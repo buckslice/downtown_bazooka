@@ -1,0 +1,7 @@
+*
+!*.gitignore
+!*.cpp
+!*.hpp
+!*.h
+!assets/
+!assets/**
