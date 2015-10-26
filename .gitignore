@@ -5,3 +5,5 @@
 !*.h
 !assets/
 !assets/**
+!libs/
+!libs/**
