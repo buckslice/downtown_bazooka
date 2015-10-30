@@ -19,7 +19,7 @@
 const GLuint WIDTH = 1024, HEIGHT = 768;
 const GLuint NUMBER_OF_MESHES = 10000;
 const GLuint NUMBER_OF_VERTICES = 120;
-const GLuint NUMBER_OF_POINTS = 5;
+const GLuint FLOATS_PER_VERTEX = 5;
 const int POWER = 3; // for the blend function
 const float SIZE = 2000.0f;
 const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
@@ -150,9 +150,9 @@ GLuint loadTexture() {
 Mesh buildMesh(GLuint& tex) {
 	// build mesh from data
 	std::vector<Vertex> verts;
-	for (int i = 0; i < NUMBER_OF_VERTICES / NUMBER_OF_POINTS; i++) {
+	for (int i = 0; i < NUMBER_OF_VERTICES / FLOATS_PER_VERTEX; i++) {
 		Vertex v;
-		int j = i * NUMBER_OF_POINTS;
+		int j = i * FLOATS_PER_VERTEX;
 		v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
 		v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
 
@@ -292,7 +292,6 @@ void runMainLoop(sf::Window& window, Shader& shader, Mesh& mesh) {
 
 		// clear screen to color
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		//glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw instanced mesh a bunch of times
@@ -302,24 +301,17 @@ void runMainLoop(sf::Window& window, Shader& shader, Mesh& mesh) {
 		window.display();
 	}
 }
-void clearMemory(Shader& shader, GLuint& tex) {
-	// clean up
-	glDeleteTextures(1, &tex);
-	glDeleteProgram(shader.program);
-	delete[] modelMatrices;
-	delete[] colors;
-}
-////////////////////////////////////////////////////////////////////////////
 
-int main() {
+sf::Window* initGL() {
 	// window settings
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
 
-	sf::Window window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
-	window.setFramerateLimit(60);
+	//sf::Window window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
+	sf::Window* window = new sf::Window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
+	window->setFramerateLimit(60);
 
 	// init glew (must be after window creation)
 	glewExperimental = GL_TRUE;
@@ -328,6 +320,12 @@ int main() {
 	// setup OpenGL options
 	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+
+	return window;
+}
+
+int main() {
+	sf::Window* window = initGL();
 
 	// build and compile shader
 	//Shader shader("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -344,9 +342,14 @@ int main() {
 
 	uploadModelMatrices(mesh);
 
-	runMainLoop(window, shader, mesh);
+	runMainLoop(*window, shader, mesh);
 
-	clearMemory(shader, tex);
+	// clean up
+	glDeleteTextures(1, &tex);
+	glDeleteProgram(shader.program);
+	delete[] modelMatrices;
+	delete[] colors;
+	delete window;
 
 	return 0;
 }
