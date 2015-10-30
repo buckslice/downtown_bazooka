@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>	//rand
+#include <cmath>
 
 #include "Shader.h"
 #include "Mesh.h"
@@ -16,6 +17,15 @@
 
 
 const GLuint WIDTH = 1024, HEIGHT = 768;
+const GLuint NUMBER_OF_MESHES = 10000;
+const GLuint NUMBER_OF_VERTICES = 120;
+const GLuint NUMBER_OF_POINTS = 5;
+const int POWER = 3; // for the blend function
+const float SIZE = 2000.0f;
+const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
+// set up model matrices and colors for instanced buildings
+glm::mat4* modelMatrices = new glm::mat4[NUMBER_OF_MESHES];
+glm::vec3* colors = new glm::vec3[NUMBER_OF_MESHES];
 
 GLfloat vertices[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -103,16 +113,201 @@ float cubicSCurve(float value) {
 	return value * value * (3.0f - 2.0f * value);
 }
 
-float cubic(float value) {
-	return value * value * value;
+
+float blend(float d, float low, float high, int power) {
+	return pow((d - low) / (high - low), power);
 }
 
-float quadric(float value) {
-	return value * value * value * value;
+glm::vec3 generateRandomColor() {
+	// returns a random color as a glm::vec3
+	GLfloat r = rand() % 101;
+	GLfloat g = rand() % 101;
+	GLfloat b = rand() % 101;
+	return glm::vec3(r / 100.0f, g / 100.0f, b / 100.0f);
+
 }
 
-float blend(float d, float low, float high) {
-	return cubic((d - low) / (high - low));
+float generateRandomSize() {
+	return randFloat() * SIZE - SIZE / 2.0f;
+}
+
+GLuint loadTexture() {
+	// load texture
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	sf::Image image;
+	image.loadFromFile("assets/images/grid.png");
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getSize().x, image.getSize().y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	return tex;
+}
+
+Mesh buildMesh(GLuint& tex) {
+	// build mesh from data
+	std::vector<Vertex> verts;
+	for (int i = 0; i < NUMBER_OF_VERTICES / NUMBER_OF_POINTS; i++) {
+		Vertex v;
+		int j = i * NUMBER_OF_POINTS;
+		v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
+		v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
+
+		verts.push_back(v);
+	}
+	std::vector<GLuint> tris(elements, elements + sizeof(elements) / sizeof(GLuint));
+	return Mesh(verts, tris, tex);
+}
+
+void initProjectionMatrix(Shader& shader) {
+	// set up projection matrix
+	GLint projLoc = glGetUniformLocation(shader.program, "proj");
+	glm::mat4 proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 2000.0f);
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+}
+
+void generateModelMatrices(Shader& shader) {
+	srand(time(NULL));
+	for (GLuint i = 0; i < NUMBER_OF_MESHES; i++) {
+		glm::mat4 model;
+
+		float x = generateRandomSize();
+		float z = generateRandomSize();
+
+		float d = glm::distance(glm::vec2(x, z), glm::vec2(0.0f, 0.0f));
+		float blnd = blend(d, 500.0f, 0.0f, POWER);
+		if (d > 500.0f) {
+			blnd = 0.0f;	// lol comment this
+		}
+
+		float sx = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
+		float sy = randFloat() * 10.0f + blnd * 100.0f + 5.0f;
+		float sz = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
+
+		model = glm::translate(model, glm::vec3(x, sy / 2.0f, z));
+		model = glm::scale(model, glm::vec3(sx, sy, sz));
+
+		modelMatrices[i] = model;
+
+		colors[i] = generateRandomColor();
+	}
+}
+
+void uploadModelMatrices(Mesh& mesh) {
+	// set up instancing uniforms
+	// basically uploads all the model matrices to mesh
+	GLuint VAO = mesh.getVAO();
+	GLuint modelBuffer;
+	GLuint colorBuffer;
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &colorBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+	glBufferData(GL_ARRAY_BUFFER, NUMBER_OF_MESHES * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+	glVertexAttribDivisor(2, 1);
+
+	glGenBuffers(1, &modelBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
+	glBufferData(GL_ARRAY_BUFFER, NUMBER_OF_MESHES * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(sizeof(glm::vec4)));
+	glEnableVertexAttribArray(5);
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(2 * sizeof(glm::vec4)));
+	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(3 * sizeof(glm::vec4)));
+
+	glVertexAttribDivisor(3, 1);
+	glVertexAttribDivisor(4, 1);
+	glVertexAttribDivisor(5, 1);
+	glVertexAttribDivisor(6, 1);
+
+	glBindVertexArray(0);
+}
+
+sf::Vector2i getMouseMovement(sf::Window& window) {
+	sf::Vector2i mouseMove;
+	// get mouse movement
+	if (window.hasFocus()) {
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		mouseMove = mousePos - center;
+
+		// if the mouse has moved then set it back to center
+		// needs to somehow prevent mouse going outside window in one frame
+		// which is possible if you move fast enough
+		if (mouseMove != sf::Vector2i(0, 0)) {
+			sf::Mouse::setPosition(center, window);
+		}
+	}
+	return mouseMove;
+}
+
+void checkForQuit(sf::Window& window, bool& running) {
+	// check for events that will quit game
+	sf::Event e;
+	while (window.pollEvent(e)) {
+		switch (e.type) {
+		case sf::Event::Closed:
+			running = false;
+			break;
+		case sf::Event::KeyPressed:
+			if (e.key.code == sf::Keyboard::Escape) {
+				running = false;
+			}
+			break;
+		}
+	}
+}
+
+void runMainLoop(sf::Window& window, Shader& shader, Mesh& mesh) {
+	// save view matrix location in shader
+	// generated and set each frame from camera
+	GLint viewLoc = glGetUniformLocation(shader.program, "view");
+	// set up some more stuff
+	//sf::Clock animTime;
+	sf::Clock frameTime;
+	Camera cam(0.0f, 200.0f, 0.0f, 0.0f, 1.0f, 0.0f, 270.0f, 0.0f);
+	sf::Mouse::setPosition(center, window);
+
+	bool running = true;
+	while (running) {
+		GLfloat deltaTime = frameTime.restart().asSeconds();
+
+		checkForQuit(window, running);
+
+		sf::Vector2i mouseMove = getMouseMovement(window);
+
+		// update camera
+		cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
+
+		// get view matrix from camera and send it to shader
+		glm::mat4 view = cam.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+		// clear screen to color
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		//glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// draw instanced mesh a bunch of times
+		mesh.draw(shader, NUMBER_OF_MESHES);
+
+		// swap buffers
+		window.display();
+	}
+}
+void clearMemory(Shader& shader, GLuint& tex) {
+	// clean up
+	glDeleteTextures(1, &tex);
+	glDeleteProgram(shader.program);
+	delete[] modelMatrices;
+	delete[] colors;
 }
 ////////////////////////////////////////////////////////////////////////////
 
@@ -139,174 +334,19 @@ int main() {
 	Shader shader("assets/shaders/instanced.vert", "assets/shaders/default.frag");
 	shader.use();
 
-	// load texture
-	GLuint tex;
-	glGenTextures(1, &tex);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	sf::Image image;
-	image.loadFromFile("assets/images/grid.png");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getSize().x, image.getSize().y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GLuint tex = loadTexture();
 
-	// build mesh from data
-	std::vector<Vertex> verts;
-	for (int i = 0; i < 24; i++) {
-		Vertex v;
-		int j = i * 5;
-		v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
-		v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
+	Mesh mesh = buildMesh(tex);
 
-		verts.push_back(v);
-	}
-	std::vector<GLuint> tris(elements, elements + sizeof(elements) / sizeof(GLuint));
-	Mesh mesh(verts, tris, tex);
+	initProjectionMatrix(shader);
 
-	// set up projection matrix
-	GLint projLoc = glGetUniformLocation(shader.program, "proj");
-	glm::mat4 proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 2000.0f);
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+	generateModelMatrices(shader);
 
-	// save view matrix location in shader
-	// generated and set each frame from camera
-	GLint viewLoc = glGetUniformLocation(shader.program, "view");
+	uploadModelMatrices(mesh);
 
-	// set up model matrices and colors for instanced buildings
-	GLuint numberOfMeshes = 10000;
-	glm::mat4* modelMatrices;
-	modelMatrices = new glm::mat4[numberOfMeshes];
-	glm::vec3* colors;
-	colors = new glm::vec3[numberOfMeshes];
+	runMainLoop(window, shader, mesh);
 
-	srand(time(NULL));
-	for (GLuint i = 0; i < numberOfMeshes; i++) {
-		glm::mat4 model;
-
-		float size = 2000.0f;
-		float x = randFloat() * size - size / 2.0f;
-		float z = randFloat() * size - size / 2.0f;
-
-		float d = glm::distance(glm::vec2(x, z), glm::vec2(0.0f, 0.0f));
-		float blnd = blend(d, 500.0f, 0.0f);
-		if (d > 500.0f) {
-			blnd = 0.0f;	// lol comment this
-		}
-
-		float sx = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
-		float sy = randFloat() * 10.0f + blnd * 100.0f + 5.0f;
-		float sz = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
-
-		model = glm::translate(model, glm::vec3(x, sy / 2.0f, z));
-		model = glm::scale(model, glm::vec3(sx, sy, sz));
-
-		modelMatrices[i] = model;
-
-		GLfloat r = rand() % 101;
-		GLfloat g = rand() % 101;
-		GLfloat b = rand() % 101;
-		colors[i] = glm::vec3(r / 100.0f, g / 100.0f, b / 100.0f);
-	}
-
-	// set up instancing uniforms
-	// basically uploads all the model matrices to mesh
-	GLuint VAO = mesh.getVAO();
-	GLuint modelBuffer;
-	GLuint colorBuffer;
-	glBindVertexArray(VAO);
-
-	glGenBuffers(1, &colorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glBufferData(GL_ARRAY_BUFFER, numberOfMeshes * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-	glVertexAttribDivisor(2, 1);
-
-	glGenBuffers(1, &modelBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
-	glBufferData(GL_ARRAY_BUFFER, numberOfMeshes * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(sizeof(glm::vec4)));
-	glEnableVertexAttribArray(5);
-	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(2 * sizeof(glm::vec4)));
-	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(3 * sizeof(glm::vec4)));
-
-	glVertexAttribDivisor(3, 1);
-	glVertexAttribDivisor(4, 1);
-	glVertexAttribDivisor(5, 1);
-	glVertexAttribDivisor(6, 1);
-
-	glBindVertexArray(0);
-
-	// set up some more stuff
-	//sf::Clock animTime;
-	sf::Clock frameTime;
-	Camera cam(0.0f, 200.0f, 0.0f, 0.0f, 1.0f, 0.0f, 270.0f, 0.0f);
-	sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
-	sf::Mouse::setPosition(center, window);
-
-	bool running = true;
-	while (running) {
-		GLfloat deltaTime = frameTime.restart().asSeconds();
-
-		// check for events that will quit game
-		sf::Event e;
-		while (window.pollEvent(e)) {
-			switch (e.type) {
-			case sf::Event::Closed:
-				running = false;
-				break;
-			case sf::Event::KeyPressed:
-				if (e.key.code == sf::Keyboard::Escape) {
-					running = false;
-				}
-				break;
-			}
-		}
-
-		sf::Vector2i mouseMove;
-		// get mouse movement
-		if (window.hasFocus()) {
-			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-			mouseMove = mousePos - center;
-
-			// if the mouse has moved then set it back to center
-			// needs to somehow prevent mouse going outside window in one frame
-			// which is possible if you move fast enough
-			if (mouseMove != sf::Vector2i(0, 0)) {
-				sf::Mouse::setPosition(center, window);
-			}
-		}
-
-		// update camera
-		cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
-
-		// get view matrix from camera and send it to shader
-		glm::mat4 view = cam.getViewMatrix();
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-		// clear screen to color
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		//glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// draw instanced mesh a bunch of times
-		mesh.draw(shader, numberOfMeshes);
-
-		// swap buffers
-		window.display();
-	}
-
-	// clean up
-	glDeleteTextures(1, &tex);
-	glDeleteProgram(shader.program);
-	delete[] modelMatrices;
-	delete[] colors;
+	clearMemory(shader, tex);
 
 	return 0;
 }
