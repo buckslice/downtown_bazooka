@@ -4,8 +4,6 @@
 !*.hpp
 !*.h
 !*.sln
-!*.vcxproj
-!*.vcxproj.filters
 !assets/
 !assets/**
 !libs/
