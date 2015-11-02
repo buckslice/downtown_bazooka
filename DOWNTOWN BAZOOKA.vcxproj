@@ -91,12 +91,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\SFML-2.3.2\include;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glm-0.9.7.1\glm;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glew-1.13.0\include;-&gt; add glm+0.9.7.1/include;-&gt; add glew+1.13.0/include;-&gt; add SFML+2.3.2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\libs\SFML-2.3.2\include;$(ProjectDir)\libs\glm-0.9.7.1\glm;$(ProjectDir)\libs\glew-1.13.0\include;-&gt; add glm+0.9.7.1/include;-&gt; add glew+1.13.0/include;-&gt; add SFML+2.3.2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glew-1.13.0\lib\Release\Win32;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\SFML-2.3.2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\glew-1.13.0\lib\Release\Win32;$(ProjectDir)\libs\SFML-2.3.2\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;sfml-window.lib;sfml-system.lib;sfml-graphics.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -125,14 +125,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\SFML-2.3.2\include;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glm-0.9.7.1\glm;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glew-1.13.0\include;/libs/glm-0.9.7.1/glm;/libs/SFML-2.3.2/include;/libs/glew-1.13.0/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\libs\SFML-2.3.2\include;$(ProjectDir)\libs\glm-0.9.7.1\glm;$(ProjectDir)\libs\glew-1.13.0\include;/libs/glm-0.9.7.1/glm;/libs/SFML-2.3.2/include;/libs/glew-1.13.0/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\glew-1.13.0\lib\Release\Win32;C:\Users\Jeffrey\Documents\GitHub\downtown_bazooka\libs\SFML-2.3.2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\glew-1.13.0\lib\Release\Win32;$(ProjectDir)\libs\SFML-2.3.2\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;sfml-window.lib;sfml-system.lib;sfml-graphics.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
