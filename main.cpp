@@ -8,21 +8,21 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>	//rand
-#include <cmath>
+
 
 #include "shader.h"
 #include "mesh.h"
 #include "camera.h"
 #include "aabb.h"
+#include "mathutil.h"
 
 
 const GLuint WIDTH = 1024, HEIGHT = 768;
 const GLuint NUMBER_OF_MESHES = 10000;
 const GLuint NUMBER_OF_VERTICES = 120;
 const GLuint FLOATS_PER_VERTEX = 5;
-const int POWER = 3; // for the blend function
-const float SIZE = 2000.0f;
+const float CITY_SIZE = 2000.0f;
+const float BLEND_DISTANCE = 750.0f;
 const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
 // set up model matrices and colors for instanced buildings
 glm::mat4* modelMatrices = new glm::mat4[NUMBER_OF_MESHES];
@@ -104,28 +104,6 @@ glm::vec3 getMovementDir() {
 	return dir;
 }
 
-// TODO: MAKE A STATIC MATH CLASS OR SOMETHING FOR THESE NEXT COUPLE FUNCTIONS
-// generates random float from 0.0 to 1.0 inclusive
-float randFloat() {
-	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-}
-
-float cubicSCurve(float value) {
-	return value * value * (3.0f - 2.0f * value);
-}
-
-
-float blend(float d, float low, float high, int power) {
-	return pow((d - low) / (high - low), power);
-}
-
-glm::vec3 generateRandomColor() {
-	GLfloat r = rand() % 101;
-	GLfloat g = rand() % 101;
-	GLfloat b = rand() % 101;
-	return glm::vec3(r / 100.0f, g / 100.0f, b / 100.0f);
-
-}
 
 GLuint loadTexture() {
 	GLuint tex;
@@ -182,18 +160,18 @@ void generateModelMatrices(Shader& shader) {
 		float x, z, sx, sy, sz;
 		int tries = 0;
 		while (tries < 100) {
-			x = randFloat() * SIZE - SIZE / 2.0f;
-			z = randFloat() * SIZE - SIZE / 2.0f;
+			x = MathUtil::randFloat() * CITY_SIZE - CITY_SIZE / 2.0f;
+			z = MathUtil::randFloat() * CITY_SIZE - CITY_SIZE / 2.0f;
 
 			float d = glm::distance(glm::vec2(x, z), glm::vec2(0.0f, 0.0f));
-			float b = blend(d, 500.0f, 0.0f, POWER);
-			if (d > 750.0f) {
+			float b = MathUtil::blend(d, BLEND_DISTANCE, 0.0f, MathUtil::cubicSCurve);
+			if (d > BLEND_DISTANCE) {
 				b = 0.0f;	// lol comment this
 			}
 
-			sx = randFloat() * 10.0f + b * 20.0f + 5.0f;
-			sy = randFloat() * 10.0f + b * 100.0f + 5.0f;
-			sz = randFloat() * 10.0f + b * 20.0f + 5.0f;
+			sx = MathUtil::randFloat() * 10.0f + b * 20.0f + 5.0f;
+			sy = MathUtil::randFloat() * 10.0f + b * 100.0f + 5.0f;
+			sz = MathUtil::randFloat() * 10.0f + b * 20.0f + 5.0f;
 
 			AABB box(glm::vec3(x - sx / 2.0, 0.0f, z - sz / 2.0), glm::vec3(x + sx / 2.0, sy, z + sz / 2.0));
 			if (!collidesWithAny(box, boxes)) {
@@ -203,16 +181,13 @@ void generateModelMatrices(Shader& shader) {
 
 			tries++;
 		}
-		if (tries == 100) {
-			continue;
-		}
 
 		model = glm::translate(model, glm::vec3(x, sy / 2.0f, z));
 		model = glm::scale(model, glm::vec3(sx, sy, sz));
 
 		modelMatrices[i] = model;
 
-		colors[i] = generateRandomColor();
+		colors[i] = MathUtil::generateRandomColor();
 	}
 }
 
