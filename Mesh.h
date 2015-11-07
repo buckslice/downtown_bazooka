@@ -9,7 +9,7 @@
 
 #include <vector>
 
-#include "Shader.h"
+#include "shader.h"
 
 struct Vertex {
 	glm::vec3 position;

@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-
-
 class Physics {
 // static class for physics calculations
 public:

@@ -11,9 +11,10 @@
 #include <stdlib.h>	//rand
 #include <cmath>
 
-#include "Shader.h"
-#include "Mesh.h"
-#include "Camera.h"
+#include "shader.h"
+#include "mesh.h"
+#include "camera.h"
+#include "aabb.h"
 
 
 const GLuint WIDTH = 1024, HEIGHT = 768;
@@ -119,7 +120,6 @@ float blend(float d, float low, float high, int power) {
 }
 
 glm::vec3 generateRandomColor() {
-	// returns a random color as a glm::vec3
 	GLfloat r = rand() % 101;
 	GLfloat g = rand() % 101;
 	GLfloat b = rand() % 101;
@@ -127,12 +127,7 @@ glm::vec3 generateRandomColor() {
 
 }
 
-float generateRandomSize() {
-	return randFloat() * SIZE - SIZE / 2.0f;
-}
-
 GLuint loadTexture() {
-	// load texture
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glActiveTexture(GL_TEXTURE0);
@@ -148,7 +143,6 @@ GLuint loadTexture() {
 }
 
 Mesh buildMesh(GLuint& tex) {
-	// build mesh from data
 	std::vector<Vertex> verts;
 	for (int i = 0; i < NUMBER_OF_VERTICES / FLOATS_PER_VERTEX; i++) {
 		Vertex v;
@@ -163,29 +157,55 @@ Mesh buildMesh(GLuint& tex) {
 }
 
 void initProjectionMatrix(Shader& shader) {
-	// set up projection matrix
 	GLint projLoc = glGetUniformLocation(shader.program, "proj");
 	glm::mat4 proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 2000.0f);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
 }
 
+// checks if box collides with any of the boxes on the list
+bool collidesWithAny(AABB box, std::vector<AABB> boxes) {
+	for (int i = 0; i < boxes.size(); i++) {
+		if (box.getIntersect(boxes[i]).doesIntersect) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void generateModelMatrices(Shader& shader) {
+	std::vector<AABB> boxes;
+
 	srand(time(NULL));
 	for (GLuint i = 0; i < NUMBER_OF_MESHES; i++) {
 		glm::mat4 model;
 
-		float x = generateRandomSize();
-		float z = generateRandomSize();
+		float x, z, sx, sy, sz;
+		int tries = 0;
+		while (tries < 100) {
+			x = randFloat() * SIZE - SIZE / 2.0f;
+			z = randFloat() * SIZE - SIZE / 2.0f;
 
-		float d = glm::distance(glm::vec2(x, z), glm::vec2(0.0f, 0.0f));
-		float blnd = blend(d, 500.0f, 0.0f, POWER);
-		if (d > 500.0f) {
-			blnd = 0.0f;	// lol comment this
+			float d = glm::distance(glm::vec2(x, z), glm::vec2(0.0f, 0.0f));
+			float b = blend(d, 500.0f, 0.0f, POWER);
+			if (d > 750.0f) {
+				b = 0.0f;	// lol comment this
+			}
+
+			sx = randFloat() * 10.0f + b * 20.0f + 5.0f;
+			sy = randFloat() * 10.0f + b * 100.0f + 5.0f;
+			sz = randFloat() * 10.0f + b * 20.0f + 5.0f;
+
+			AABB box(glm::vec3(x - sx / 2.0, 0.0f, z - sz / 2.0), glm::vec3(x + sx / 2.0, sy, z + sz / 2.0));
+			if (!collidesWithAny(box, boxes)) {
+				boxes.push_back(box);
+				break;
+			}
+
+			tries++;
 		}
-
-		float sx = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
-		float sy = randFloat() * 10.0f + blnd * 100.0f + 5.0f;
-		float sz = randFloat() * 10.0f + blnd * 20.0f + 5.0f;
+		if (tries == 100) {
+			continue;
+		}
 
 		model = glm::translate(model, glm::vec3(x, sy / 2.0f, z));
 		model = glm::scale(model, glm::vec3(sx, sy, sz));
@@ -281,6 +301,12 @@ void runMainLoop(sf::Window& window, Shader& shader, Mesh& mesh) {
 
 		checkForQuit(window, running);
 
+		// regenerate new random city!!!
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
+			generateModelMatrices(shader);
+			uploadModelMatrices(mesh);
+		}
+
 		sf::Vector2i mouseMove = getMouseMovement(window);
 
 		// update camera
@@ -353,49 +379,3 @@ int main() {
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-// used to go inside game loop before window.display
-// just renders a bunch of meshes multiple times 
-// sends in diff model mesh as uniform for each one
-
-//glBindVertexArray(VAO);
-//glDrawElementsInstanced(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0, amount);
-//glBindVertexArray(0);
-
-//int n = 25;
-//GLuint count = n*(n + 1) / 2;
-//for (GLuint i = 0; i < count; i++) {
-//	int r = 1;
-//	int c = i;
-//	while (c - r >= 0) {
-//		c -= r;
-//		r++;
-//	}
-//	r -= 1;
-
-//	GLfloat spacing = 2.0f;
-//	GLfloat halfrw = r / 2.0f * spacing;
-//	glm::vec3 pos(c * spacing - halfrw, -1.0f, -spacing*0.866f * r);	// generate for each guy starting at 0.0.0
-
-//	glm::mat4 model;
-//	model = glm::translate(model, pos);
-//	GLfloat angle = animTime.getElapsedTime().asSeconds() * glm::radians(180.0f) * 0.25f;
-//	model = glm::rotate(model, angle, glm::vec3((GLfloat)r / 10.0f, 1.0f, -(GLfloat)r / 10.0f));
-
-//	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-//	mesh.draw(shader);
-//}
-
-//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
