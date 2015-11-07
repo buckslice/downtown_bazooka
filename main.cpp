@@ -9,6 +9,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <stdlib.h>
+
 
 #include "shader.h"
 #include "mesh.h"
@@ -18,7 +20,7 @@
 
 
 const GLuint WIDTH = 1024, HEIGHT = 768;
-const GLuint NUMBER_OF_MESHES = 10000;
+const GLuint NUMBER_OF_MESHES = 20000;
 const GLuint NUMBER_OF_VERTICES = 120;
 const GLuint FLOATS_PER_VERTEX = 5;
 const float CITY_SIZE = 2000.0f;
@@ -150,12 +152,26 @@ bool collidesWithAny(AABB box, std::vector<AABB> boxes) {
 	return false;
 }
 
+float rnd() {
+	return (double)rand() / RAND_MAX;
+}
+
+void test(glm::mat4 &model, glm::vec3 pos, glm::vec3 scale) {
+	float yscale = rnd()*.8f;
+	float ystart = rnd()*(1-yscale);
+
+	model = glm::translate(model, glm::vec3(pos.x, ystart+yscale*.5f, pos.z));
+	float a = (rnd()*.8f+.2f)*scale.x*.25f;
+	model = glm::scale(model, glm::vec3(scale.x + a, scale.y, scale.z + a));
+}
+
 void generateModelMatrices(Shader& shader) {
 	std::vector<AABB> boxes;
 
 	srand(time(NULL));
-	for (GLuint i = 0; i < NUMBER_OF_MESHES; i++) {
+	for (GLuint i = 0; i < NUMBER_OF_MESHES; i+=2) {
 		glm::mat4 model;
+		glm::mat4 model1;
 
 		float x, z, sx, sy, sz;
 		int tries = 0;
@@ -182,12 +198,22 @@ void generateModelMatrices(Shader& shader) {
 			tries++;
 		}
 
-		model = glm::translate(model, glm::vec3(x, sy / 2.0f, z));
-		model = glm::scale(model, glm::vec3(sx, sy, sz));
+		glm::vec3 pos = glm::vec3(x, sy / 2.0f, z);
+		glm::vec3 scale = glm::vec3(sx, sy, sz);
+		model = glm::translate(model, pos);
+		model = glm::scale(model, scale);
 
 		modelMatrices[i] = model;
 
-		colors[i] = MathUtil::generateRandomColor();
+		test(model1, pos, scale);//Just a test
+		modelMatrices[i + 1] = model1;
+		/*model1 = glm::translate(model1, glm::vec3(x, sy / 2.0f + rand()*(sy*.5f - .5f), z));
+		float a = rand()*sx*.2f;
+		model1 = glm::scale(model1, glm::vec3(sx + a, sy, sz + a));
+		modelMatrices[i + 1] = model1;*/
+
+		colors[i] = rand()%1000 == 1 ? glm::vec3(.5f,0,1.0f) : rand()%100 == 1 ? glm::vec3(1.0f,0,0) : rand()%2 == 0 ? glm::vec3(0, 1.0f, rnd()*.5f + .5f) : glm::vec3(0, rnd()*.5f + .5f, 1.0f);//MathUtil::generateRandomColor();
+		colors[i + 1] = colors[i];
 	}
 }
 
