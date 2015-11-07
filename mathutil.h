@@ -17,7 +17,7 @@ public:
 	}
 
 	static float cubicSCurve(float value) {
-		return value * value * (3.0f - 2.0f * value);
+		return value * value * value;// (3.0f - 2.0f * value);
 	}
 
 
