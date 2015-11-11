@@ -158,14 +158,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aabb.cpp" />
+    <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="cityGenerator.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="gameObject.h" />
+    <ClInclude Include="glHelper.h" />
     <ClInclude Include="intersectData.h" />
     <ClInclude Include="mathutil.h" />
     <ClInclude Include="mesh.h" />

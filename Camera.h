@@ -23,6 +23,7 @@ public:
 
 	GLfloat yaw;
 	GLfloat pitch;
+	GLfloat yvel;
 
 	GLfloat speed;
 	GLfloat mouseSensitivity;
@@ -74,16 +75,34 @@ public:
 		right = glm::normalize(glm::cross(forward, worldUp));
 		up = glm::normalize(glm::cross(right, forward));
 
-		// calculate position from movement direction and speed
-		GLfloat y = dir.y;
-		dir.y = 0.0f;
-		glm::vec3 d;
-		if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
-			d = glm::normalize(dir);
+		bool flymode = true;
+		if (flymode) {
+			// calculate position from movement direction and speed
+			GLfloat y = dir.y;
+			dir.y = 0.0f;
+			glm::vec3 d;
+			if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
+				d = glm::normalize(dir);
+			}
+			d.y = y;
+			d *= speed * delta;
+			pos += right * d.x + forward * d.z + worldUp * d.y;
+		} else {
+			glm::vec3 newf = glm::normalize(glm::cross( worldUp, right));
+			glm::vec3 d;
+			if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
+				d = glm::normalize(dir);
+			}
+			d *= speed * delta;
+			pos += right * d.x + newf * d.z;// +worldUp * d.y;
+
+			yvel += -9.81f;
+			pos.y += yvel * delta;
+			if (pos.y <= 2.0f) {
+				pos.y = 2.0f;
+				yvel = 0.0f;
+			}
 		}
-		d.y = y;
-		d *= speed * delta;
-		pos += right * d.x + forward * d.z + worldUp * d.y;
 		
 	}
 

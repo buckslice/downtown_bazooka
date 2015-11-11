@@ -1,11 +1,19 @@
 #pragma once
 
 #include <cmath>
+#include <vector>
+#include "aabb.h"
 
 class Physics {
 // static class for physics calculations
 public:
 	const float GRAVITY = -9.8f;
+
+	// eventually make collider class
+	// so you can have different shapes
+	std::vector<AABB> staticObjects;
+	std::vector<AABB> dynamicObjects;
+
 
 	static float finalVelocity1(float initialVelocity, float acceleration, float distance) {
 		return sqrt(pow(initialVelocity, 2) + (2 * acceleration * distance));

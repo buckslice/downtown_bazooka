@@ -9,87 +9,16 @@
 #include <iostream>
 #include <fstream>
 
-#include <stdlib.h>
-
-
 #include "shader.h"
-#include "mesh.h"
 #include "camera.h"
-#include "aabb.h"
-#include "mathutil.h"
+#include "cityGenerator.h"
+#include "glHelper.h"
 
 
 const GLuint WIDTH = 1440, HEIGHT = 960;
-const GLuint NUMBER_OF_MESHES = 7500;
-const GLuint NUMBER_OF_VERTICES = 120;
-const GLuint FLOATS_PER_VERTEX = 5;
-const float CITY_SIZE = 2000.0f;
-const float BLEND_DISTANCE = 500.0f;
 const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
-glm::mat4* modelMatrices = new glm::mat4[NUMBER_OF_MESHES];
-glm::vec3* colors = new glm::vec3[NUMBER_OF_MESHES];
-GLuint blurColorBuffers[2];
-GLuint blurFrameBuffers[2];
 
-// helps make square texture look better on buildings
-GLfloat vn = 1.0f / 32.0f;
-GLfloat vertices[] = {
-	// front
-	-0.5f, -0.5f, -0.5f,  0.0f, vn,
-	0.5f, -0.5f, -0.5f,  1.0f, vn,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f - vn,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f - vn,
-
-	// back
-	-0.5f, -0.5f,  0.5f,  0.0f, vn,
-	0.5f, -0.5f,  0.5f,  1.0f, vn,
-	0.5f,  0.5f,  0.5f,  1.0f, 1.0f - vn,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f - vn,
-
-	// left
-	-0.5f,  0.5f,  0.5f,  0.0f, vn,
-	-0.5f,  0.5f, -0.5f,  1.0f, vn,
-	-0.5f, -0.5f, -0.5f,  1.0f, 1.0f - vn,
-	-0.5f, -0.5f,  0.5f,  0.0f, 1.0f - vn,
-
-	// right
-	0.5f,  0.5f,  0.5f,  0.0f, vn,
-	0.5f,  0.5f, -0.5f,  1.0f, vn,
-	0.5f, -0.5f, -0.5f,  1.0f, 1.0f - vn,
-	0.5f, -0.5f,  0.5f,  0.0f, 1.0f - vn,
-
-	// bottom
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-	// top
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-};
-
-GLuint elements[] = {
-	0,1,2,
-	2,3,0,
-
-	4,5,6,
-	6,7,4,
-
-	8,9,10,
-	10,11,8,
-
-	12,13,14,
-	14,15,12,
-
-	16,17,18,
-	18,19,16,
-
-	20,21,22,
-	22,23,20
-};
+FBO blurBuffers[2];
 
 glm::vec3 getMovementDir() {
 	// calculate movement direction
@@ -113,173 +42,6 @@ glm::vec3 getMovementDir() {
 		dir.y += 1.0f;
 	}
 	return dir;
-}
-
-
-GLuint loadTexture() {
-	GLuint tex;
-	glGenTextures(1, &tex);
-	sf::Image image;
-	image.loadFromFile("assets/images/grid.png");
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getSize().x, image.getSize().y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
-
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return tex;
-}
-
-Mesh buildMesh(GLuint& tex) {
-	std::vector<Vertex> verts;
-	for (int i = 0; i < NUMBER_OF_VERTICES / FLOATS_PER_VERTEX; i++) {
-		Vertex v;
-		int j = i * FLOATS_PER_VERTEX;
-		v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
-		v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
-
-		verts.push_back(v);
-	}
-	std::vector<GLuint> tris(elements, elements + sizeof(elements) / sizeof(GLuint));
-	return Mesh(verts, tris, tex);
-}
-
-// checks if box collides with any of the boxes on the list
-bool collidesWithAny(AABB box, std::vector<AABB> boxes) {
-	for (int i = 0; i < boxes.size(); i++) {
-		if (box.getIntersect(boxes[i]).doesIntersect) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool tooClose(float minDist, glm::vec2 city, std::vector<glm::vec2> cities) {
-	for (int i = 0; i < cities.size(); i++) {
-		if (glm::distance(city, cities[i]) < minDist) {
-			return true;
-		}
-	}
-	return false;
-}
-
-float rnd() {
-	return (double)rand() / RAND_MAX;
-}
-
-void generateModelMatrices(Shader& shader, bool square) {
-	srand(time(NULL));
-
-	std::vector<AABB> boxes;
-	std::vector<glm::vec2> cities;
-
-	// generate some random city centers
-	const int numCitys = 8;
-	for (GLuint i = 0; i < numCitys; i++) {
-		glm::vec2 city;
-		int tries = 0;
-		do {
-			if (square) {
-				city = MathUtil::randomPointInSquare(CITY_SIZE);
-			} else {
-				city = MathUtil::randomPointInCircle(CITY_SIZE / 2.0f);
-			}
-			tries++;
-		} while (tooClose(400.0f, city, cities) && tries < 100);
-
-		cities.push_back(city);
-	}
-
-	// generate randomly located buildings
-	// sized based on their distance to nearest city center
-	for (GLuint i = 0; i < NUMBER_OF_MESHES; i++) {
-		glm::mat4 model;
-		glm::mat4 model1;
-
-		float sx, sy, sz;
-		int tries = 0;
-		glm::vec2 p;
-		while (tries < 100) {
-			if (square) {
-				p = MathUtil::randomPointInSquare(CITY_SIZE);
-			} else {
-				p = MathUtil::randomPointInCircle(CITY_SIZE / 2.0f);
-			}
-
-			float distToClosestCity = std::numeric_limits<float>::max();
-			glm::vec2 closestCity;
-			for (int i = 0; i < cities.size(); i++) {
-				distToClosestCity = std::min(distToClosestCity, glm::distance(p, cities[i]));
-			}
-			float d = distToClosestCity;
-			float b = MathUtil::blend(d, BLEND_DISTANCE, 0.0f, MathUtil::cubic);
-			if (d > BLEND_DISTANCE) {
-				b = 0.0f;	// lol comment this
-			}
-
-			sx = MathUtil::randFloat() * 10.0f + b * 20.0f + 5.0f;
-			sy = MathUtil::randFloat() * 10.0f + b * 100.0f + 5.0f;
-			sz = MathUtil::randFloat() * 10.0f + b * 20.0f + 5.0f;
-
-			AABB box(glm::vec3(p.x - sx / 2.0, 0.0f, p.y - sz / 2.0), glm::vec3(p.x + sx / 2.0, sy, p.y + sz / 2.0));
-			if (!collidesWithAny(box, boxes)) {
-				boxes.push_back(box);
-				break;
-			}
-
-			tries++;
-		}
-
-		glm::vec3 pos = glm::vec3(p.x, sy / 2.0f, p.y);
-		glm::vec3 scale = glm::vec3(sx, sy, sz);
-		model = glm::translate(model, pos);
-		model = glm::scale(model, scale);
-
-		modelMatrices[i] = model;
-
-		colors[i] = rand() % 1000 == 1 ? glm::vec3(.5f, 0, 1.0f) : rand() % 100 == 1 ? glm::vec3(1.0f, 0, 0) : rand() % 2 == 0 ? glm::vec3(0, 1.0f, rnd()*.5f + .5f) : glm::vec3(0, rnd()*.5f + .5f, 1.0f);//MathUtil::generateRandomColor();
-	}
-}
-
-// set up instancing uniforms
-// basically uploads all the model matrices to mesh
-void uploadModelMatrices(Mesh& mesh) {
-	GLuint VAO = mesh.getVAO();
-	GLuint modelBuffer;
-	GLuint colorBuffer;
-	glBindVertexArray(VAO);
-
-	glGenBuffers(1, &colorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glBufferData(GL_ARRAY_BUFFER, NUMBER_OF_MESHES * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-	glVertexAttribDivisor(2, 1);
-
-	glGenBuffers(1, &modelBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
-	glBufferData(GL_ARRAY_BUFFER, NUMBER_OF_MESHES * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(sizeof(glm::vec4)));
-	glEnableVertexAttribArray(5);
-	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(2 * sizeof(glm::vec4)));
-	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(3 * sizeof(glm::vec4)));
-
-	glVertexAttribDivisor(3, 1);
-	glVertexAttribDivisor(4, 1);
-	glVertexAttribDivisor(5, 1);
-	glVertexAttribDivisor(6, 1);
-
-	glBindVertexArray(0);
 }
 
 sf::Vector2i getMouseMovement(sf::Window& window) {
@@ -316,41 +78,6 @@ void checkForQuit(sf::Window& window, bool& running) {
 	}
 }
 
-GLuint buildColorBuffer() {
-	GLuint cbo;
-	glGenTextures(1, &cbo);
-	glBindTexture(GL_TEXTURE_2D, cbo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	return cbo;
-}
-
-GLuint buildFrameBuffer(GLuint colorBuffer, bool withDepth) {
-	GLuint fbo;
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	if (withDepth) {
-		GLuint rbo;
-		glGenRenderbuffers(1, &rbo);
-		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-	}
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cout << "ERROR::MAIN::FRAMEBUFFER_NOT_COMPLETE" << std::endl;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return fbo;
-}
-
 // render a fullscreen quad
 // used to render into frame buffers
 GLuint quadVAO = 0;
@@ -368,12 +95,12 @@ GLuint blurColorBuffer(GLuint colorBuffer, GLuint iterations, Shader blur) {
 	GLuint resLoc = glGetUniformLocation(blur.program, "resolution");
 	GLuint dirLoc = glGetUniformLocation(blur.program, "dir");
 	for (GLuint i = 0; i < iterations; i++) {
-		glUniform1f(radLoc, i);
+		glUniform1f(radLoc, i*1.1f);
 		glUniform1f(resLoc, horizontal ? WIDTH : HEIGHT);
 		GLfloat hz = horizontal ? 1.0f : 0.0f;
 		glUniform2f(dirLoc, hz, 1.0f - hz);
-		glBindTexture(GL_TEXTURE_2D, first ? colorBuffer : blurColorBuffers[!horizontal]);
-		glBindFramebuffer(GL_FRAMEBUFFER, blurFrameBuffers[horizontal]);
+		glBindTexture(GL_TEXTURE_2D, first ? colorBuffer : blurBuffers[!horizontal].color);
+		glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[horizontal].frame);
 
 		renderQuad();
 
@@ -381,7 +108,7 @@ GLuint blurColorBuffer(GLuint colorBuffer, GLuint iterations, Shader blur) {
 		first = false;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);	//back to default framebuffer
-	return blurColorBuffers[!horizontal];
+	return blurBuffers[!horizontal].color;
 }
 
 sf::Window* initGL() {
@@ -405,8 +132,7 @@ sf::Window* initGL() {
 
 	// initialize blur color buffers
 	for (GLuint i = 0; i < 2; i++) {
-		blurColorBuffers[i] = buildColorBuffer();
-		blurFrameBuffers[i] = buildFrameBuffer(blurColorBuffers[i], false);
+		blurBuffers[i] = GLHelper::buildFBO(WIDTH, HEIGHT, false);
 	}
 
 	// initialize quad for framebuffer rendering
@@ -449,17 +175,18 @@ int main() {
 	glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
 	glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
 
-	GLuint tex = loadTexture();
-	Mesh mesh = buildMesh(tex);
+	GLuint tex = GLHelper::loadTexture("assets/images/grid.png");
+	
+	CityGenerator cg;
+	Mesh mesh = cg.buildMesh(tex);
 
 	// generate a random city
-	generateModelMatrices(buildingShader, true);
-	uploadModelMatrices(mesh);
+	cg.generateModelMatrices(true);
+	cg.uploadModelMatrices(mesh);
 
 	// build main frame buffer
 	// holds color and depth data
-	GLuint sceneColorBuffer = buildColorBuffer();
-	GLuint sceneFrameBuffer = buildFrameBuffer(sceneColorBuffer, true);
+	FBO sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
 
 	// save matrix locations from shader
 	GLint projLoc = glGetUniformLocation(buildingShader.program, "proj");
@@ -471,6 +198,7 @@ int main() {
 
 	// set up some more stuff
 	sf::Clock frameTime;
+	sf::Clock animTime;
 	sf::Mouse::setPosition(center, *window);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
 
@@ -482,13 +210,13 @@ int main() {
 
 		// generate new square city
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
-			generateModelMatrices(buildingShader, true);
-			uploadModelMatrices(mesh);
+			cg.generateModelMatrices(true);
+			cg.uploadModelMatrices(mesh);
 		}
 		// generate new circular city
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) {
-			generateModelMatrices(buildingShader, false);
-			uploadModelMatrices(mesh);
+			cg.generateModelMatrices(false);
+			cg.uploadModelMatrices(mesh);
 		}
 
 		sf::Vector2i mouseMove = getMouseMovement(*window);
@@ -497,7 +225,7 @@ int main() {
 		cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
 
 		// RENDER SCENE TO FRAMEBUFFER
-		glBindFramebuffer(GL_FRAMEBUFFER, sceneFrameBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 		buildingShader.use();
@@ -510,15 +238,16 @@ int main() {
 
 		// BLUR PASS
 		glDisable(GL_DEPTH_TEST);	//dont need this now
-		GLuint blurred = blurColorBuffer(sceneColorBuffer, 10, blurShader);
+		GLuint blurred = blurColorBuffer(sceneBuffer.color, 10, blurShader);
 
 		// FINAL PASS (combines blur buffer with original scene buffer)
 		glClear(GL_COLOR_BUFFER_BIT);
 		blendShader.use();
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, sceneColorBuffer);
+		glBindTexture(GL_TEXTURE_2D, sceneBuffer.color);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, blurred);
+		glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
 		renderQuad();
 
 		// swap buffers
@@ -528,8 +257,9 @@ int main() {
 	// clean up
 	glDeleteTextures(1, &tex);
 	glDeleteProgram(buildingShader.program);
-	delete[] modelMatrices;
-	delete[] colors;
+	glDeleteProgram(blurShader.program);
+	glDeleteProgram(blendShader.program);
+	cg.destroy();
 	//delete window;
 
 	return 0;
