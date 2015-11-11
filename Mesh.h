@@ -35,11 +35,6 @@ public:
 	}
 
 	void draw(Shader shader, GLuint amount) {
-		// set uniforms
-		glUniform1i(glGetUniformLocation(shader.program, "tex"), 0);
-		//GLint uniColor = glGetUniformLocation(shader.program, "Color");
-		//glUniform3f(uniColor, 0.0f, 0.0f, 1.0f);
-
 		// set bindings
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);

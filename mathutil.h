@@ -16,10 +16,24 @@ public:
 		return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 	}
 
-	static float cubicSCurve(float value) {
-		return value * value * value;// (3.0f - 2.0f * value);
+	static glm::vec2 randomPointInSquare(float size) {
+		return glm::vec2(randFloat() * size - size / 2.0f, randFloat() * size - size / 2.0f);
 	}
 
+	static glm::vec2 randomPointInCircle(float radius) {
+		float t = 2 * 3.14159f * randFloat();
+		float u = randFloat() + randFloat();
+		float r = u > 1 ? 2.0f - u : u;
+		return glm::vec2(r * cos(t), r * sin(t)) * radius;
+	}
+
+	static float cubicSCurve(float value) {
+		return (3.0f - 2.0f * value);
+	}
+
+	static float cubic(float value) {
+		return value*value*value;
+	}
 
 	static float blend(float d, float low, float high, std::function<float(float)> f) {
 		return f((d - low) / (high - low));
