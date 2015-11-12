@@ -181,10 +181,6 @@ int main() {
 	CityGenerator cg;
 	Mesh mesh = cg.buildMesh(tex);
 
-	// generate a random city
-	cg.generateModelMatrices(true);
-	cg.uploadModelMatrices(mesh);
-
 	// build main frame buffer
 	// holds color and depth data
 	FBO sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
@@ -203,6 +199,11 @@ int main() {
 	sf::Mouse::setPosition(center, *window);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
 	Physics physics(cam);
+	GLfloat flycd = 0.0f;
+
+	// generate a random city
+	cg.generateModelMatrices(true);
+	cg.uploadModelMatrices(mesh);
 	physics.addObjects(cg.boxes);
 
 	bool running = true;
@@ -215,12 +216,14 @@ int main() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
 			physics.clearObjects();
 			cg.generateModelMatrices(true);
+			physics.addObjects(cg.boxes);
 			cg.uploadModelMatrices(mesh);
 		}
 		// generate new circular city
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) {
 			physics.clearObjects();
 			cg.generateModelMatrices(false);
+			physics.addObjects(cg.boxes);
 			cg.uploadModelMatrices(mesh);
 		}
 
@@ -231,6 +234,11 @@ int main() {
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
 			cam.jump();
+		}
+		flycd -= deltaTime;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && flycd < 0.0f) {
+			cam.flying = !cam.flying;
+			flycd = 1.0f;
 		}
 
 		// update physics
