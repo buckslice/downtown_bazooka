@@ -160,6 +160,7 @@
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="physics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />

@@ -13,6 +13,7 @@
 #include "camera.h"
 #include "cityGenerator.h"
 #include "glHelper.h"
+#include "physics.h"
 
 
 const GLuint WIDTH = 1440, HEIGHT = 960;
@@ -176,7 +177,7 @@ int main() {
 	glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
 
 	GLuint tex = GLHelper::loadTexture("assets/images/grid.png");
-	
+
 	CityGenerator cg;
 	Mesh mesh = cg.buildMesh(tex);
 
@@ -201,6 +202,8 @@ int main() {
 	sf::Clock animTime;
 	sf::Mouse::setPosition(center, *window);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
+	Physics physics(cam);
+	physics.addObjects(cg.boxes);
 
 	bool running = true;
 	while (running) {
@@ -210,11 +213,13 @@ int main() {
 
 		// generate new square city
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
+			physics.clearObjects();
 			cg.generateModelMatrices(true);
 			cg.uploadModelMatrices(mesh);
 		}
 		// generate new circular city
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) {
+			physics.clearObjects();
 			cg.generateModelMatrices(false);
 			cg.uploadModelMatrices(mesh);
 		}
@@ -223,6 +228,13 @@ int main() {
 
 		// update camera
 		cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+			cam.jump();
+		}
+
+		// update physics
+		physics.update(deltaTime);
 
 		// RENDER SCENE TO FRAMEBUFFER
 		glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);

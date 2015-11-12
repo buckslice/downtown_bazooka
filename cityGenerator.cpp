@@ -1,6 +1,5 @@
 #include "cityGenerator.h"
 #include "mathutil.h"
-#include "aabb.h"
 #include <stdlib.h>
 #include <algorithm>
 #include <time.h>
@@ -108,7 +107,7 @@ Mesh CityGenerator::buildMesh(GLuint& tex) {
 void CityGenerator::generateModelMatrices(bool square) {
 	srand(time(NULL));
 
-	std::vector<AABB> boxes;
+	boxes.clear();
 	std::vector<glm::vec2> cities;
 
 	// generate some random city centers
@@ -176,16 +175,16 @@ void CityGenerator::generateModelMatrices(bool square) {
 		modelMatrices[i] = model;
 
 		glm::vec3 c;
-		if (sy < 20.0f) {
-			if (rand() % 50 == 1) {
-				c = glm::vec3(1.0f, 0, 0);		// red
-			} else {
-				c = glm::vec3(rnd() * .25f + .5f, 0.0, 1.0f);	// purp
-			}
+		if (rand() % 50 == 1) {
+			c = glm::vec3(1.0f, 0, 0);		// red
+		} else if (sy < 15.0f) {
+			c = glm::vec3(0.0f, rnd() * 0.5f, 1.0f);	// blue
+		} else if (sy < 20.0f) {
+			c = glm::vec3(0.0f, 1.0f, 1.0f);	// blue
 		} else if (sy < 50.0f) {
-			c = glm::vec3(1.0f, rnd() * .2f + .3f, 0.0f);	// orange
+			c = glm::vec3(rnd() * .25f + .5f, 0.0, 1.0f);	// purp
 		} else {
-			c = glm::vec3(0.0f, 0.5f * rnd() + .5f, 1.0f);	// blue
+			c = glm::vec3(1.0f, rnd() * .2f + .3f, 0.0f);	// orange
 		}
 
 		colors[i] = c;

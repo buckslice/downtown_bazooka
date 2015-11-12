@@ -9,8 +9,10 @@
 
 const GLfloat YAW = -90.0f;
 const GLfloat PITCH = 0.0f;
-const GLfloat SPEED = 100.0f;
+const GLfloat SPEED = 15.0f;
 const GLfloat SENSITIVITY = 0.25f;
+const GLfloat GRAVITY = 30.0f;
+const GLfloat JUMPSPEED = 25.0f;
 
 class Camera {
 
@@ -20,18 +22,19 @@ public:
 	glm::vec3 up;
 	glm::vec3 right;
 	glm::vec3 worldUp;
+	glm::vec3 vel;
 
 	GLfloat yaw;
 	GLfloat pitch;
-	GLfloat yvel;
 
 	GLfloat speed;
 	GLfloat mouseSensitivity;
 	GLfloat zoom;
+	bool grounded;
 
 	// vector constructor
 	Camera(glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH)
-		:speed(SPEED), mouseSensitivity(SENSITIVITY){
+		:speed(SPEED), mouseSensitivity(SENSITIVITY) {
 		this->pos = pos;
 		this->worldUp = up;
 		this->yaw = yaw;
@@ -75,35 +78,56 @@ public:
 		right = glm::normalize(glm::cross(forward, worldUp));
 		up = glm::normalize(glm::cross(right, forward));
 
-		bool flymode = true;
-		if (flymode) {
-			// calculate position from movement direction and speed
-			GLfloat y = dir.y;
-			dir.y = 0.0f;
-			glm::vec3 d;
-			if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
-				d = glm::normalize(dir);
-			}
-			d.y = y;
-			d *= speed * delta;
-			pos += right * d.x + forward * d.z + worldUp * d.y;
-		} else {
-			glm::vec3 newf = glm::normalize(glm::cross( worldUp, right));
-			glm::vec3 d;
-			if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
-				d = glm::normalize(dir);
-			}
-			d *= speed * delta;
-			pos += right * d.x + newf * d.z;// +worldUp * d.y;
-
-			yvel += -9.81f;
-			pos.y += yvel * delta;
-			if (pos.y <= 2.0f) {
-				pos.y = 2.0f;
-				yvel = 0.0f;
-			}
+		// calculate position from movement direction and speed
+		// old flying mode
+		/*GLfloat y = dir.y;
+		dir.y = 0.0f;
+		glm::vec3 d;
+		if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
+			d = glm::normalize(dir);
 		}
-		
+		d.y = y;
+		d *= speed * delta;
+		pos += right * d.x + forward * d.z + worldUp * d.y;*/
+
+		// fps mode
+		if (vel.y != 0.0f) {
+			grounded = false;
+		}
+		glm::vec3 newf = glm::normalize(glm::cross(worldUp, right));
+
+		GLfloat oldy = vel.y;
+		//vel = glm::vec3(0.0f);
+		if (dir != glm::vec3(0.0f, 0.0f, 0.0f)) {
+			//dir.y = 0.0f;	// ignore y dir for fps controls
+			dir = glm::normalize(dir);
+		}
+		vel.y = 0.0f;
+
+		GLfloat accel = grounded ? 10.0f : 2.0f;
+		accel *= speed * delta;
+		vel += (right * dir.x + newf * dir.z) * accel;
+		if (glm::dot(vel, vel) > speed * speed) {
+			vel = glm::normalize(vel) * speed;
+		}
+
+		// if no input then apply drag
+		if (dir == glm::vec3(0.0f)) {
+			vel *= (grounded ? .8f : .95f);
+			//vel *= .9f;
+		}
+
+		// gravity 9.81 not right for some reason
+		vel.y = oldy - GRAVITY * delta;
+
+	}
+
+	void jump() {
+		// check if grounded
+		if (grounded) {
+			vel.y = JUMPSPEED;
+			grounded = false;
+		}
 	}
 
 
