@@ -60,6 +60,12 @@ void Physics::update(float delta) {
 		}
 	}
 
+	for (int i = 0; i < staticObjects.size(); i++) {
+		if (AABB::check(player, staticObjects[i])) {
+			std::cout << "thanks blizzard" << std::endl;
+		}
+	}
+
 	// clamp camera to ground
 	if (cam.pos.y < 1.8f) {
 		cam.grounded = true;

@@ -2,9 +2,9 @@
 in vec2 Texcoord;
 out vec4 color;
 
-uniform sampler2D screenTexture;
+uniform sampler2D screen;
 
 void main()
 { 
-    color = texture(screenTexture, Texcoord);
+    color = texture(screen, Texcoord);
 }

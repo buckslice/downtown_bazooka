@@ -20,6 +20,7 @@ const GLuint WIDTH = 1440, HEIGHT = 960;
 const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
 
 FBO blurBuffers[2];
+const GLuint BLUR_DOWNSAMPLE = 2;
 
 glm::vec3 getMovementDir() {
 	// calculate movement direction
@@ -89,27 +90,50 @@ void renderQuad() {
 }
 
 // blur a color buffer for a given number of iterations
-GLuint blurColorBuffer(GLuint colorBuffer, GLuint iterations, Shader blur) {
+void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iterations, Shader screen, Shader blur) {
+
+	// downsample into first blur buffer
+	glViewport(0, 0, WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE);
+	screen.use();
+	glBindTexture(GL_TEXTURE_2D, sceneIn);
+	glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[0].frame);
+	renderQuad();
+
 	blur.use();
-	GLboolean horizontal = true, first = true;
+	GLboolean horizontal = true;
 	GLuint radLoc = glGetUniformLocation(blur.program, "radius");
 	GLuint resLoc = glGetUniformLocation(blur.program, "resolution");
 	GLuint dirLoc = glGetUniformLocation(blur.program, "dir");
-	for (GLuint i = 0; i < iterations; i++) {
-		glUniform1f(radLoc, i*1.1f);
+
+	if (iterations > 4) {
+		return;
+	}
+	// nice weird numbers that dont line up lol
+	int lookups[4] = { 1, 3, 7, 13 };
+	//int lookups[4] = { 2, 5, 9, 17 };
+
+	// iterations * 2 since does width then height
+	// left rest in tho incase we want to blur directionally later
+	for (GLuint i = 0; i < iterations * 2; i++) {
+		glUniform1f(radLoc, lookups[i / 2]); //pow(2, (i / 2 + 1)) or pow(3,
 		glUniform1f(resLoc, horizontal ? WIDTH : HEIGHT);
 		GLfloat hz = horizontal ? 1.0f : 0.0f;
 		glUniform2f(dirLoc, hz, 1.0f - hz);
-		glBindTexture(GL_TEXTURE_2D, first ? colorBuffer : blurBuffers[!horizontal].color);
+		glBindTexture(GL_TEXTURE_2D, blurBuffers[!horizontal].color);
 		glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[horizontal].frame);
 
 		renderQuad();
 
 		horizontal = !horizontal;
-		first = false;
 	}
+
+	glViewport(0, 0, WIDTH, HEIGHT);
+	screen.use();
+	glBindTexture(GL_TEXTURE_2D, blurBuffers[!horizontal].color);
+	glBindFramebuffer(GL_FRAMEBUFFER, frameOut);
+	renderQuad();
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);	//back to default framebuffer
-	return blurBuffers[!horizontal].color;
 }
 
 sf::Window* initGL() {
@@ -133,7 +157,7 @@ sf::Window* initGL() {
 
 	// initialize blur color buffers
 	for (GLuint i = 0; i < 2; i++) {
-		blurBuffers[i] = GLHelper::buildFBO(WIDTH, HEIGHT, false);
+		blurBuffers[i] = GLHelper::buildFBO(WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE, false);
 	}
 
 	// initialize quad for framebuffer rendering
@@ -169,6 +193,9 @@ int main() {
 
 	// shader that blurs a colorbuffer
 	Shader blurShader("assets/shaders/screen.vert", "assets/shaders/blur.frag");
+	Shader screenShader("assets/shaders/screen.vert", "assets/shaders/screen.frag");
+	screenShader.use();
+	glUniform1i(glGetUniformLocation(screenShader.program, "screen"), 0);
 
 	// shader that blends the blur with the scene
 	Shader blendShader("assets/shaders/screen.vert", "assets/shaders/blend.frag");
@@ -184,6 +211,7 @@ int main() {
 	// build main frame buffer
 	// holds color and depth data
 	FBO sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
+	FBO blurUpscaled = GLHelper::buildFBO(WIDTH, HEIGHT, true);
 
 	// save matrix locations from shader
 	GLint projLoc = glGetUniformLocation(buildingShader.program, "proj");
@@ -258,7 +286,7 @@ int main() {
 
 		// BLUR PASS
 		glDisable(GL_DEPTH_TEST);	//dont need this now
-		GLuint blurred = blurColorBuffer(sceneBuffer.color, 10, blurShader);
+		blurColorBuffer(sceneBuffer.color, blurUpscaled.frame, 4, screenShader, blurShader);
 
 		// FINAL PASS (combines blur buffer with original scene buffer)
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -266,7 +294,8 @@ int main() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, sceneBuffer.color);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, blurred);
+		glBindTexture(GL_TEXTURE_2D, blurUpscaled.color);
+		// blur strength is how bright the blur is
 		glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
 		renderQuad();
 
