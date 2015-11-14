@@ -4,8 +4,9 @@
 
 class Game {
 public:
-	Game() {
-
+	Game(int numPlayers) {
+		started = false;
+		this->numPlayers = numPlayers;
 	}
 
 	int getNumPlayers() {
@@ -19,9 +20,26 @@ public:
 	bool gameIsOver() {
 		return gameOver;
 	}
+
+	void start() {
+		started = true;
+	}
+
+	bool hasStarted() {
+		return started;
+	}
+
+	void addPlayer(Player p) {
+		//TODO
+	}
 	
+	void removePlayer(Player p) {
+		//TODO
+	}
+
 private:
 	int numPlayers;
 	Player* players;
 	bool gameOver;
+	bool started;
 };
