@@ -160,6 +160,7 @@
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="menu.cpp" />
     <ClCompile Include="physics.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +173,7 @@
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="intersectData.h" />
     <ClInclude Include="mathutil.h" />
+    <ClInclude Include="menu.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="physics.h" />
     <ClInclude Include="player.h" />

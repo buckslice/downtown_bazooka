@@ -14,6 +14,8 @@
 #include "cityGenerator.h"
 #include "glHelper.h"
 #include "physics.h"
+#include "menu.h"
+#include "game.h"
 
 
 const GLuint WIDTH = 1440, HEIGHT = 960;
@@ -136,7 +138,7 @@ void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iterations, Shader 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);	//back to default framebuffer
 }
 
-sf::Window* initGL() {
+sf::RenderWindow* initGL() {
 	// window settings
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
@@ -144,7 +146,7 @@ sf::Window* initGL() {
 	settings.antialiasingLevel = 2;
 
 	//sf::Window window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
-	sf::Window* window = new sf::Window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
+	sf::RenderWindow* window = new sf::RenderWindow(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
 	window->setFramerateLimit(60);
 
 	// init glew (must be after window creation)
@@ -183,7 +185,11 @@ sf::Window* initGL() {
 }
 
 int main() {
-	sf::Window* window = initGL();
+	sf::RenderWindow* window = initGL();
+
+	Menu menu(WIDTH, HEIGHT);
+
+	Game game(1);
 
 	// build and compile shaders
 	// basic shader for buildings
@@ -258,7 +264,12 @@ int main() {
 		sf::Vector2i mouseMove = getMouseMovement(*window);
 
 		// update camera
-		cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
+		if (game.hasStarted()) {
+			cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
+		}
+		else {
+			//TODO make camera AI to scroll around the city
+		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
 			cam.jump();
@@ -298,6 +309,14 @@ int main() {
 		// blur strength is how bright the blur is
 		glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
 		renderQuad();
+
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		window->resetGLStates();
+
+		menu.update(*window, running, game);
+		menu.draw(*window);
 
 		// swap buffers
 		window->display();
