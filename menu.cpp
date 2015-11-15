@@ -11,27 +11,26 @@ Menu::Menu(float width, float height)
 	}
 	selectedItemIndex = 0;
 	lastUp = lastDown = false;
-
 	menu[0].setFont(font);
-	menu[0].setColor(sf::Color::Red);
+	menu[0].setColor(selectedColor);
 	menu[0].setString("Play");
 	menu[0].setPosition(sf::Vector2f(width / 2 - 100.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1));
 	menu[0].setScale(sf::Vector2f(2.0f, 2.0f));
 
 	menu[1].setFont(font);
-	menu[1].setColor(sf::Color::White);
+	menu[1].setColor(defaultColor);
 	menu[1].setString("Instructions");
 	menu[1].setPosition(sf::Vector2f(width / 2 - 200.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2));
 	menu[1].setScale(sf::Vector2f(2.0f, 2.0f));
 
 	menu[2].setFont(font);
-	menu[2].setColor(sf::Color::White);
+	menu[2].setColor(defaultColor);
 	menu[2].setString("Quit");
 	menu[2].setPosition(sf::Vector2f(width / 2 - 100.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3));
 	menu[2].setScale(sf::Vector2f(2.0f, 2.0f));
 
 	title.setFont(font);
-	title.setColor(sf::Color::White);
+	title.setColor(defaultColor);
 	title.setString("DOWTOWN BAZOOKA");
 	title.setPosition(sf::Vector2f(125.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.1));
 	title.setScale(sf::Vector2f(3.0f, 3.0f));
@@ -52,14 +51,14 @@ void Menu::draw(sf::RenderWindow& window) {
 }
 
 void Menu::moveUp() {
-	menu[selectedItemIndex].setColor(sf::Color::White);
+	menu[selectedItemIndex].setColor(defaultColor);
 	if (selectedItemIndex > 0) {
 		selectedItemIndex--;
 	}
 	else {
 		selectedItemIndex = MAX_NUMBER_OF_ITEMS - 1;
 	}
-	menu[selectedItemIndex].setColor(sf::Color::Red);
+	menu[selectedItemIndex].setColor(selectedColor);
 }
 
 void Menu::setVisible(bool visible) {
@@ -71,14 +70,14 @@ void Menu::showInstructions() {
 }
 
 void Menu::moveDown() {
-	menu[selectedItemIndex].setColor(sf::Color::White);
+	menu[selectedItemIndex].setColor(defaultColor);
 	if (selectedItemIndex < MAX_NUMBER_OF_ITEMS - 1) {
 		selectedItemIndex++;
 	}
 	else {
 		selectedItemIndex = 0;
 	}
-	menu[selectedItemIndex].setColor(sf::Color::Red);
+	menu[selectedItemIndex].setColor(selectedColor);
 }
 
 void Menu::executeItem(sf::RenderWindow& window, bool& running, Game& game) {
@@ -98,6 +97,7 @@ void Menu::executeItem(sf::RenderWindow& window, bool& running, Game& game) {
 }
 
 void Menu::update(sf::RenderWindow& window, bool& running, Game& game) {
+	draw(window);
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		if (!lastUp) {
 			moveUp();

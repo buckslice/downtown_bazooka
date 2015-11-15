@@ -4,6 +4,8 @@
 #include "game.h"
 
 #define MAX_NUMBER_OF_ITEMS 3
+#define defaultColor sf::Color::Yellow
+#define selectedColor sf::Color::Green
 
 class Menu
 {
