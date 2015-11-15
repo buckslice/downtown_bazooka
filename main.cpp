@@ -95,8 +95,8 @@ void renderQuad() {
 void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iterations, Shader screen, Shader blur) {
 
 	// downsample into first blur buffer
-	glViewport(0, 0, WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE);
 	screen.use();
+	glViewport(0, 0, WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE);
 	glBindTexture(GL_TEXTURE_2D, sceneIn);
 	glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[0].frame);
 	renderQuad();
@@ -115,7 +115,8 @@ void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iterations, Shader 
 	//int lookups[4] = { 2, 5, 9, 17 };
 
 	// iterations * 2 since does width then height
-	// left rest in tho incase we want to blur directionally later
+	// could have simplified below code but left it
+	// incase we want directional blurs later
 	for (GLuint i = 0; i < iterations * 2; i++) {
 		glUniform1f(radLoc, lookups[i / 2]); //pow(2, (i / 2 + 1)) or pow(3,
 		glUniform1f(resLoc, horizontal ? WIDTH : HEIGHT);
@@ -129,8 +130,9 @@ void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iterations, Shader 
 		horizontal = !horizontal;
 	}
 
-	glViewport(0, 0, WIDTH, HEIGHT);
+	// upsample into blur result buffer
 	screen.use();
+	glViewport(0, 0, WIDTH, HEIGHT);
 	glBindTexture(GL_TEXTURE_2D, blurBuffers[!horizontal].color);
 	glBindFramebuffer(GL_FRAMEBUFFER, frameOut);
 	renderQuad();
@@ -156,6 +158,8 @@ sf::RenderWindow* initGL() {
 	// setup OpenGL options
 	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	// initialize blur color buffers
 	for (GLuint i = 0; i < 2; i++) {
@@ -217,7 +221,7 @@ int main() {
 	// build main frame buffer
 	// holds color and depth data
 	FBO sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
-	FBO blurUpscaled = GLHelper::buildFBO(WIDTH, HEIGHT, true);
+	FBO blurResult = GLHelper::buildFBO(WIDTH, HEIGHT, true);
 
 	// save matrix locations from shader
 	GLint projLoc = glGetUniformLocation(buildingShader.program, "proj");
@@ -233,7 +237,8 @@ int main() {
 	sf::Mouse::setPosition(center, *window);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
 	Physics physics(cam);
-	GLfloat flycd = 0.0f;
+	bool qlast = false;
+	int framecount = 0;
 
 	// generate a random city
 	cg.generateModelMatrices(true);
@@ -266,18 +271,27 @@ int main() {
 		// update camera
 		if (game.hasStarted()) {
 			cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
-		}
-		else {
+		} else {
 			//TODO make camera AI to scroll around the city
+			cam.yaw += 5.0f * deltaTime;
+			cam.updateCameraVectors();
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
 			cam.jump();
 		}
-		flycd -= deltaTime;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && flycd < 0.0f) {
-			cam.flying = !cam.flying;
-			flycd = 1.0f;
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+			if (!qlast) {
+				cam.flying = !cam.flying;
+				qlast = true;
+			}
+		} else {
+			qlast = false;
+		}
+		framecount++;
+		if (framecount > 60) {
+			framecount = 1;
 		}
 
 		// update physics
@@ -285,8 +299,12 @@ int main() {
 
 		// RENDER SCENE TO FRAMEBUFFER
 		glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
 		buildingShader.use();
 		// set projection and view matrices
 		glm::mat4 view = cam.getViewMatrix();
@@ -297,7 +315,7 @@ int main() {
 
 		// BLUR PASS
 		glDisable(GL_DEPTH_TEST);	//dont need this now
-		blurColorBuffer(sceneBuffer.color, blurUpscaled.frame, 4, screenShader, blurShader);
+		blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, screenShader, blurShader);
 
 		// FINAL PASS (combines blur buffer with original scene buffer)
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -305,11 +323,12 @@ int main() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, sceneBuffer.color);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, blurUpscaled.color);
+		glBindTexture(GL_TEXTURE_2D, blurResult.color);
 		// blur strength is how bright the blur is
 		glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
 		renderQuad();
 
+		// reset shit so drawing with sfml can work
 		glBindVertexArray(0);
 		glUseProgram(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);

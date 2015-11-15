@@ -40,6 +40,7 @@ public:
 		this->worldUp = up;
 		this->yaw = yaw;
 		this->pitch = pitch;
+		updateCameraVectors();
 	}
 
 	// scalar constructor
@@ -49,10 +50,21 @@ public:
 		this->worldUp = glm::vec3(upX, upY, upZ);
 		this->yaw = yaw;
 		this->pitch = pitch;
+		updateCameraVectors();
 	}
 
 	glm::mat4 getViewMatrix() {
 		return glm::lookAt(pos, pos + forward, up);
+	}
+
+	void updateCameraVectors() {
+		glm::vec3 f;
+		f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		f.y = sin(glm::radians(pitch));
+		f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		forward = glm::normalize(f);
+		right = glm::normalize(glm::cross(forward, worldUp));
+		up = glm::normalize(glm::cross(right, forward));
 	}
 
 	void update(glm::vec3 dir, GLfloat mdx, GLfloat mdy, GLfloat delta) {
@@ -70,14 +82,7 @@ public:
 		pitch -= mdy;
 		pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
-		// update camera vectors
-		glm::vec3 f;
-		f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		f.y = sin(glm::radians(pitch));
-		f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		forward = glm::normalize(f);
-		right = glm::normalize(glm::cross(forward, worldUp));
-		up = glm::normalize(glm::cross(right, forward));
+		updateCameraVectors();
 
 		// movement controls
 		glm::vec3 xzforward = glm::normalize(glm::cross(worldUp, right));
@@ -104,7 +109,7 @@ public:
 			// if no input then apply drag
 			if (dir == glm::vec3(0.0f)) {
 				vel *= (grounded ? .8f : .95f);
-				//vel *= .9f;
+				vel *= .9f;
 			}
 			// gravity 9.81 not right for some reason
 			vel.y = oldy - GRAVITY * delta;

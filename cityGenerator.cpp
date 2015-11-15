@@ -6,42 +6,43 @@
 
 // helps make square texture look better on buildings
 GLfloat vn = 1.0f / 32.0f;
+// each uv starts in bottom left (when looking at face) and progresses clockwise around
 GLfloat vertices[] = {
 	// front
 	-0.5f, -0.5f, -0.5f,  0.0f, vn,
-	0.5f, -0.5f, -0.5f,  1.0f, vn,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f - vn,
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f - vn,
+	0.5f,  0.5f, -0.5f,  1.0f, 1.0f - vn,
+	0.5f, -0.5f, -0.5f,  1.0f, vn,
 
-	// back
-	-0.5f, -0.5f,  0.5f,  0.0f, vn,
-	0.5f, -0.5f,  0.5f,  1.0f, vn,
-	0.5f,  0.5f,  0.5f,  1.0f, 1.0f - vn,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f - vn,
+	// back   
+	0.5f, -0.5f,  0.5f,  0.0f, vn,
+	0.5f,  0.5f,  0.5f,  0.0f, 1.0f - vn,
+	-0.5f,  0.5f,  0.5f,  1.0f, 1.0f - vn,
+	-0.5f, -0.5f,  0.5f,  1.0f, vn,
 
 	// left
-	-0.5f,  0.5f,  0.5f,  0.0f, vn,
-	-0.5f,  0.5f, -0.5f,  1.0f, vn,
-	-0.5f, -0.5f, -0.5f,  1.0f, 1.0f - vn,
-	-0.5f, -0.5f,  0.5f,  0.0f, 1.0f - vn,
+	-0.5f, -0.5f,  0.5f,  0.0f, vn,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f - vn,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f - vn,
+	-0.5f, -0.5f, -0.5f,  1.0f, vn,
 
 	// right
-	0.5f,  0.5f,  0.5f,  0.0f, vn,
-	0.5f,  0.5f, -0.5f,  1.0f, vn,
-	0.5f, -0.5f, -0.5f,  1.0f, 1.0f - vn,
-	0.5f, -0.5f,  0.5f,  0.0f, 1.0f - vn,
+	0.5f, -0.5f, -0.5f,  0.0f, vn,
+	0.5f,  0.5f, -0.5f,  0.0f, 1.0f - vn,
+	0.5f,  0.5f,  0.5f,  1.0f, 1.0f - vn,
+	0.5f, -0.5f,  0.5f,  1.0f, vn,
 
 	// bottom
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 	0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
 	0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
 	// top
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
 };
 
 GLuint elements[] = {
@@ -67,7 +68,7 @@ GLuint elements[] = {
 // checks if box collides with any of the boxes on the list
 bool collidesWithAny(AABB box, std::vector<AABB> boxes) {
 	for (GLuint i = 0; i < boxes.size(); i++) {
-		if (box.getIntersect(boxes[i]).doesIntersect) {
+		if (AABB::check(box, boxes[i])) {
 			return true;
 		}
 	}
@@ -106,6 +107,7 @@ Mesh CityGenerator::buildMesh(GLuint& tex) {
 
 void CityGenerator::generateModelMatrices(bool square) {
 	srand(time(NULL));
+	//srand(1); //my testing city for physics bugs lol
 
 	boxes.clear();
 	std::vector<glm::vec2> cities;

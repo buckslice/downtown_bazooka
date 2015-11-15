@@ -16,11 +16,11 @@ public:
 		max(max) {
 	}
 
-	IntersectData getIntersect(const AABB& other) const;
+	//IntersectData getIntersect(const AABB& other) const;
 
 	static bool check(const AABB& a, const AABB& b);
 
-	AABB getSwept(AABB b, glm::vec3 vel);
+	static AABB getSwept(const AABB& b, const glm::vec3& vel);
 
 
 };
