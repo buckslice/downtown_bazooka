@@ -295,6 +295,14 @@ int main() {
 		// draw instanced mesh a bunch of times (sets model matrix internally)
 		mesh.draw(buildingShader, NUMBER_OF_MESHES);
 
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		window->resetGLStates();
+
+		menu.update(*window, running, game);
+		game.update(*window);
+
 		// BLUR PASS
 		glDisable(GL_DEPTH_TEST);	//dont need this now
 		blurColorBuffer(sceneBuffer.color, blurUpscaled.frame, 4, screenShader, blurShader);
@@ -310,14 +318,7 @@ int main() {
 		glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
 		renderQuad();
 
-		glBindVertexArray(0);
-		glUseProgram(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		window->resetGLStates();
-
-		menu.update(*window, running, game);
-		game.update(*window);
-		menu.draw(*window);
+		
 
 		// swap buffers
 		window->display();

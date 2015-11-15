@@ -4,13 +4,13 @@
 #include <iostream>
 
 const int MAX_HEALTH = 100;
+const int HEALTH_BAR_HEIGHT = 20;
 class Player : public GameObject {
 public:
 	Player(float initialVelocity = 0.0f, float initialAcceleration = 0.0f, int initialHealth = MAX_HEALTH) {
 		this->velocity = initialVelocity;
 		this->acceleration = initialAcceleration;
 		this->health = initialHealth;
-		healthBar.setSize(sf::Vector2f(1440, 50));
 		healthBar.setFillColor(sf::Color::Green);
 	}
 
@@ -40,7 +40,7 @@ public:
 	}
 
 	void drawHealthBar(sf::RenderWindow& window) {
-		healthBar.setSize(sf::Vector2f(1440 * health / MAX_HEALTH, 50));
+		healthBar.setSize(sf::Vector2f(window.getSize().x * health / MAX_HEALTH, HEALTH_BAR_HEIGHT));
 		window.draw(healthBar);
 	}
 
@@ -56,8 +56,8 @@ private:
 	sf::RectangleShape healthBar;
 
 	void normalizeHealth() {
-		if (health >= 100) {
-			health = 100;
+		if (health >= MAX_HEALTH) {
+			health = MAX_HEALTH;
 		}
 		if (health <= 0) {
 			health = 0;

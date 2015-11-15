@@ -98,6 +98,7 @@ void Menu::executeItem(sf::RenderWindow& window, bool& running, Game& game) {
 }
 
 void Menu::update(sf::RenderWindow& window, bool& running, Game& game) {
+	draw(window);
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		if (!lastUp) {
 			moveUp();
