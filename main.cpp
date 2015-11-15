@@ -189,7 +189,7 @@ int main() {
 
 	Menu menu(WIDTH, HEIGHT);
 
-	Game game(1);
+	Game game(WIDTH, HEIGHT);
 
 	// build and compile shaders
 	// basic shader for buildings
@@ -316,6 +316,7 @@ int main() {
 		window->resetGLStates();
 
 		menu.update(*window, running, game);
+		game.update(*window);
 		menu.draw(*window);
 
 		// swap buffers

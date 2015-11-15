@@ -4,21 +4,25 @@
 
 class Game {
 public:
-	Game(int numPlayers) {
+	Game(int width, int height) {
 		started = false;
-		this->numPlayers = numPlayers;
+		if (!font.loadFromFile("assets/fonts/MAGNETOB.ttf")) {
+			//handle error
+			std::cout << "ERROR::FONT::LOAD_FAILURE";
+		}
+		gameOver.setFont(font);
+		gameOver.setColor(sf::Color::Red);
+		gameOver.setString("Game Over");
+		gameOver.setPosition(sf::Vector2f(width / 2 - 200.0f, height / 2));
+		gameOver.setScale(sf::Vector2f(2.0f, 2.0f));
 	}
 
-	int getNumPlayers() {
-		return numPlayers;
-	}
-
-	Player* getPlayers() {
-		return players;
+	Player getPlayer() {
+		return player;
 	}
 
 	bool gameIsOver() {
-		return gameOver;
+		return player.getHealth() == 0;
 	}
 
 	void start() {
@@ -29,17 +33,25 @@ public:
 		return started;
 	}
 
-	void addPlayer(Player p) {
-		//TODO
-	}
-	
-	void removePlayer(Player p) {
-		//TODO
+	void update(sf::RenderWindow& window) {
+		if (started && !gameIsOver()) {
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+				player.changeHealth(5);
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+				player.changeHealth(-5);
+			}
+			player.update(window);
+		}
+
+		if (started && gameIsOver()) {
+			window.draw(gameOver);
+		}
 	}
 
 private:
-	int numPlayers;
-	Player* players;
-	bool gameOver;
+	Player player;
 	bool started;
+	sf::Font font;
+	sf::Text gameOver;
 };
