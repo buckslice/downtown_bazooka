@@ -8,6 +8,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
+#include <Windows.h>
 
 #include "shader.h"
 #include "camera.h"
@@ -48,10 +49,17 @@ glm::vec3 getMovementDir() {
     return dir;
 }
 
-sf::Vector2i getMouseMovement(sf::Window& window) {
+// TODO extract to input class
+sf::Vector2i getMouseMovement(sf::Window& window, bool lastFocus) {
     sf::Vector2i mouseMove;
     // get mouse movement
     if (window.hasFocus()) {
+        // if just got focus this frame then ignore
+        if (!lastFocus) {
+            sf::Mouse::setPosition(center, window);
+            return sf::Vector2i(0, 0);
+        }
+
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
         mouseMove = mousePos - center;
 
@@ -178,7 +186,6 @@ int main() {
     sf::RenderWindow* window = initGL();
 
     Menu menu(WIDTH, HEIGHT);
-
     Game game(WIDTH, HEIGHT);
 
     // build and compile shaders
@@ -222,9 +229,10 @@ int main() {
     sf::Clock animTime;
     sf::Mouse::setPosition(center, *window);
     window->setMouseCursorVisible(false);
-    glClearColor(.05f,.0f,0.1f, 1.0f); // set black clear color
+    window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be useful
+    glClearColor(.05f, .0f, 0.1f, 1.0f); // set black clear color
     Physics physics(cam);
-    bool qlast = false;
+    bool lastFocus = false;
 
     // generate a random city
     cg.generateModelMatrices(false);
@@ -235,10 +243,6 @@ int main() {
     while (running) {
         GLfloat deltaTime = frameTime.restart().asSeconds();
 
-        // TODO: seperate following stuff into input class
-        // that tracks button just pressed events
-        // also make a rendering class and game logic class
-
         // check for events that will quit game
         sf::Event e;
         while (window->pollEvent(e)) {
@@ -246,34 +250,70 @@ int main() {
             case sf::Event::Closed:
                 running = false;
                 break;
-            case sf::Event::KeyPressed:
-                if (e.key.code == sf::Keyboard::Escape) {
+            case sf::Event::KeyPressed: // triggers first time a key is pressed
+                bool success = true;
+                switch (e.key.code) {
+                case sf::Keyboard::Escape:
                     if (menu.getVisible()) {
                         running = false;
                     } else {
                         menu.setVisible(true);
                     }
+                    break;
+                case sf::Keyboard::R:
+                    glDeleteProgram(buildingShader.program);
+                    glDeleteProgram(blurShader.program);
+                    glDeleteProgram(screenShader.program);
+                    glDeleteProgram(blendShader.program);
+
+                    success = success && buildingShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
+                    buildingShader.use();
+                    glUniform1i(glGetUniformLocation(buildingShader.program, "tex"), 0);
+
+                    // shader that blurs a colorbuffer
+                    success = success && blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
+                    success = success && screenShader.build("assets/shaders/screen.vert", "assets/shaders/screen.frag");
+                    screenShader.use();
+                    glUniform1i(glGetUniformLocation(screenShader.program, "screen"), 0);
+
+                    // shader that blends the blur with the scene
+                    success = success && blendShader.build("assets/shaders/screen.vert", "assets/shaders/blend.frag");
+                    blendShader.use();
+                    glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
+                    glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
+
+                    std::cout << "SHADERS::RECOMPILE::" << (success ? "SUCCESS" : "FAILURE") << std::endl;
+                    break;
+                case sf::Keyboard::F:        // generate new square city
+                    physics.clearObjects();
+                    cg.generateModelMatrices(true);
+                    physics.addObjects(cg.boxes);
+                    cg.uploadModelMatrices(mesh);
+                    break;
+                case sf::Keyboard::G:        // generate new circular city
+                    physics.clearObjects();
+                    cg.generateModelMatrices(false);
+                    physics.addObjects(cg.boxes);
+                    cg.uploadModelMatrices(mesh);
+                    break;
+                case sf::Keyboard::Q:
+                    cam.flying = !cam.flying;
+                    break;
+                case sf::Keyboard::Space:
+                    cam.jump();
+                    break;
+                default:
+                    break;
                 }
+
                 break;
             }
         }
 
-        // generate new square city
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) {
-            physics.clearObjects();
-            cg.generateModelMatrices(true);
-            physics.addObjects(cg.boxes);
-            cg.uploadModelMatrices(mesh);
-        }
-        // generate new circular city
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) {
-            physics.clearObjects();
-            cg.generateModelMatrices(false);
-            physics.addObjects(cg.boxes);
-            cg.uploadModelMatrices(mesh);
-        }
-
-        sf::Vector2i mouseMove = getMouseMovement(*window);
+        // get mouse movement and update based on window focus
+        window->setMouseCursorVisible(!window->hasFocus());
+        sf::Vector2i mouseMove = getMouseMovement(*window, lastFocus);
+        lastFocus = window->hasFocus();
 
         // update camera
         if (game.isRunning()) {
@@ -284,19 +324,6 @@ int main() {
             cam.pitch = 0.0f;
             cam.yaw += 5.0f * deltaTime;
             cam.updateCameraVectors();
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-            cam.jump();
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-            if (!qlast) {
-                cam.flying = !cam.flying;
-                qlast = true;
-            }
-        } else {
-            qlast = false;
         }
 
         // update physics
@@ -351,6 +378,7 @@ int main() {
     glDeleteTextures(1, &tex);
     glDeleteProgram(buildingShader.program);
     glDeleteProgram(blurShader.program);
+    glDeleteProgram(screenShader.program);
     glDeleteProgram(blendShader.program);
     cg.destroy();
     //delete window;

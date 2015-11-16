@@ -7,13 +7,26 @@
 Physics::Physics(Camera& cam) : cam(cam) {
 }
 
-void Physics::update(float delta) {
-    resolvedSet.clear();
+// make entity class with pos, vel, and maybe onCollisoin method or something
+// make physics loop through each dynamic object and check agaisnt static objects
+// the square distance broadphase check will probably be bad in this scenario even 
+// need some sort of spatial partitioning :)))) so fun
 
-    // set remaining velocity to camera velocity initially
-    glm::vec3 rvel = cam.vel;
+// renderingengine class
+// input class <--- really would help (just pressed tracking)
+// keyboard class and mouse class rather
+// game class
+// ui class?
+
+// oh also circle ground mesh and square groudn mesh that are black colored
+
+void Physics::update(float delta) {
 
     // for loop will go here for each dynamic object
+
+    resolvedSet.clear();
+    // set remaining velocity to camera velocity initially
+    glm::vec3 rvel = cam.vel;
 
     // try to resolve up to 10 collisions for this object this frame
     for (int resolutionAttempts = 0; resolutionAttempts < 10; resolutionAttempts++) {
@@ -66,6 +79,7 @@ void Physics::update(float delta) {
         cam.pos += rvel * delta * time;
 
         // ground camera if hit bottom or if normal of what you hit points in the y direction
+        // should technically only set grounded if normal is > 0.0f but whatever
         if (cam.pos.y < EYE_HEIGHT || norm.y != 0.0f) {
             cam.grounded = true;
             cam.vel.y = 0.0f;
@@ -94,6 +108,7 @@ void Physics::update(float delta) {
     //std::cout << resolvedSet.size() << std::endl;
 }
 
+// TODO put this as a static function in AABB instead
 float Physics::sweepTest(AABB b1, AABB b2, glm::vec3 vel, glm::vec3& norm) {
     // find distance between objects on near and far sides
     glm::vec3 invEntr;
