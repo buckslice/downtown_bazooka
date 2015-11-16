@@ -108,6 +108,8 @@ void Menu::update(sf::RenderWindow& window, bool& running, Game& game) {
         game.setRunning(false);
     }
 
+	if(!visible) return;
+
     draw(window);
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
         if (!lastUp) {

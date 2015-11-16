@@ -222,7 +222,7 @@ int main() {
     sf::Clock animTime;
     sf::Mouse::setPosition(center, *window);
     window->setMouseCursorVisible(false);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
+    glClearColor(.05f,.0f,0.1f, 1.0f); // set black clear color
     Physics physics(cam);
     bool qlast = false;
 
