@@ -1,16 +1,14 @@
 #include "menu.h"
+#include "input.h"
 #include <iostream>
-
-sf::Text menu[MAX_NUMBER_OF_ITEMS];
-sf::Text title;
 
 Menu::Menu(float width, float height) {
     if (!font.loadFromFile("assets/fonts/cour.ttf")) {
         //handle error
         std::cout << "ERROR::FONT::LOAD_FAILURE";
     }
-    selectedItemIndex = 0;
-    lastUp = lastDown = false;
+    curSelection = 0;
+
     menu[0].setFont(font);
     menu[0].setColor(selectedColor);
     menu[0].setString("Play");
@@ -55,14 +53,52 @@ void Menu::draw(sf::RenderWindow& window) {
     }
 }
 
-void Menu::moveUp() {
-    menu[selectedItemIndex].setColor(defaultColor);
-    if (selectedItemIndex > 0) {
-        selectedItemIndex--;
-    } else {
-        selectedItemIndex = MAX_NUMBER_OF_ITEMS - 1;
+int circularClamp(int n, int min, int max) {
+    if (n < min) {
+        return max;
+    } else if (n > max) {
+        return min;
     }
-    menu[selectedItemIndex].setColor(selectedColor);
+    return n;
+}
+
+void Menu::move(bool up) {
+    menu[curSelection].setColor(defaultColor);
+    curSelection += up ? -1 : 1;
+    curSelection = circularClamp(curSelection, 0, MAX_NUMBER_OF_ITEMS - 1);
+    menu[curSelection].setColor(selectedColor);
+}
+
+void Menu::showInstructions() {
+    //TODO
+}
+
+void Menu::update(bool& running) {
+    if (!visible) {
+        return;
+    }
+
+    if (Input::justPressed(sf::Keyboard::W) || Input::justPressed(sf::Keyboard::Up)) {
+        move(true);
+    }
+
+    if (Input::justPressed(sf::Keyboard::S) || Input::justPressed(sf::Keyboard::Down)) {
+        move(false);
+    }
+
+    if (Input::justPressed(sf::Keyboard::Return) || Input::justPressed(sf::Keyboard::Space)) {
+        switch (curSelection) {
+        case 0:
+            setVisible(false);
+            break;
+        case 1:
+            showInstructions();
+            break;
+        case 2:
+            running = false;
+            break;
+        }
+    }
 }
 
 void Menu::setVisible(bool visible) {
@@ -71,65 +107,4 @@ void Menu::setVisible(bool visible) {
 
 bool Menu::getVisible() {
     return visible;
-}
-
-void Menu::showInstructions() {
-    //TODO
-}
-
-void Menu::moveDown() {
-    menu[selectedItemIndex].setColor(defaultColor);
-    if (selectedItemIndex < MAX_NUMBER_OF_ITEMS - 1) {
-        selectedItemIndex++;
-    } else {
-        selectedItemIndex = 0;
-    }
-    menu[selectedItemIndex].setColor(selectedColor);
-}
-
-void Menu::executeItem(sf::RenderWindow& window, bool& running, Game& game) {
-    switch (selectedItemIndex) {
-    case 0:
-        setVisible(false);
-        game.setRunning(true);
-        break;
-    case 1:
-        showInstructions();
-        break;
-    case 2:
-        running = false;
-        window.close();
-        break;
-    }
-}
-
-void Menu::update(sf::RenderWindow& window, bool& running, Game& game) {
-    if (visible && game.isRunning()) {
-        game.setRunning(false);
-    }
-
-	if(!visible) return;
-
-    draw(window);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        if (!lastUp) {
-            moveUp();
-            lastUp = true;
-        }
-    } else {
-        lastUp = false;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-        if (!lastDown) {
-            moveDown();
-            lastDown = true;
-        }
-    } else {
-        lastDown = false;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-        executeItem(window, running, game);
-    }
 }

@@ -34,7 +34,7 @@ public:
 		setupMesh();
 	}
 
-	void draw(Shader shader, GLuint amount) {
+	void draw(Shader shader) {
 		// set bindings
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -63,11 +63,17 @@ public:
 		return VAO;
 	}
 
+    void setInstanceAmount(GLuint amount) {
+        this->amount = amount;
+    }
+
 private:
 	// render handles
 	GLuint VAO, VBO, EBO;
 
 	glm::vec3 color;
+
+    GLuint amount;  // if 0 no instancing, if > 0 then instanced
 
 	void setupMesh() {
 		glGenVertexArrays(1, &VAO);

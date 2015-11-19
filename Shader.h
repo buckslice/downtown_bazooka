@@ -13,6 +13,9 @@ class Shader {
 public:
     GLuint program;
 
+    Shader() {
+    }
+
     Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
         build(vertexPath, fragmentPath);
     }
@@ -57,7 +60,8 @@ public:
         glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-            std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+            std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED: \"" << vertexPath << "\"" << std::endl;
+            std::cout << infoLog << std::endl;
         }
         // Fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
@@ -67,7 +71,8 @@ public:
         glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-            std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+            std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: \"" << fragmentPath << "\"" << std::endl;
+            std::cout << infoLog << std::endl;
         }
         // Shader Program
         program = glCreateProgram();
@@ -78,8 +83,10 @@ public:
         glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(program, 512, NULL, infoLog);
-            std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+            std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED: \"" << vertexPath << "\",\"" << fragmentPath << "\"" << std::endl;
+            std::cout << infoLog << std::endl;
         }
+
         // Delete the shaders as they're linked into our program now and no longer necessery
         glDeleteShader(vertex);
         glDeleteShader(fragment);

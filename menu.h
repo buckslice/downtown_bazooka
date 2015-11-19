@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SFML\Graphics.hpp"
-#include "game.h"
 
 #define MAX_NUMBER_OF_ITEMS 3
 #define defaultColor sf::Color::White
@@ -14,19 +13,19 @@ public:
     ~Menu();
 
     void draw(sf::RenderWindow& window);
-    void moveUp();
-    void moveDown();
-    void update(sf::RenderWindow& window, bool& running, Game& game);
+    void update(bool& running);
     void setVisible(bool visible);
     bool getVisible();
-    void showInstructions();
-private:
-    int selectedItemIndex;
-    sf::Font font;
 
-    bool lastUp;
-    bool lastDown;
-    bool visible;
-    void executeItem(sf::RenderWindow& window, bool& running, Game& game);
+private:
+    void move(bool up);
+    void showInstructions();
+
+    sf::Text menu[MAX_NUMBER_OF_ITEMS];
+    sf::Text title;
+
+    sf::Font font;
+    int curSelection;
+    bool visible = true;
 };
 

@@ -199,6 +199,7 @@ void CityGenerator::generateModelMatrices(bool square) {
 // set up instancing uniforms
 // basically uploads all the model matrices to mesh
 void CityGenerator::uploadModelMatrices(Mesh& mesh) {
+    mesh.setInstanceAmount(NUMBER_OF_MESHES);
 	GLuint VAO = mesh.getVAO();
 	GLuint modelBuffer;
 	GLuint colorBuffer;

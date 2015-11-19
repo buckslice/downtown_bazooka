@@ -158,7 +158,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aabb.cpp" />
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
+    <ClCompile Include="graphics.cpp" />
+    <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="physics.cpp" />
@@ -171,6 +174,8 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="gameObject.h" />
     <ClInclude Include="glHelper.h" />
+    <ClInclude Include="graphics.h" />
+    <ClInclude Include="input.h" />
     <ClInclude Include="intersectData.h" />
     <ClInclude Include="mathutil.h" />
     <ClInclude Include="menu.h" />

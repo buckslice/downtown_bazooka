@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Player.h"
+#include "player.h"
+#include "input.h"
 
 class Game {
 public:
     Game(int width, int height) {
-        started = false;
+        running = false;
         if (!font.loadFromFile("assets/fonts/MAGNETOB.ttf")) {
             //handle error
             std::cout << "ERROR::FONT::LOAD_FAILURE";
@@ -26,32 +27,32 @@ public:
     }
 
     void setRunning(bool b) {
-        started = b;
+        running = b;
     }
 
     bool isRunning() {
-        return started;
+        return running;
     }
 
     void update(sf::RenderWindow& window) {
-        if (started) { //&& !gameIsOver()) {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+        if (running) { //&& !gameIsOver()) {
+            if (Input::pressed(sf::Keyboard::Right)) {
                 player.addHealth(5);
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+            if (Input::pressed(sf::Keyboard::Left)) {
                 player.addHealth(-5);
             }
             player.update(window);
         }
 
-        if (started && gameIsOver()) {
+        if (running && gameIsOver()) {
             //window.draw(gameOver);
         }
     }
 
 private:
     Player player;
-    bool started;
+    bool running;
     sf::Font font;
     sf::Text gameOver;
 };
