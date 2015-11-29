@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <Windows.h>
+#include <memory>
 
 #include "shader.h"
 #include "camera.h"
@@ -19,30 +20,9 @@
 #include "game.h"
 #include "graphics.h"
 #include "input.h"
-
-glm::vec3 getMovementDir() {
-    // calculate movement direction
-    glm::vec3 dir(0.0f, 0.0f, 0.0f);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) || sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-        dir.z += 1.0f;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::O) || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-        dir.z -= 1.0f;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-        dir.x -= 1.0f;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) || sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-        dir.x += 1.0f;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
-        dir.y -= 1.0f;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-        dir.y += 1.0f;
-    }
-    return dir;
-}
+#include "enemy.h"
+#include "mathutil.h"
+#include "entityManager.h"
 
 // TODO extract to input class
 sf::Vector2i getMouseMovement(sf::Window& window, bool lastFocus) {
@@ -83,18 +63,18 @@ int main() {
     Graphics graphics(*window);
     Input input;
 
-    Menu menu(WIDTH, HEIGHT);
-    Game game(WIDTH, HEIGHT);
+    //Game game(WIDTH, HEIGHT);
 
     // init and build city
     CityGenerator cg;
-    GLuint tex = GLHelper::loadTexture("assets/images/grid.png");
-    Mesh mesh = cg.buildMesh(tex);
-    graphics.buildingMesh = &mesh;
 
     // init camera
-    Camera cam(0.0f, 200.0f, 0.0f, 0.0f, 1.0f, 0.0f, 270.0f, 0.0f);
-    float timeSinceJump = -1.0f;
+    Camera cam(270.0f, 0.0f);
+    Player* player = new Player(&cam);
+    cam.transform.parent = player->transform;
+    cam.transform.pos = glm::vec3(0.0f, 1.8f, 0.0f);
+
+    Menu menu(WIDTH, HEIGHT, player);
 
     // set up some more stuff
     sf::Clock frameTime;
@@ -102,17 +82,24 @@ int main() {
     sf::Mouse::setPosition(center, *window);
     window->setMouseCursorVisible(false);
     window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be useful
-    Physics physics(cam);
-    bool lastFocus = false;
+    bool lastFocused = false;
+    bool windowFocused = false;
 
-    // generate a random city
-    cg.generateModelMatrices(false);
-    cg.uploadModelMatrices(mesh);
-    physics.addObjects(cg.boxes);
+    // generate a random circular city
+    cg.generate(false, 7500, graphics);
+
+    Physics physics;
+    physics.addStatics(cg.boxes);
+    //physics.printStaticMatrix();
+
+    EntityManager em(graphics, player);
 
     bool running = true;
     while (running) {
-        GLfloat deltaTime = frameTime.restart().asSeconds();
+        GLfloat delta = frameTime.restart().asSeconds();
+
+        lastFocused = windowFocused;
+        windowFocused = window->hasFocus();
 
         // should check for window.resize event too and resize window
         // check for events that will quit game
@@ -128,14 +115,8 @@ int main() {
         }
 
         // update static input bool arrays
-        input.update();
-
-        if (Input::justPressed(sf::Keyboard::Escape)) {
-            if (menu.getVisible()) {
-                running = false;
-            } else {
-                menu.setVisible(true);
-            }
+        if (windowFocused || lastFocused) {
+            input.update();
         }
 
         // recompile shaders
@@ -143,71 +124,55 @@ int main() {
             graphics.buildShaders();
         }
 
-        // build square city
-        if (Input::justPressed(sf::Keyboard::F)) {
-            physics.clearObjects();
-            cg.generateModelMatrices(true);
-            physics.addObjects(cg.boxes);
-            cg.uploadModelMatrices(mesh);
+        // build square or circular city if prompted
+        if (Input::justPressed(sf::Keyboard::F) || Input::justPressed(sf::Keyboard::G)) {
+            physics.clearStatics();
+            cg.generate(Input::justPressed(sf::Keyboard::F), 7500, graphics);
+            physics.addStatics(cg.boxes);
         }
-
-        // build circular city
-        if (Input::justPressed(sf::Keyboard::G)) {
-            physics.clearObjects();
-            cg.generateModelMatrices(false);
-            physics.addObjects(cg.boxes);
-            cg.uploadModelMatrices(mesh);
-        }
-
-        // toggle flying
-        if (Input::justPressed(sf::Keyboard::Q)) {
-            cam.flying = !cam.flying;
-        }
-
-        // jumping
-        if (Input::justPressed(sf::Keyboard::Space)) {
-            timeSinceJump = 0.0f;
-        }
-
-        float jumpLenience = 0.2f;
-        if (timeSinceJump < jumpLenience) {
-            cam.jump();
-        }
-        timeSinceJump += deltaTime;
 
         // get mouse movement and update based on window focus
-        window->setMouseCursorVisible(!window->hasFocus());
-        sf::Vector2i mouseMove = getMouseMovement(*window, lastFocus);
-        lastFocus = window->hasFocus();
+        window->setMouseCursorVisible(!windowFocused);
+        sf::Vector2i mouseMove = getMouseMovement(*window, lastFocused);
 
         //update menu
         menu.update(running);
-        game.setRunning(!menu.getVisible());
+
+        if (menu.justClosed) {
+            player->flying = false;
+            em.init(2000);
+        }
+        if (menu.justOpened) {
+            em.deleteEntities(1);
+            physics.clearDynamics();
+        }
 
         // update camera
-        if (game.isRunning()) {
-            cam.update(getMovementDir(), mouseMove.x, mouseMove.y, deltaTime);
+        if (!menu.getVisible()) {   // if game running
+            em.update(delta);
+
+            if (windowFocused) {
+                cam.update(mouseMove.x, mouseMove.y);
+            }
         } else {
-            //TODO make camera AI to scroll around the city
-            cam.pos = glm::vec3(0.0f, 200.0f, 0.0f);
-            cam.vel = glm::vec3(0.0f);
+            // reset player to floating above city
+            player->setPosition(glm::vec3(0.0f, 200.0f, 0.0f));
+            player->getTransform()->vel = glm::vec3(0.0f);
+            // auto scroll camera
             cam.pitch = 0.0f;
-            cam.yaw += 5.0f * deltaTime;
+            cam.yaw += 5.0f * delta;
             cam.updateCameraVectors();
         }
 
-        // update entitys here
-
         // resolve collisions
-        physics.update(deltaTime);
+        physics.update(delta);
 
         // render graphics
-        graphics.renderScene(cam);
+        graphics.renderScene(cam, !menu.getVisible());
 
         // draw UI
         window->resetGLStates();
         menu.draw(*window);
-        game.update(*window);
 
         // apply bloom
         graphics.postProcess();
@@ -215,11 +180,6 @@ int main() {
         // swap buffers
         window->display();
     }
-
-    // clean up
-    glDeleteTextures(1, &tex);
-    cg.destroy();
-    //delete window;
 
     return 0;
 }

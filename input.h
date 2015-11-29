@@ -13,4 +13,5 @@ public:
     static bool pressed(sf::Keyboard::Key key);
     static bool justPressed(sf::Keyboard::Key key);
     static bool justReleased(sf::Keyboard::Key key);
+
 };

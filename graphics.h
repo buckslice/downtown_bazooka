@@ -13,15 +13,24 @@ const GLuint BLUR_DOWNSAMPLE = 2;
 class Graphics {
 public:
 
-    Mesh* buildingMesh;
+    Mesh* cube;
+    Mesh* guy;
 
     Graphics(sf::RenderWindow& window);
     ~Graphics();
 
-    void renderScene(Camera& cam);
+    void renderScene(Camera& cam, bool drawDudes);
     //void renderUI();
     void postProcess();
     void buildShaders();
+
+    GLuint genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors);
+    GLuint genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models);
+
+    // should make gen buffers functions above just build buffer given a max_size
+    // then use below functions to update it during runtime
+    //void updateColorBuffer(GLuint buffer, std::vector<glm::vec3>& colors);
+    //void updateModelBuffer(GLuint buffer, std::vector<glm::mat4>& models);
 
 private:
 
@@ -42,5 +51,7 @@ private:
 
     GLint projLoc;
     GLint viewLoc;
+
+    GLuint tex;
 
 };

@@ -1,27 +1,19 @@
 #include "camera.h"
-
-// vector constructor
-Camera::Camera(glm::vec3 pos, glm::vec3 up, GLfloat yaw, GLfloat pitch)
-    :speed(SPEED), mouseSensitivity(SENSITIVITY) {
-    this->pos = pos;
-    this->worldUp = up;
-    this->yaw = yaw;
-    this->pitch = pitch;
-    updateCameraVectors();
-}
+#include <iostream>
 
 // scalar constructor
-Camera::Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch)
-    :speed(SPEED), mouseSensitivity(SENSITIVITY) {
-    this->pos = glm::vec3(posX, posY, posZ);
-    this->worldUp = glm::vec3(upX, upY, upZ);
+Camera::Camera(GLfloat yaw, GLfloat pitch)
+    : mouseSensitivity(SENSITIVITY) {
+    worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     this->yaw = yaw;
     this->pitch = pitch;
+
     updateCameraVectors();
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    return glm::lookAt(pos, pos + forward, up);
+    glm::vec3 p = transform.getPos();
+    return glm::lookAt(p, p + forward, up);
 }
 
 glm::mat4 Camera::getProjMatrix(GLuint w, GLuint h) {
@@ -38,7 +30,7 @@ void Camera::updateCameraVectors() {
     up = glm::normalize(glm::cross(right, forward));
 }
 
-void Camera::update(glm::vec3 input, GLfloat mdx, GLfloat mdy, GLfloat delta) {
+void Camera::update(GLfloat mdx, GLfloat mdy) {
     // update yaw and pitch from mouse deltas
     mdx *= mouseSensitivity;
     mdy *= mouseSensitivity;
@@ -54,44 +46,4 @@ void Camera::update(glm::vec3 input, GLfloat mdx, GLfloat mdy, GLfloat delta) {
     pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
     updateCameraVectors();
-
-    // movement controls
-    glm::vec3 xzforward = glm::normalize(glm::cross(worldUp, right));
-    if (input != glm::vec3(0.0f, 0.0f, 0.0f)) {
-        input = glm::normalize(input);
-    }
-
-    if (flying) {
-        vel = (right * input.x + xzforward * input.z + worldUp * input.y) * speed * 8.0f;
-    } else {
-        input.y = 0.0f; // ignore this part of input
-        if (vel.y != 0.0f) {
-            grounded = false;
-        }
-
-        GLfloat oldy = vel.y;
-        GLfloat accel = grounded ? 10.0f : 2.0f;
-        accel *= speed * delta;
-        vel.y = 0.0f;
-        vel += (right * input.x + xzforward * input.z) * accel;
-        if (glm::dot(vel, vel) > speed * speed) {
-            vel = glm::normalize(vel) * speed;
-        }
-
-        // if no input then apply drag
-        if (input == glm::vec3(0.0f)) {
-            vel *= (grounded ? .8f : .95f);
-            vel *= .9f;
-        }
-        // gravity 9.81 not right for some reason
-        vel.y = oldy - GRAVITY * delta;
-    }
-}
-
-void Camera::jump() {
-    // check if grounded
-    if (grounded && !flying) {
-        vel.y = JUMPSPEED;
-        grounded = false;
-    }
 }

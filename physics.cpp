@@ -1,217 +1,259 @@
 
-#include "physics.h"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtx/projection.hpp>
+#include "physics.h"
+#include "cityGenerator.h"
 
-Physics::Physics(Camera& cam) : cam(cam) {
+// has to be in implementation file because reasons (#staticlife?)
+static std::vector<PhysicsTransform> dynamicObjects;
+
+Physics::Physics() {
+
+    int splits = 5;
+
+    // aabb encapsulate whole city
+    // should make aabb encapsulate method and change to actually check against all static
+    // would then need to rebuild whole tree sometimes tho i think..?
+    float hs = CITY_SIZE / 2.0f;
+    float wgl = 100.0f;
+    AABB wholeCity(glm::vec3(-hs - wgl, 0.0, -hs - wgl), glm::vec3(hs + wgl, 10000.0f, hs + wgl));
+    aabbTree.push_back(wholeCity);
+    int startIndex = 0;
+    for (int s = 0; s < splits; s++) {
+        int len = aabbTree.size();
+        for (int i = startIndex; i < len; i++) {
+            AABB cur = aabbTree[i];
+
+            float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
+            float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
+
+            // bl tl tr br
+            aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
+            aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
+            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, hz), cur.max));
+            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, cur.min.z), glm::vec3(cur.max.x, cur.max.y, hz)));
+
+        }
+
+        // increment next start index based on how much we added this split
+        startIndex += pow(4, s);
+    }
+
+    // stores lists of static objects
+    // its same size as aabbTree even though it should only just be leaves but whatever
+    treeMatrix.resize(aabbTree.size());
+
+    //float citysize = wholeCity.max.x - wholeCity.min.x;
+    //std::cout << "leaf size: " << citysize / pow(2, splits) << std::endl;
+
 }
 
-// make entity class with pos, vel, and maybe onCollisoin method or something
-// make physics loop through each dynamic object and check agaisnt static objects
-// the square distance broadphase check will probably be bad in this scenario even 
-// need some sort of spatial partitioning :)))) so fun
+int totalAABBChecks = 0;
 
-// renderingengine class
-// input class <--- really would help (just pressed tracking)
-// keyboard class and mouse class rather
-// game class
-// ui class?
-
-// oh also circle ground mesh and square groudn mesh that are black colored
+// searches tree and returns a list of leaf indices AABB collides with
+// externally you always call it with node = 0 so you start at root node
+// but wasnt sure how to enforce that
+void Physics::getLeafs(std::vector<int>& locs, int node, AABB swept) {
+    totalAABBChecks++;
+    if (AABB::check(aabbTree[node], swept)) {
+        // check if you are leaf node
+        if (node * 4 + 1 >= aabbTree.size()) {
+            locs.push_back(node);
+        } else {
+            // exlore children
+            getLeafs(locs, node * 4 + 1, swept);
+            getLeafs(locs, node * 4 + 2, swept);
+            getLeafs(locs, node * 4 + 3, swept);
+            getLeafs(locs, node * 4 + 4, swept);
+        }
+    }
+}
 
 void Physics::update(float delta) {
 
-    // for loop will go here for each dynamic object
+    totalAABBChecks = 0;
+    // if in corner between two statics this will be 3 which seems weird, but its because
+    // it does 2 initial sweeps, chooses closer collision and resolves it, then it does
+    // another sweep from new location against second for a total of 3 sweeps
+    int totalSweepTests = 0;
 
-    resolvedSet.clear();
-    // set remaining velocity to camera velocity initially
-    glm::vec3 rvel = cam.vel;
-
-    // try to resolve up to 10 collisions for this object this frame
-    for (int resolutionAttempts = 0; resolutionAttempts < 10; resolutionAttempts++) {
-        // build collision box from player
-        glm::vec3 p = cam.pos;
-        AABB player(glm::vec3(p.x - .5f, p.y - EYE_HEIGHT, p.z - .5f),
-            glm::vec3(p.x + .5f, p.y + (P_HEIGHT - EYE_HEIGHT), p.z + .5f));
-
-        // get box that covers players current position projected by velocity
-        AABB broadphase = AABB::getSwept(player, rvel * delta);
-
-        // save time, normal, and index of closest object we hit
-        float time = 1.0f;  // holds time of collision (0-1)
-        glm::vec3 norm;
-        int objIndex = -1;
-
-        // returns closest collision found
-        bool fullTest = false;
-        for (int i = 0; i < staticObjects.size(); i++) {
-            // if already resolved check
-            if (resolvedSet.count(i)) {
-                continue;
-            }
-
-            // square distance check
-            glm::vec3 diff = player.min - staticObjects[i].min;
-            if (glm::dot(diff, diff) > COL_RADIUS * COL_RADIUS) {
-                continue;
-            }
-
-            // broadphase sweep bounds check
-            if (!AABB::check(broadphase, staticObjects[i])) {
-                continue;
-            }
-
-            // narrow sweep bounds resolution
-            // calculates exact time of collision (if there was one)
-            glm::vec3 n;
-            float t = sweepTest(player, staticObjects[i], rvel * delta, n);
-            if (t < time) {
-                time = t;
-                norm = n;
-                objIndex = i;
-            }
-            fullTest = true;
-        }
-        resolvedSet.insert(objIndex);
-
-        // update camera position
-        cam.pos += rvel * delta * time;
-
-        // ground camera if hit bottom or if normal of what you hit points in the y direction
-        // should technically only set grounded if normal is > 0.0f but whatever
-        if (cam.pos.y < EYE_HEIGHT || norm.y != 0.0f) {
-            cam.grounded = true;
-            cam.vel.y = 0.0f;
-            rvel.y = 0.0f;
-        }
-
-        // dont let camera go below bottom of level (y = 0 + eye height)
-        cam.pos.y = fmax(cam.pos.y, EYE_HEIGHT);
-
-        // if there was a collision then update remaining velocity for subsequent collision tests
-        if (time < 1.0f) {
-            // to slide along surface take projection of velocity onto normal of surface
-            // and subtract that from current velocity
-            glm::vec3 pvel = rvel - glm::proj(rvel, norm);
-            // update remaining velocity to projected velocity * remaining time
-            rvel = pvel * (1.0f - time);
-        }
-
-        // if there was no full collision test then this object is resolved
-        if (!fullTest) {
-            break;
-        }
-
+    bool printedErrorThisFrame = false;
+    // find list of leaf(s) each dynamic object is in
+    dynamicLeafLists.resize(dynamicObjects.size());
+    for (int i = 0; i < dynamicLeafLists.size(); i++) {
+        dynamicLeafLists[i].clear();
+        getLeafs(dynamicLeafLists[i], 0, dynamicObjects[i].getSwept(delta));
     }
 
-    //std::cout << resolvedSet.size() << std::endl;
+    // for each dynamic object
+    for (int dynamicIndex = 0; dynamicIndex < dynamicObjects.size(); dynamicIndex++) {
+        PhysicsTransform& pt = dynamicObjects[dynamicIndex];
+
+        resolvedSet.clear();
+
+        // set remaining velocity to initial velocity of dynamic
+        glm::vec3 rvel = pt.vel;
+
+        // try to resolve up to 10 collisions for this object this frame
+        for (int resolutionAttempts = 0; resolutionAttempts < 10; resolutionAttempts++) {
+            // probly an error when this happens
+            // my aabb sweeptest fix needs a little tweaking
+            // could also be something else though perhaps with the quadtree
+            // or the different sets pruning too aggresively
+            //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
+            //    std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
+            //    printedErrorThisFrame = true;   // to avoid spam
+            //}
+
+            checkSet.clear();
+
+            AABB curDynamic = pt.getAABB();
+            AABB broadphase = AABB::getSwept(curDynamic, pt.vel * delta);
+
+            // save time, normal, and index of closest object we hit
+            float time = 1.0f;  // holds time of collision (0-1)
+            glm::vec3 norm;
+            int closestStaticIndex = -1;    // index of closest static obj u hit
+
+            // returns closest collision found
+            bool fullTest = false;
+            // for each leaf this dynamic is in
+            std::vector<int>& leafList = dynamicLeafLists[dynamicIndex];
+            for (int li = 0; li < leafList.size(); li++) {
+                int leaf = leafList[li];
+                // for each object in this leaf
+                std::vector<int>& leafObjects = treeMatrix[leaf];
+                for (int i = 0; i < leafObjects.size(); i++) {
+                    int curStaticIndex = leafObjects[i];
+                    if (resolvedSet.count(curStaticIndex) || checkSet.count(curStaticIndex)) {
+                        continue;
+                    }
+
+                    AABB curStatic = staticObjects[curStaticIndex];
+                    totalAABBChecks++;
+                    // broadphase sweep bounds check
+                    if (!AABB::check(broadphase, curStatic)) {
+                        // if failed any broadphase then dont check this static again since 
+                        // future resolutions will never exceed previous broadphases
+                        resolvedSet.insert(curStaticIndex);
+                        continue;
+                    }
+                    // this set just tracks if youve checked this object before during the current resolution attempt 
+                    // done purely to prevent duplicate checks over leaf borders (need to test if this is even worth it lol)
+                    checkSet.insert(curStaticIndex);
+
+                    // narrow sweep bounds resolution
+                    // calculates exact time of collision
+                    // but still possible for no collision at this point
+                    glm::vec3 n;
+                    float t = AABB::sweepTest(curDynamic, curStatic, rvel * delta, n);
+                    if (t < time) {
+                        time = t;
+                        norm = n;
+                        closestStaticIndex = curStaticIndex;
+                    }
+                    totalSweepTests++;
+                    fullTest = true;
+                }
+            }
+
+            // dont let this dynamic collide with this static again
+            resolvedSet.insert(closestStaticIndex);
+
+            // update dynamic position
+            pt.pos += rvel * delta * time;
+
+            // ground dynamic if hit bottom or if normal of what you hit points in the y direction
+            // should technically only set grounded if normal is > 0.0f actually..
+            // also just made all PhysicsTransforms have a grounded variable cuz might be useful, and im lazy
+            if (pt.pos.y < 0.0f || norm.y != 0.0f) {
+                pt.grounded = true;
+                pt.vel.y = 0.0f;
+                rvel.y = 0.0f;
+            }
+
+            // dont let dynamic go below 0.0f;
+            pt.pos.y = fmax(pt.pos.y, 0.0f);
+
+            // if there was a collision then update remaining velocity for subsequent collision tests
+            if (time < 1.0f) {
+                // to slide along surface take projection of velocity onto normal of surface
+                // and subtract that from current velocity
+                glm::vec3 pvel = rvel - glm::proj(rvel, norm);
+                // update remaining velocity to projected velocity * remaining time
+                rvel = pvel * (1.0f - time);
+            }
+
+            // if there was no full collision test then this object is resolved
+            if (!fullTest) {
+                break;
+            }
+
+        }
+    }
+
+    //std::cout << "AABB checks: " << totalAABBChecks << " Sweep tests: " << totalSweepTests << std::endl;
+
 }
 
-// TODO put this as a static function in AABB instead
-float Physics::sweepTest(AABB b1, AABB b2, glm::vec3 vel, glm::vec3& norm) {
-    // find distance between objects on near and far sides
-    glm::vec3 invEntr;
-    glm::vec3 invExit;
-
-    if (vel.x > 0.0f) {
-        invEntr.x = b2.min.x - b1.max.x;
-        invExit.x = b2.max.x - b1.min.x;
-    } else {
-        invEntr.x = b2.max.x - b1.min.x;
-        invExit.x = b2.min.x - b1.max.x;
-    }
-    if (vel.y > 0.0f) {
-        invEntr.y = b2.min.y - b1.max.y;
-        invExit.y = b2.max.y - b1.min.y;
-    } else {
-        invEntr.y = b2.max.y - b1.min.y;
-        invExit.y = b2.min.y - b1.max.y;
-    }
-    if (vel.z > 0.0f) {
-        invEntr.z = b2.min.z - b1.max.z;
-        invExit.z = b2.max.z - b1.min.z;
-    } else {
-        invEntr.z = b2.max.z - b1.min.z;
-        invExit.z = b2.min.z - b1.max.z;
-    }
-
-    float e = .00001f;
-    if (invEntr.y < e && invEntr.y > -e) {
-        invEntr.y = 0.0f;
-    }
-    // above is my wierd fix for falling through tops of buildings randomly
-    // basically its accounting for floating point precision error during earlier subtractions
-    // doesnt happen in x or z direction because player movement is much
-    // more granular than gravity. prob should just do the next two checks as well
-    // but i want to wait to see if a bug pops up and if these will fix it to confirm my theories
-
-    //if (invEntr.x < e && invEntr.x > -e) {
-    //    invEntr.x = 0.0f;
-    //}
-    //if (invEntr.z < e && invEntr.z > -e) {
-    //    invEntr.z = 0.0f;
-    //}
-
-    // find time of collision
-    glm::vec3 entr;
-    glm::vec3 exit;
-
-    if (vel.x == 0.0f) {
-        entr.x = -std::numeric_limits<float>::infinity();
-        exit.x = std::numeric_limits<float>::infinity();
-    } else {
-        entr.x = invEntr.x / vel.x;
-        exit.x = invExit.x / vel.x;
-    }
-    if (vel.y == 0.0f) {
-        entr.y = -std::numeric_limits<float>::infinity();
-        exit.y = std::numeric_limits<float>::infinity();
-    } else {
-        entr.y = invEntr.y / vel.y;
-        exit.y = invExit.y / vel.y;
-    }
-    if (vel.z == 0.0f) {
-        entr.z = -std::numeric_limits<float>::infinity();
-        exit.z = std::numeric_limits<float>::infinity();
-    } else {
-        entr.z = invEntr.z / vel.z;
-        exit.z = invExit.z / vel.z;
-    }
-
-    float entrTime = glm::compMax(entr);
-    float exitTime = glm::compMin(exit);
-
-    // if there was no collision
-    if (entrTime > exitTime ||
-        entr.x < 0.0f && entr.y < 0.0f && entr.z < 0.0f ||
-        entr.x > 1.0f || entr.y > 1.0f || entr.z > 1.0f) {
-        norm = glm::vec3(0.0f);
-        return 1.0f;
-    }
-
-    // calculate normal of collided surface
-    if (entrTime == entr.x) {
-        norm = glm::vec3(invEntr.x < 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
-    } else if (entrTime == entr.y) {
-        norm = glm::vec3(0.0f, invEntr.y < 0.0f ? 1.0f : -1.0f, 0.0f);
-    } else {
-        norm = glm::vec3(0.0f, 0.0f, invEntr.z < 0.0f ? 1.0f : -1.0f);
-    }
-
-    return entrTime;
-}
-
-void Physics::addObject(AABB& obj) {
+void Physics::addStatic(AABB obj) {
+    // push new object onto statics list and get index
     staticObjects.push_back(obj);
-}
+    int objIndex = staticObjects.size() - 1;
 
-void Physics::addObjects(const std::vector<AABB>& objs) {
-    for (int i = 0; i < objs.size(); i++) {
-        staticObjects.push_back(objs[i]);
+    // get list of leaves this object collides with
+    std::vector<int> indices;
+    getLeafs(indices, 0, obj);
+    // then add this objects index to each collision list
+    for (int i = 0; i < indices.size(); i++) {
+        treeMatrix[indices[i]].push_back(objIndex);
     }
 }
 
-void Physics::clearObjects() {
-    staticObjects.clear();
+void Physics::addStatics(const std::vector<AABB>& objs) {
+    for (int i = 0; i < objs.size(); i++) {
+        addStatic(objs[i]);
+    }
 }
+
+void Physics::clearStatics() {
+    staticObjects.clear();
+    treeMatrix.clear();
+    treeMatrix.resize(aabbTree.size());
+}
+
+// pretty filth temp method for now until i figure out wth im doing (more on this below lol)
+void Physics::clearDynamics() {
+    PhysicsTransform player = dynamicObjects[0];
+    dynamicObjects.clear();
+    dynamicObjects.push_back(player);
+}
+
+void Physics::printStaticMatrix() {
+    for (int i = 0; i < treeMatrix.size(); i++) {
+        if (treeMatrix[i].size() > 0) {
+            std::cout << i << " ";
+            for (int j = 0; j < treeMatrix[i].size(); j++) {
+                std::cout << treeMatrix[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
+// need to make this return an int pointer or something
+// so it can be reassigned when a dynamic is destroyed or something
+
+// alternatively just store everything in entity and quit caring about cache cuz
+// probably doesnt even matter! ya since entity wont even have that many components in it
+// this is pretty pointless.. #noragrets #winterquartergoals #notthatmuchworkactually
+int Physics::registerDynamic(glm::vec3 scale) {
+    dynamicObjects.push_back(PhysicsTransform(scale));
+    return dynamicObjects.size() - 1;
+}
+
+PhysicsTransform* Physics::getTransform(int index) {
+    return &dynamicObjects[index];
+}
+

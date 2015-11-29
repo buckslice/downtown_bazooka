@@ -4,43 +4,47 @@
 #include <vector>
 #include <unordered_set>
 
-#include "aabb.h"
 #include "camera.h"
+#include "transform.h"
+#include "cityGenerator.h"
 #include <SFML/Window.hpp>
+
 
 class Physics {
 public:
-	const float GRAVITY = -9.8f;
-    const float COL_RADIUS = 200.0f; // only checks for collisions in a radius around player
+    const float GRAVITY = -9.8f;
 
-	// these should be moved into player class
-	const GLfloat EYE_HEIGHT = 1.8f;
-	const GLfloat P_HEIGHT = 2.0f;
+    void update(float delta);
 
-	Physics(Camera& cam);
+    void addStatic(AABB obj);
+    void addStatics(const std::vector<AABB>& objs);
+    void clearStatics();
+    void clearDynamics();
 
-	void update(float delta);
+    static PhysicsTransform* getTransform(int index);
+    static int registerDynamic(glm::vec3 scale);
 
-	void addObject(AABB& obj);
+    void printStaticMatrix();
 
-	void addObjects(const std::vector<AABB>& objs);
-
-	void clearObjects();
-
-	// b1 is dynamic AABB with velocity vel
-	// b2 is static AABB
-	float sweepTest(AABB b1, AABB b2, glm::vec3 vel, glm::vec3& norm);
+    Physics();
 
 private:
-	// eventually make collider class
-	// so you can have different shapes
-	std::vector<AABB> staticObjects;
-	//std::vector<AABB> dynamicObjects;
 
-    // holds address of each object already collided with this frame
+    void getLeafs(std::vector<int>& locs, int node, AABB swept);
+
+    // list of static objects (dynamic list is in implementation)
+    std::vector<AABB> staticObjects;
+    // aabb quadtree that is used to determine what leaf(s) an obj is in
+    std::vector<AABB> aabbTree;
+    // list for each dynamic object that tells them which leaf(s) they are in
+    std::vector<std::vector<int>> dynamicLeafLists;
+    // holds lists of statics in each leaf of the quadtree
+    std::vector<std::vector<int>> treeMatrix;
+
+    // used to prevent unnecessary additional checks
     std::unordered_set<int> resolvedSet;
+    // used to prevent multiple checks on leaf borders
+    std::unordered_set<int> checkSet;
 
-	Camera& cam;
-
-	sf::Clock timeSinceStart;
+    sf::Clock timeSinceStart;
 };

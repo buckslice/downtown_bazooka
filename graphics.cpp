@@ -3,6 +3,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "graphics.h"
 
+extern GLfloat vertices[];
+extern GLuint elements[];
+
 Graphics::Graphics(sf::RenderWindow& window) {
     initGL(window);
 }
@@ -43,6 +46,24 @@ void Graphics::initGL(sf::RenderWindow& window) {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 
+    // build cube mesh
+    GLuint cubeVerts = 120;
+    GLuint floatsPerVert = 5;
+    std::vector<Vertex> verts;
+    for (int i = 0; i < cubeVerts / floatsPerVert; i++) {
+        Vertex v;
+        int j = i * floatsPerVert;
+        v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
+        v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
+
+        verts.push_back(v);
+    }
+    GLuint numElements = 36;
+    std::vector<GLuint> tris(elements, elements + numElements);
+    tex = GLHelper::loadTexture("assets/images/grid.png");
+    cube = new Mesh(verts, tris, tex);
+    guy = new Mesh(verts, tris, tex);
+
     // more stuff
     buildShaders();
 
@@ -62,7 +83,7 @@ void Graphics::renderQuad() {
     glBindVertexArray(0);
 }
 
-void Graphics::renderScene(Camera& cam) {
+void Graphics::renderScene(Camera& cam, bool drawDudes) {
     // RENDER SCENE TO FRAMEBUFFER
     glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
 
@@ -78,7 +99,10 @@ void Graphics::renderScene(Camera& cam) {
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     // draw instanced mesh a bunch of times (sets model matrix internally)
-    buildingMesh->draw(buildingShader);
+    cube->draw(buildingShader);
+    if (drawDudes) {
+        guy->draw(buildingShader);
+    }
 
     // clear states
     glBindVertexArray(0);
@@ -198,4 +222,123 @@ void Graphics::deleteShaders() {
 
 Graphics::~Graphics() {
     deleteShaders();
+    delete cube;
+    delete guy;
+    glDeleteTextures(1, &tex);
 }
+
+GLuint Graphics::genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors) {
+    mesh.setInstanceAmount(colors.size());
+    GLuint VAO = mesh.getVAO();
+    GLuint colorBuffer;
+    glBindVertexArray(VAO);
+
+    glGenBuffers(1, &colorBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+
+    glVertexAttribDivisor(2, 1);
+
+    glBindVertexArray(0);
+    return colorBuffer;
+}
+
+GLuint Graphics::genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models) {
+    mesh.setInstanceAmount(models.size());
+    GLuint VAO = mesh.getVAO();
+    GLuint modelBuffer;
+    glBindVertexArray(VAO);
+
+    //glDeleteBuffers(1, &modelBuffer);
+    glGenBuffers(1, &modelBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
+    glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(sizeof(glm::vec4)));
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(2 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(3 * sizeof(glm::vec4)));
+
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+
+    glBindVertexArray(0);
+    return modelBuffer;
+}
+
+//void Graphics::updateColorBuffer(GLuint buffer, std::vector<glm::vec3>& colors) {
+//    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+//    glBufferSubData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+//}
+//
+//void Graphics::updateModelBuffer(GLuint buffer, std::vector<glm::mat4>& models) {
+//
+//}
+
+// helps make square texture look better on buildings
+GLfloat _vn = 1.0f / 32.0f;
+// each uv starts in bottom left (when looking at face) and progresses clockwise around
+GLfloat vertices[] = {
+    // front
+    -0.5f, -0.5f, -0.5f,  0.0f, _vn,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f - _vn,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f - _vn,
+    0.5f, -0.5f, -0.5f,  1.0f, _vn,
+
+    // back   
+    0.5f, -0.5f,  0.5f,  0.0f, _vn,
+    0.5f,  0.5f,  0.5f,  0.0f, 1.0f - _vn,
+    -0.5f,  0.5f,  0.5f,  1.0f, 1.0f - _vn,
+    -0.5f, -0.5f,  0.5f,  1.0f, _vn,
+
+    // left
+    -0.5f, -0.5f,  0.5f,  0.0f, _vn,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f - _vn,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f - _vn,
+    -0.5f, -0.5f, -0.5f,  1.0f, _vn,
+
+    // right
+    0.5f, -0.5f, -0.5f,  0.0f, _vn,
+    0.5f,  0.5f, -0.5f,  0.0f, 1.0f - _vn,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f - _vn,
+    0.5f, -0.5f,  0.5f,  1.0f, _vn,
+
+    // bottom
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+    // top
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+};
+
+GLuint elements[] = {
+    0,1,2,
+    2,3,0,
+
+    4,5,6,
+    6,7,4,
+
+    8,9,10,
+    10,11,8,
+
+    12,13,14,
+    14,15,12,
+
+    16,17,18,
+    18,19,16,
+
+    20,21,22,
+    22,23,20
+};

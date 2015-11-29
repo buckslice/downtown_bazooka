@@ -2,7 +2,7 @@
 #include "input.h"
 #include <iostream>
 
-Menu::Menu(float width, float height) {
+Menu::Menu(float width, float height, Player* player) {
     if (!font.loadFromFile("assets/fonts/cour.ttf")) {
         //handle error
         std::cout << "ERROR::FONT::LOAD_FAILURE";
@@ -35,6 +35,8 @@ Menu::Menu(float width, float height) {
     title.setPosition(sf::Vector2f(300.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.1));
     title.setScale(sf::Vector2f(3.0f, 3.0f));
 
+    healthBar.setFillColor(sf::Color(180, 255, 0, 255));
+    this->player = player;
     // this should give the width in pixels of the text so we can use that to center it
     // but too bad it crashes everytihng so hard lol whyyyyyy???
     //float w = title.getLocalBounds().width;
@@ -50,6 +52,10 @@ void Menu::draw(sf::RenderWindow& window) {
         for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
             window.draw(menu[i]);
         }
+    } else {
+        healthBar.setPosition(0.0f, window.getSize().y - HEALTH_BAR_HEIGHT);
+        healthBar.setSize(sf::Vector2f(window.getSize().x * player->getHealth() / MAX_HEALTH, HEALTH_BAR_HEIGHT));
+        window.draw(healthBar);
     }
 }
 
@@ -74,6 +80,17 @@ void Menu::showInstructions() {
 }
 
 void Menu::update(bool& running) {
+    justClosed = false;
+    justOpened = false;
+    if (Input::justPressed(sf::Keyboard::Escape)) {
+        if (visible) {
+            running = false;
+        } else {
+            visible = true;
+            justOpened = true;
+        }
+    }
+    
     if (!visible) {
         return;
     }
@@ -90,6 +107,7 @@ void Menu::update(bool& running) {
         switch (curSelection) {
         case 0:
             setVisible(false);
+            justClosed = true;
             break;
         case 1:
             showInstructions();

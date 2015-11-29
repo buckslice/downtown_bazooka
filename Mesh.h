@@ -67,13 +67,14 @@ public:
         this->amount = amount;
     }
 
+
 private:
 	// render handles
 	GLuint VAO, VBO, EBO;
 
 	glm::vec3 color;
 
-    GLuint amount;  // if 0 no instancing, if > 0 then instanced
+    GLuint amount = 0;  // if 0 no instancing, if > 0 then instanced
 
 	void setupMesh() {
 		glGenVertexArrays(1, &VAO);
