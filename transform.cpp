@@ -5,7 +5,7 @@
 // returns world pos of transform
 glm::vec3 Transform::getPos() {
     if (parent >= 0) {
-        return Physics::getTransform(parent)->pos + pos;
+        return Physics::getTransform(parent)->getPos() + pos;
     }
     return pos;
 }

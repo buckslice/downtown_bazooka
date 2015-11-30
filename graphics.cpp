@@ -6,8 +6,15 @@
 extern GLfloat vertices[];
 extern GLuint elements[];
 
+GLuint WIDTH;
+GLuint HEIGHT;
+
 Graphics::Graphics(sf::RenderWindow& window) {
+    WIDTH = window.getSize().x;
+    HEIGHT = window.getSize().y;
+
     initGL(window);
+
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
@@ -21,10 +28,7 @@ void Graphics::initGL(sf::RenderWindow& window) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    // initialize blur color buffers
-    for (GLuint i = 0; i < 2; i++) {
-        blurBuffers[i] = GLHelper::buildFBO(WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE, false);
-    }
+    buildBuffers();
 
     // initialize quad for framebuffer rendering
     GLfloat quadVertices[] = {
@@ -45,6 +49,7 @@ void Graphics::initGL(sf::RenderWindow& window) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glBindVertexArray(0);
 
     // build cube mesh
     GLuint cubeVerts = 120;
@@ -67,12 +72,30 @@ void Graphics::initGL(sf::RenderWindow& window) {
     // more stuff
     buildShaders();
 
-    // build main frame buffer
-    // holds color and depth data
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
+
+}
+
+void Graphics::resize(int width, int height) {
+    WIDTH = width;
+    HEIGHT = height;
+    glViewport(0, 0, WIDTH, HEIGHT);
+    // destroy buffers and then rebuild
+    blurBuffers[0].destroy();
+    blurBuffers[1].destroy();
+    sceneBuffer.destroy();
+    blurResult.destroy();
+
+    buildBuffers();
+}
+
+void Graphics::buildBuffers() {
+    // initialize buffers
+    for (GLuint i = 0; i < 2; i++) {
+        blurBuffers[i] = GLHelper::buildFBO(WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE, false);
+    }
     sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
     blurResult = GLHelper::buildFBO(WIDTH, HEIGHT, true);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
 }
 
 // render a fullscreen quad

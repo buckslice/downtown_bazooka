@@ -37,7 +37,7 @@ Physics::Physics() {
         }
 
         // increment next start index based on how much we added this split
-        startIndex += pow(4, s);
+        startIndex += (int)pow(4, s);
     }
 
     // stores lists of static objects
@@ -217,6 +217,21 @@ void Physics::addStatics(const std::vector<AABB>& objs) {
     }
 }
 
+bool Physics::checkStatic(AABB obj) {
+    std::vector<int> indices;
+    getLeafs(indices, 0, obj);
+
+    for (int i = 0; i < indices.size(); i++) {
+        for (int j = 0; j < treeMatrix[indices[i]].size(); j++) {
+            int o = treeMatrix[indices[i]][j];
+            if (AABB::check(obj, staticObjects[o])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Physics::clearStatics() {
     staticObjects.clear();
     treeMatrix.clear();
@@ -244,10 +259,11 @@ void Physics::printStaticMatrix() {
 
 // need to make this return an int pointer or something
 // so it can be reassigned when a dynamic is destroyed or something
-
 // alternatively just store everything in entity and quit caring about cache cuz
 // probably doesnt even matter! ya since entity wont even have that many components in it
-// this is pretty pointless.. #noragrets #winterquartergoals #notthatmuchworkactually
+// just not sure how to handle pointers to different objects basically
+// indices into vector works but then need to be updated when vector deletes (just move end guy into deleted spot)
+// or with pointers but whenever a vector resizes any pointers to any of its objects get invalidated
 int Physics::registerDynamic(glm::vec3 scale) {
     dynamicObjects.push_back(PhysicsTransform(scale));
     return dynamicObjects.size() - 1;

@@ -4,10 +4,7 @@
 #include <vector>
 #include <unordered_set>
 
-#include "camera.h"
 #include "transform.h"
-#include "cityGenerator.h"
-#include <SFML/Window.hpp>
 
 
 class Physics {
@@ -18,9 +15,9 @@ public:
 
     void addStatic(AABB obj);
     void addStatics(const std::vector<AABB>& objs);
+    bool checkStatic(AABB obj);
     void clearStatics();
     void clearDynamics();
-
     static PhysicsTransform* getTransform(int index);
     static int registerDynamic(glm::vec3 scale);
 
@@ -46,5 +43,4 @@ private:
     // used to prevent multiple checks on leaf borders
     std::unordered_set<int> checkSet;
 
-    sf::Clock timeSinceStart;
 };

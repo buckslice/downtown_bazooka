@@ -6,6 +6,7 @@
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <fstream>
 #include <Windows.h>
@@ -24,84 +25,101 @@
 #include "mathutil.h"
 #include "entityManager.h"
 
+sf::Vector2i center;
+
 // TODO extract to input class
-sf::Vector2i getMouseMovement(sf::Window& window, bool lastFocus) {
+sf::Vector2i getMouseMovement(sf::Window& window, bool centerAndIgnore) {
     sf::Vector2i mouseMove;
-    // get mouse movement
-    if (window.hasFocus()) {
-        // if just got focus this frame then ignore
-        if (!lastFocus) {
-            sf::Mouse::setPosition(center, window);
-            return sf::Vector2i(0, 0);
-        }
 
-        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-        mouseMove = mousePos - center;
+    // if window just got refocused or on resize then recenter mouse and ignore
+    if (centerAndIgnore) {
+        sf::Mouse::setPosition(center, window);
+        return sf::Vector2i(0, 0);
+    }
 
-        // if the mouse has moved then set it back to center
-        // needs to somehow prevent mouse going outside window in one frame
-        // which is possible if you move fast enough
-        if (mouseMove != sf::Vector2i(0, 0)) {
-            sf::Mouse::setPosition(center, window);
-        }
+    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+    mouseMove = mousePos - center;
+
+    // if the mouse has moved then set it back to center
+    // needs to somehow prevent mouse going outside window in one frame
+    // which is possible if you move fast enough
+    if (mouseMove != sf::Vector2i(0, 0)) {
+        sf::Mouse::setPosition(center, window);
     }
     return mouseMove;
 }
 
 
 int main() {
-    // window settings
+
+    // set default game width and height
+    GLuint width = 1280;
+    GLuint height = 960;
+    center.x = width / 2;
+    center.y = height / 2;
+
+    // build window
     sf::ContextSettings settings;
     settings.depthBits = 24;
     settings.stencilBits = 8;
     settings.antialiasingLevel = 2;
-
-    //sf::Window window(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
-    sf::RenderWindow* window = new sf::RenderWindow(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Close, settings);
+    sf::RenderWindow* window = new sf::RenderWindow(sf::VideoMode(width, height), "DOWNTOWN BAZOOKA", sf::Style::Default, settings);
     window->setFramerateLimit(60);
 
+    // load music track
+    sf::Music mainTrack;
+    if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
+        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+    }
+
+    // main systems
     Graphics graphics(*window);
+    Physics physics;
     Input input;
 
-    //Game game(WIDTH, HEIGHT);
-
-    // init and build city
+    // init random seed and build city
+    srand(time(NULL));
+    //srand(1); //my testing seed for physics bugs lol
     CityGenerator cg;
 
+    // generate a random city
+    cg.generate(false, false, 7500, graphics, physics);
+
     // init camera
-    Camera cam(270.0f, 0.0f);
+    Camera cam(0.0f, 0.0f);
     Player* player = new Player(&cam);
     cam.transform.parent = player->transform;
     cam.transform.pos = glm::vec3(0.0f, 1.8f, 0.0f);
 
-    Menu menu(WIDTH, HEIGHT, player);
+    EntityManager em(graphics, player);
+    
+    Menu menu(width, height, player);
 
-    // set up some more stuff
+    // set up music
+    mainTrack.setLoop(true);
+    mainTrack.setVolume(20.0f);
+    mainTrack.play();
+
+    // some utility clocks
     sf::Clock frameTime;
     sf::Clock animTime;
+
+    // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
     window->setMouseCursorVisible(false);
     window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be useful
     bool lastFocused = false;
-    bool windowFocused = false;
-
-    // generate a random circular city
-    cg.generate(false, 7500, graphics);
-
-    Physics physics;
-    physics.addStatics(cg.boxes);
-    //physics.printStaticMatrix();
-
-    EntityManager em(graphics, player);
+    bool gameFocused = false;
+    bool clickedInside = true;
+    bool mouseVisible = false;
+    bool lastMouseVisible = false;
 
     bool running = true;
+
     while (running) {
         GLfloat delta = frameTime.restart().asSeconds();
 
-        lastFocused = windowFocused;
-        windowFocused = window->hasFocus();
-
-        // should check for window.resize event too and resize window
+        // should check for window.resize event too and resize window?
         // check for events that will quit game
         sf::Event e;
         while (window->pollEvent(e)) {
@@ -109,17 +127,48 @@ int main() {
             case sf::Event::Closed:
                 running = false;
                 break;
+            case sf::Event::Resized:
+                window->setView(sf::View(sf::FloatRect(0.0f, 0.0f, e.size.width, e.size.height)));
+                graphics.resize(e.size.width, e.size.height);
+                center.x = e.size.width / 2;
+                center.y = e.size.height / 2;
+                break;
             default:
                 break;
             }
         }
 
+        // check and track game focusing
+        lastFocused = gameFocused;
+        gameFocused = window->hasFocus() && clickedInside;
+        if (!gameFocused && lastFocused) {
+            clickedInside = false;
+        }
+        if (!clickedInside && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            sf::Vector2i mp = sf::Mouse::getPosition(*window);
+            clickedInside = mp.x >= 0 && mp.y >= 0;
+        }
+
+        // handle mouse visibility
+        lastMouseVisible = mouseVisible;
+        mouseVisible = !gameFocused;
+        if (mouseVisible != lastMouseVisible) {
+            // if you call this every frame it messes up mouse icon
+            window->setMouseCursorVisible(mouseVisible);
+        }
+
+        // get mouse movement and update based on window focus
+        sf::Vector2i mouseMove;
+        if (gameFocused) {
+            mouseMove = getMouseMovement(*window, !lastFocused);
+        }
+
         // update static input bool arrays
-        if (windowFocused || lastFocused) {
+        if (gameFocused || lastFocused) {
             input.update();
         }
 
-        // recompile shaders
+        // recompile shaders if prompted
         if (Input::justPressed(sf::Keyboard::R)) {
             graphics.buildShaders();
         }
@@ -127,13 +176,8 @@ int main() {
         // build square or circular city if prompted
         if (Input::justPressed(sf::Keyboard::F) || Input::justPressed(sf::Keyboard::G)) {
             physics.clearStatics();
-            cg.generate(Input::justPressed(sf::Keyboard::F), 7500, graphics);
-            physics.addStatics(cg.boxes);
+            cg.generate(false, Input::justPressed(sf::Keyboard::F), 7500, graphics, physics);
         }
-
-        // get mouse movement and update based on window focus
-        window->setMouseCursorVisible(!windowFocused);
-        sf::Vector2i mouseMove = getMouseMovement(*window, lastFocused);
 
         //update menu
         menu.update(running);
@@ -151,7 +195,7 @@ int main() {
         if (!menu.getVisible()) {   // if game running
             em.update(delta);
 
-            if (windowFocused) {
+            if (gameFocused) {
                 cam.update(mouseMove.x, mouseMove.y);
             }
         } else {

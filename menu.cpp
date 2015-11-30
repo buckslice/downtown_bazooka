@@ -13,48 +13,54 @@ Menu::Menu(float width, float height, Player* player) {
     menu[0].setColor(selectedColor);
     menu[0].setString("Play");
     menu[0].setScale(sf::Vector2f(2.0f, 2.0f));
-    menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1));
 
     menu[1].setFont(font);
     menu[1].setColor(defaultColor);
     menu[1].setString("Instructions");
-    menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2));
     menu[1].setScale(sf::Vector2f(2.0f, 2.0f));
 
     menu[2].setFont(font);
     menu[2].setColor(defaultColor);
     menu[2].setString("Quit");
-    menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3));
     menu[2].setScale(sf::Vector2f(2.0f, 2.0f));
 
-    title = sf::Text();
     title.setFont(font);
     title.setColor(titleColor);
     title.setString("DOWTOWN BAZOOKA");
     title.setStyle(sf::Text::Bold);
-    title.setPosition(sf::Vector2f(300.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.1));
     title.setScale(sf::Vector2f(3.0f, 3.0f));
 
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
-    this->player = player;
-    // this should give the width in pixels of the text so we can use that to center it
-    // but too bad it crashes everytihng so hard lol whyyyyyy???
-    //float w = title.getLocalBounds().width;
-}
 
+    this->player = player;
+
+    // this should give the width in pixels of the text so we can use that to center it
+    // but too bad it crashes the game so hard lol whyyyyyy???
+    // some sort of weird access violation where we arent reseting states right??? bugged pos???
+    //sf::FloatRect rect = title->getLocalBounds();
+
+}
 
 Menu::~Menu() {
 }
 
 void Menu::draw(sf::RenderWindow& window) {
+    int width = window.getSize().x;
+    int height = window.getSize().y;
     if (visible) {
+        // set positions incase resize
+        title.setPosition(sf::Vector2f(width / 2 - 400.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
+        menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
+        menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
+        menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
+
         window.draw(title);
         for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
             window.draw(menu[i]);
         }
     } else {
-        healthBar.setPosition(0.0f, window.getSize().y - HEALTH_BAR_HEIGHT);
-        healthBar.setSize(sf::Vector2f(window.getSize().x * player->getHealth() / MAX_HEALTH, HEALTH_BAR_HEIGHT));
+        healthBar.setPosition(0.0f, height - HEALTH_BAR_HEIGHT);
+        healthBar.setSize(sf::Vector2f(width * player->getHealth() / MAX_HEALTH, HEALTH_BAR_HEIGHT));
         window.draw(healthBar);
     }
 }
@@ -90,7 +96,7 @@ void Menu::update(bool& running) {
             justOpened = true;
         }
     }
-    
+
     if (!visible) {
         return;
     }

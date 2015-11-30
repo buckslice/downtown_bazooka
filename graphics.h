@@ -6,8 +6,6 @@
 #include "camera.h"
 #include "mesh.h"
 
-const GLuint WIDTH = 1440, HEIGHT = 960;
-const sf::Vector2i center(WIDTH / 2, HEIGHT / 2);
 const GLuint BLUR_DOWNSAMPLE = 2;
 
 class Graphics {
@@ -20,9 +18,11 @@ public:
     ~Graphics();
 
     void renderScene(Camera& cam, bool drawDudes);
+    void resize(int width, int height);
     //void renderUI();
     void postProcess();
     void buildShaders();
+    void buildBuffers();
 
     GLuint genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors);
     GLuint genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SFML\Graphics.hpp"
+#include "SFML/Graphics.hpp"
 #include "player.h"
 
 #define MAX_NUMBER_OF_ITEMS 3

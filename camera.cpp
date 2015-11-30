@@ -28,6 +28,7 @@ void Camera::updateCameraVectors() {
     forward = glm::normalize(f);
     right = glm::normalize(glm::cross(forward, worldUp));
     up = glm::normalize(glm::cross(right, forward));
+    //std::cout << forward.x << " " << forward.y << " " << forward.z << std::endl;
 }
 
 void Camera::update(GLfloat mdx, GLfloat mdy) {

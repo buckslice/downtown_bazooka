@@ -22,8 +22,8 @@ public:
             bool elite = rand() % 50 == 0;
 
             glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-            glm::vec3 variance = scale * Mth::randInsideUnitSphere();
-            variance.z = variance.x;
+            glm::vec3 variance = Mth::randInsideUnitSphere();
+            variance.x = variance.z = abs(variance.x);
             scale += variance * .25f;
             if (elite) {
                 scale *= Mth::rand01() + 2.0f;
@@ -33,7 +33,7 @@ public:
             if (elite) { // gold elites 
                 e->speed = Mth::rand01() * 5.0f + 10.0f;
                 e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-                cols.push_back(glm::vec3(0.8f + Mth::rand01() * 0.2f, 1.0f, 0.0f));
+                cols.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
             } else {    // red grunts
                 cols.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
             }
@@ -57,7 +57,6 @@ public:
             }
 
             // update dude models
-            // kinda filth but works for now
             glm::mat4 model;
             glm::vec3 pos = entities[i]->getTransform()->pos;
             glm::vec3 scale = entities[i]->getTransform()->scale;
