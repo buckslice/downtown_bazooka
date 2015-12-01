@@ -93,6 +93,7 @@ void Physics::update(float delta) {
         resolvedSet.clear();
 
         // set remaining velocity to initial velocity of dynamic
+		pt.vel.y += GRAVITY * delta;
         glm::vec3 rvel = pt.vel;
 
         // try to resolve up to 10 collisions for this object this frame

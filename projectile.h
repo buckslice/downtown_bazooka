@@ -12,7 +12,7 @@ public:
 private:
 	float speed;
 	glm::vec3 forward;
-	float timer = 1.0f;
+	float timer = 5.0f;
 	bool alive = true;
 };
 

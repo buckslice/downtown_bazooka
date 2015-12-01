@@ -45,5 +45,5 @@ void Enemy::update(GLfloat delta) {
     pt.vel.x = dirToPlayer.x;
     pt.vel.z = dirToPlayer.z;
 
-    pt.vel.y += GRAVITY * delta;
+    //pt.vel.y += GRAVITY * delta;
 }

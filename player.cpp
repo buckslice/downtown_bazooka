@@ -31,7 +31,7 @@ void Player::update(GLfloat delta) {
 
 	// check shoot input
 	if (Input::justPressed(sf::Keyboard::P)) {
-		shoot(xzforward);
+		shoot(cam->forward);
 	}
 
 	int size = projectiles.size();
@@ -76,7 +76,7 @@ void Player::update(GLfloat delta) {
             pt.vel *= .9f;
         }
         // gravity 9.81 not right for some reason
-        pt.vel.y = oldy + GRAVITY * delta;
+		pt.vel.y = oldy;
     }
 }
 
