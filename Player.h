@@ -13,8 +13,6 @@ const int HEALTH_BAR_HEIGHT = 20;
 
 const GLfloat SPEED = 15.0f;
 const GLfloat JUMPSPEED = 25.0f;
-const GLfloat GRAVITY = -30.0f;
-
 
 class Player : public Entity {
 public:
@@ -30,7 +28,7 @@ public:
 
     void jump();
 
-	void shoot(glm::vec3 xzforward);
+	void shoot();
 
     void addHealth(int amount);
 

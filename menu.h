@@ -23,16 +23,17 @@ public:
 
 private:
     void move(bool up);
-    void showInstructions();
 
     sf::Text menu[MAX_NUMBER_OF_ITEMS];
     sf::Text title;
+    sf::Text instructions;
     sf::RectangleShape healthBar;
 
     Player* player;
     sf::Font font;
     int curSelection;
     bool visible = true;
+    bool showingInstructions = false;
 
 };
 

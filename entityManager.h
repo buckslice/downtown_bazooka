@@ -44,6 +44,10 @@ public:
         if (initColors) {
             glDeleteBuffers(1, &dudeColorBuffer);
         }
+        // push on extra colors at end for projectiles
+        for (int i = 0; i < 100; i++) {
+            cols.push_back(glm::vec3(0.95f, 1.0f, 0.5f));
+        }
         dudeColorBuffer = g.genColorBuffer(*g.guy, cols);
         initColors = true;
     }
@@ -53,23 +57,23 @@ public:
         for (int i = 0; i < entities.size(); i++) {
             entities[i]->update(delta);
             if (i == 0) {   // player is always first
-				 std::vector<Projectile>& projectiles = player->getProjectiles();
-				 for (int j = 0; j < projectiles.size(); j++) {
-					 glm::mat4 model;
-					 glm::vec3 pos = projectiles[j].getTransform()->pos;
-					 glm::vec3 scale = projectiles[j].getTransform()->scale;
-					 model = glm::translate(model, pos);
-					 model = glm::scale(model, scale);
-					 models.push_back(model);
-				 }
 				 continue;
             }
-
-            // update dude models
+            // update dudes model
             glm::mat4 model;
             glm::vec3 pos = entities[i]->getTransform()->pos;
             glm::vec3 scale = entities[i]->getTransform()->scale;
             pos.y += scale.y / 2.0f;
+            model = glm::translate(model, pos);
+            model = glm::scale(model, scale);
+            models.push_back(model);
+        }
+        // add projectiles onto end
+        std::vector<Projectile>& projectiles = player->getProjectiles();
+        for (int j = 0; j < projectiles.size(); j++) {
+            glm::mat4 model;
+            glm::vec3 pos = projectiles[j].getTransform()->pos;
+            glm::vec3 scale = projectiles[j].getTransform()->scale;
             model = glm::translate(model, pos);
             model = glm::scale(model, scale);
             models.push_back(model);

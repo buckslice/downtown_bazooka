@@ -30,8 +30,8 @@ void Player::update(GLfloat delta) {
     }
 
 	// check shoot input
-	if (Input::justPressed(sf::Keyboard::P)) {
-		shoot(cam->forward);
+	if (Input::justPressed(sf::Keyboard::E)) {
+		shoot();
 	}
 
 	int size = projectiles.size();
@@ -53,12 +53,14 @@ void Player::update(GLfloat delta) {
 
     PhysicsTransform& pt = *getTransform();
     if (flying) {
+        pt.obeysGravity = false;
         pt.vel = (cam->right * input.x + xzforward * input.z + cam->worldUp * input.y) * speed * 8.0f;
     } else {
         input.y = 0.0f; // ignore this part of input when not flying
         if (pt.vel.y != 0.0f) {
             pt.grounded = false;
         }
+        pt.obeysGravity = true;
 
         GLfloat oldy = pt.vel.y;
         GLfloat accel = pt.grounded ? 10.0f : 2.0f;
@@ -89,9 +91,11 @@ void Player::jump() {
     }
 }
 
-void Player::shoot(glm::vec3 forward) {
+void Player::shoot() {
 	PhysicsTransform& pt = *getTransform();
-	Projectile projectile(pt.getPos(), 100.0f, forward);
+    glm::vec3 shootPos = pt.getPos();
+    shootPos.y += 1.8f;
+	Projectile projectile(shootPos, pt.vel + cam->forward*100.0f);
 	projectiles.push_back(projectile);
 }
 
@@ -108,16 +112,16 @@ std::vector<Projectile> Player::getProjectiles() const {
 glm::vec3 Player::getMovementDir() {
     // calculate movement direction
     glm::vec3 dir(0.0f, 0.0f, 0.0f);
-    if (Input::pressed(sf::Keyboard::Comma) || Input::pressed(sf::Keyboard::W)) {
+    if (Input::pressed(sf::Keyboard::W)) {
         dir.z += 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::O) || Input::pressed(sf::Keyboard::S)) {
+    if (Input::pressed(sf::Keyboard::S)) {
         dir.z -= 1.0f;
     }
     if (Input::pressed(sf::Keyboard::A)) {
         dir.x -= 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::E) || Input::pressed(sf::Keyboard::D)) {
+    if (Input::pressed(sf::Keyboard::D)) {
         dir.x += 1.0f;
     }
     if (Input::pressed(sf::Keyboard::LShift)) {

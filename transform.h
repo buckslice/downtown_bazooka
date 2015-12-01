@@ -23,6 +23,7 @@ class PhysicsTransform : public Transform {
 public:
     glm::vec3 vel;
     bool grounded = false;
+    bool obeysGravity = true;
 
     // default is 1x1x1 box centered on bottom
     PhysicsTransform(glm::vec3 scale) :

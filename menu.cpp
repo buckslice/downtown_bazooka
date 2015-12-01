@@ -30,6 +30,19 @@ Menu::Menu(float width, float height, Player* player) {
     title.setStyle(sf::Text::Bold);
     title.setScale(sf::Vector2f(3.0f, 3.0f));
 
+    instructions.setFont(font);
+    instructions.setColor(DEFAULT_COLOR);
+    instructions.setString(
+        " WASD : move\n"
+        " Space: jump, select\n"
+        " ESC  : menu, quit\n"
+        " Q    : toggle flymode\n"
+        " E    : shoot\n"
+        " G    : gen normal\n"
+        " F    : gen colorwheel\n"
+        " R    : recompile shaders");
+    instructions.setScale(sf::Vector2f(2.0f, 2.0f));
+
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
     this->player = player;
@@ -48,15 +61,19 @@ void Menu::draw(sf::RenderWindow& window) {
     int width = window.getSize().x;
     int height = window.getSize().y;
     if (visible) {
-        // set positions incase resize
-        title.setPosition(sf::Vector2f(width / 2 - 440.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
-        menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
-        menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
-        menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
+        if (showingInstructions) {
+            window.draw(instructions);
+        } else {
+            // set positions incase resize
+            title.setPosition(sf::Vector2f(width / 2 - 460.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
+            menu[0].setPosition(sf::Vector2f(width / 2 - 85.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
+            menu[1].setPosition(sf::Vector2f(width / 2 - 210.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
+            menu[2].setPosition(sf::Vector2f(width / 2 - 85.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
 
-        window.draw(title);
-        for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
-            window.draw(menu[i]);
+            window.draw(title);
+            for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
+                window.draw(menu[i]);
+            }
         }
     } else {
         healthBar.setPosition(0.0f, height - HEALTH_BAR_HEIGHT);
@@ -81,16 +98,17 @@ void Menu::move(bool up) {
     menu[curSelection].setColor(SELECTED_COLOR);
 }
 
-void Menu::showInstructions() {
-    //TODO
-}
 
 void Menu::update(bool& running) {
     justClosed = false;
     justOpened = false;
     if (Input::justPressed(sf::Keyboard::Escape)) {
         if (visible) {
-            running = false;
+            if (showingInstructions) {
+                showingInstructions = false;
+            } else {
+                running = false;
+            }
         } else {
             visible = true;
             justOpened = true;
@@ -116,7 +134,7 @@ void Menu::update(bool& running) {
             justClosed = true;
             break;
         case 1:
-            showInstructions();
+            showingInstructions = true;
             break;
         case 2:
             running = false;

@@ -9,7 +9,7 @@
 
 class Physics {
 public:
-    const float GRAVITY = -9.8f;
+    const float GRAVITY = -30.0f;
 
     void update(float delta);
 

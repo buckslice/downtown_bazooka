@@ -93,7 +93,9 @@ void Physics::update(float delta) {
         resolvedSet.clear();
 
         // set remaining velocity to initial velocity of dynamic
-		pt.vel.y += GRAVITY * delta;
+        if (pt.obeysGravity) {
+            pt.vel.y += GRAVITY * delta;
+        }
         glm::vec3 rvel = pt.vel;
 
         // try to resolve up to 10 collisions for this object this frame
@@ -184,6 +186,7 @@ void Physics::update(float delta) {
                 glm::vec3 pvel = rvel - glm::proj(rvel, norm);
                 // update remaining velocity to projected velocity * remaining time
                 rvel = pvel * (1.0f - time);
+                // should add different collision type for reflect bounce too
             }
 
             // if there was no full collision test then this object is resolved

@@ -2,12 +2,10 @@
 
 
 
-Projectile::Projectile(glm::vec3 position, float speed, glm::vec3 forward) {
-	this->speed = speed;
-	this->forward = forward;
-	PhysicsTransform* pt = getTransform();
-	pt->vel = speed * forward;
-	pt->pos = position;
+Projectile::Projectile(glm::vec3 pos, glm::vec3 vel) {
+    PhysicsTransform* pt = getTransform();
+    pt->pos = pos;
+    pt->vel = vel;
 }
 
 
@@ -16,13 +14,13 @@ Projectile::~Projectile() {
 }
 
 void Projectile::update(GLfloat delta) {
-	// if the projectile collides with something, delete it
-	timer -= delta;
-	if (timer <= 0.0f) {
-		alive = false;
-	}
+    // if the projectile collides with something, delete it
+    timer -= delta;
+    if (timer <= 0.0f) {
+        alive = false;
+    }
 }
 
 bool Projectile::isAlive() const {
-	return alive;
+    return alive;
 }
