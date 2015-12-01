@@ -10,23 +10,23 @@ Menu::Menu(float width, float height, Player* player) {
     curSelection = 0;
 
     menu[0].setFont(font);
-    menu[0].setColor(selectedColor);
+    menu[0].setColor(SELECTED_COLOR);
     menu[0].setString("Play");
     menu[0].setScale(sf::Vector2f(2.0f, 2.0f));
 
     menu[1].setFont(font);
-    menu[1].setColor(defaultColor);
+    menu[1].setColor(DEFAULT_COLOR);
     menu[1].setString("Instructions");
     menu[1].setScale(sf::Vector2f(2.0f, 2.0f));
 
     menu[2].setFont(font);
-    menu[2].setColor(defaultColor);
+    menu[2].setColor(DEFAULT_COLOR);
     menu[2].setString("Quit");
     menu[2].setScale(sf::Vector2f(2.0f, 2.0f));
 
     title.setFont(font);
-    title.setColor(titleColor);
-    title.setString("DOWTOWN BAZOOKA");
+    title.setColor(TITLE_COLOR);
+    title.setString("DOWNTOWN BAZOOKA");
     title.setStyle(sf::Text::Bold);
     title.setScale(sf::Vector2f(3.0f, 3.0f));
 
@@ -37,7 +37,7 @@ Menu::Menu(float width, float height, Player* player) {
     // this should give the width in pixels of the text so we can use that to center it
     // but too bad it crashes the game so hard lol whyyyyyy???
     // some sort of weird access violation where we arent reseting states right??? bugged pos???
-    //sf::FloatRect rect = title->getLocalBounds();
+    //sf::FloatRect rect = title.getLocalBounds();
 
 }
 
@@ -49,7 +49,7 @@ void Menu::draw(sf::RenderWindow& window) {
     int height = window.getSize().y;
     if (visible) {
         // set positions incase resize
-        title.setPosition(sf::Vector2f(width / 2 - 400.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
+        title.setPosition(sf::Vector2f(width / 2 - 440.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
         menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
         menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
         menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
@@ -75,10 +75,10 @@ int circularClamp(int n, int min, int max) {
 }
 
 void Menu::move(bool up) {
-    menu[curSelection].setColor(defaultColor);
+    menu[curSelection].setColor(DEFAULT_COLOR);
     curSelection += up ? -1 : 1;
     curSelection = circularClamp(curSelection, 0, MAX_NUMBER_OF_ITEMS - 1);
-    menu[curSelection].setColor(selectedColor);
+    menu[curSelection].setColor(SELECTED_COLOR);
 }
 
 void Menu::showInstructions() {

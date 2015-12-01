@@ -4,9 +4,9 @@
 #include "player.h"
 
 #define MAX_NUMBER_OF_ITEMS 3
-#define defaultColor sf::Color::White
-#define titleColor sf::Color::Yellow
-#define selectedColor sf::Color::Green
+#define DEFAULT_COLOR sf::Color::White
+#define TITLE_COLOR sf::Color::Yellow
+#define SELECTED_COLOR sf::Color::Green
 
 class Menu {
 public:

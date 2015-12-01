@@ -167,6 +167,7 @@
     <ClCompile Include="noise.cpp" />
     <ClCompile Include="physics.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="projectile.cpp" />
     <ClCompile Include="transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +190,7 @@
     <ClInclude Include="noise.h" />
     <ClInclude Include="physics.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="projectile.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="transform.h" />
   </ItemGroup>

@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "physics.h"
 #include "input.h"
+#include "projectile.h"
 
 const int MAX_HEALTH = 100;
 const int HEALTH_BAR_HEIGHT = 20;
@@ -29,11 +30,16 @@ public:
 
     void jump();
 
+	void shoot(glm::vec3 xzforward);
+
     void addHealth(int amount);
+
+	std::vector<Projectile> getProjectiles() const;
 
 private:
     Camera* cam;
     int health;
+	std::vector<Projectile> projectiles;
     float speed;
     float timeSinceJump = -1.0f;
 

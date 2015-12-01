@@ -53,7 +53,16 @@ public:
         for (int i = 0; i < entities.size(); i++) {
             entities[i]->update(delta);
             if (i == 0) {   // player is always first
-                continue;
+				 std::vector<Projectile>& projectiles = player->getProjectiles();
+				 for (int j = 0; j < projectiles.size(); j++) {
+					 glm::mat4 model;
+					 glm::vec3 pos = projectiles[j].getTransform()->pos;
+					 glm::vec3 scale = projectiles[j].getTransform()->scale;
+					 model = glm::translate(model, pos);
+					 model = glm::scale(model, scale);
+					 models.push_back(model);
+				 }
+				 continue;
             }
 
             // update dude models
@@ -67,8 +76,10 @@ public:
         }
         if (initModels) {
             glDeleteBuffers(1, &dudeModelBuffer);
+			//glDeleteBuffers(1, &projectileModelBuffer);
         }
         dudeModelBuffer = g.genModelBuffer(*g.guy, models);
+		//projectileModelBuffer = g.genModelBuffer(*g.guy, projectileModels);
         initModels = true;
     }
 
@@ -89,6 +100,7 @@ private:
     std::vector<Entity*> entities;
     GLuint dudeColorBuffer;
     GLuint dudeModelBuffer;
+	//GLuint projectileModelBuffer;
     Graphics& g;
     Player* player;
     bool initColors = false;

@@ -5,7 +5,14 @@ int Player::getHealth() {
 }
 
 void Player::update(GLfloat delta) {
+	// get movement
+	glm::vec3 input = getMovementDir();
 
+	// movement controls
+	glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
+	if (input != glm::vec3(0.0f, 0.0f, 0.0f)) {
+		input = glm::normalize(input);
+	}
     if (Input::pressed(sf::Keyboard::Right)) {
         addHealth(5);
     }
@@ -22,21 +29,27 @@ void Player::update(GLfloat delta) {
         timeSinceJump = 0.0f;
     }
 
+	// check shoot input
+	if (Input::justPressed(sf::Keyboard::P)) {
+		shoot(xzforward);
+	}
+
+	int size = projectiles.size();
+	for (int i = 0; i < size; i++) {
+		projectiles[i].update(delta);
+		if (!projectiles[i].isAlive()) {
+			projectiles[i] = projectiles[size - 1];
+			projectiles.pop_back();
+			size--;
+		}
+	}
+
     // jump if in time
     float jumpLenience = 0.2f;
     if (timeSinceJump < jumpLenience) {
         jump();
     }
     timeSinceJump += delta;
-
-    // get movement
-    glm::vec3 input = getMovementDir();
-
-    // movement controls
-    glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
-    if (input != glm::vec3(0.0f, 0.0f, 0.0f)) {
-        input = glm::normalize(input);
-    }
 
     PhysicsTransform& pt = *getTransform();
     if (flying) {
@@ -76,31 +89,41 @@ void Player::jump() {
     }
 }
 
+void Player::shoot(glm::vec3 forward) {
+	PhysicsTransform& pt = *getTransform();
+	Projectile projectile(pt.getPos(), 100.0f, forward);
+	projectiles.push_back(projectile);
+}
+
 void Player::addHealth(int amount) {
     health += amount;
     health = std::max(0, std::min(health, MAX_HEALTH));
+}
+
+std::vector<Projectile> Player::getProjectiles() const {
+	return projectiles;
 }
 
 
 glm::vec3 Player::getMovementDir() {
     // calculate movement direction
     glm::vec3 dir(0.0f, 0.0f, 0.0f);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) || sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+    if (Input::pressed(sf::Keyboard::Comma) || Input::pressed(sf::Keyboard::W)) {
         dir.z += 1.0f;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::O) || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+    if (Input::pressed(sf::Keyboard::O) || Input::pressed(sf::Keyboard::S)) {
         dir.z -= 1.0f;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+    if (Input::pressed(sf::Keyboard::A)) {
         dir.x -= 1.0f;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) || sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+    if (Input::pressed(sf::Keyboard::E) || Input::pressed(sf::Keyboard::D)) {
         dir.x += 1.0f;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+    if (Input::pressed(sf::Keyboard::LShift)) {
         dir.y -= 1.0f;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+    if (Input::pressed(sf::Keyboard::Space)) {
         dir.y += 1.0f;
     }
     return dir;
