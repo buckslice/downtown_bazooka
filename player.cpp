@@ -53,22 +53,27 @@ void Player::update(GLfloat delta) {
 
     PhysicsTransform& pt = *getTransform();
     if (flying) {
-        pt.obeysGravity = false;
+        pt.gravityMultiplier = 0.0f;
         pt.vel = (cam->right * input.x + xzforward * input.z + cam->worldUp * input.y) * speed * 8.0f;
     } else {
         input.y = 0.0f; // ignore this part of input when not flying
         if (pt.vel.y != 0.0f) {
             pt.grounded = false;
         }
-        pt.obeysGravity = true;
-
+		
         GLfloat oldy = pt.vel.y;
+
+		if (!pt.grounded && Input::pressed(sf::Keyboard::Space) && oldy > 0)//If the player is holding down Space and moving up, then they'll decelerate more slowly
+			pt.gravityMultiplier = 1.0f;
+		else
+			pt.gravityMultiplier = 3.0f;
+
         GLfloat accel = pt.grounded ? 10.0f : 2.0f;
         accel *= speed * delta;
         pt.vel.y = 0.0f;
         pt.vel += (cam->right * input.x + xzforward * input.z) * accel;
 
-        if (glm::dot(pt.vel, pt.vel) > speed * speed) {
+        if (glm::dot(pt.vel, pt.vel) > speed * speed) {//For the future: This will give us problems if we want rocket-jumping
             pt.vel = glm::normalize(pt.vel) * speed;
         }
 
@@ -130,5 +135,10 @@ glm::vec3 Player::getMovementDir() {
     if (Input::pressed(sf::Keyboard::Space)) {
         dir.y += 1.0f;
     }
+
+	float len = dir.length();
+	if(len > 1)
+		dir /= len;//normalize the movement vector so the player doesn't move faster diagonally
+
     return dir;
 }

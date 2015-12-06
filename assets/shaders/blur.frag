@@ -38,5 +38,16 @@ void main()
 	//float distsq = (tc.x-.5)*(tc.x-.5)+(tc.y-.5)*(tc.y-.5);
 	//sum *= vec4(.5,.5,.5,1.0);
 
+	//float r = 
+	/*float avg = texture2D(tex, vec2(tc.x-.05,tc.y)).r+texture2D(tex, vec2(tc.x-.05,tc.y)).b+texture2D(tex, vec2(tc.x+.05,tc.y)).r+texture2D(tex, vec2(tc.x+.05,tc.y)).b;
+	avg *= .25;
+
+	sum = vec4(
+		texture2D(tex, vec2(tc.x-.005-.005*avg,tc.y)).r,
+		texture2D(tex, vec2(tc.x,tc.y)).g,
+		texture2D(tex, vec2(tc.x+.005+.005f*avg,tc.y)).b,
+		1
+	);*/
+
     gl_FragColor = vec4(sum.rgb, 1.0);
 }

@@ -93,8 +93,8 @@ void Physics::update(float delta) {
         resolvedSet.clear();
 
         // set remaining velocity to initial velocity of dynamic
-        if (pt.obeysGravity) {
-            pt.vel.y += GRAVITY * delta;
+        if (pt.getAffectedByGravity()) {
+            pt.vel.y += GRAVITY * pt.gravityMultiplier * delta;
         }
         glm::vec3 rvel = pt.vel;
 

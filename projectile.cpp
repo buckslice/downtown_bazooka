@@ -1,7 +1,6 @@
 #include "projectile.h"
 
 
-
 Projectile::Projectile(glm::vec3 pos, glm::vec3 vel) {
     PhysicsTransform* pt = getTransform();
     pt->pos = pos;
@@ -19,6 +18,8 @@ void Projectile::update(GLfloat delta) {
     if (timer <= 0.0f) {
         alive = false;
     }
+
+	//GetEntityManager()->SpawnParticle(getTransform()->getPos());
 }
 
 bool Projectile::isAlive() const {

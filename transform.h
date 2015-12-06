@@ -23,7 +23,7 @@ class PhysicsTransform : public Transform {
 public:
     glm::vec3 vel;
     bool grounded = false;
-    bool obeysGravity = true;
+    float gravityMultiplier = 1.0f;
 
     // default is 1x1x1 box centered on bottom
     PhysicsTransform(glm::vec3 scale) :
@@ -33,6 +33,8 @@ public:
 
     AABB getAABB();
     AABB getSwept(float delta);    // uses vel
+
+	inline bool getAffectedByGravity(){return gravityMultiplier != 0.0f;}
 
 private:
     // aabb extents
