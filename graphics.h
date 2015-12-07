@@ -10,6 +10,7 @@ const GLuint BLUR_DOWNSAMPLE = 2;
 
 class Graphics {
 public:
+	Graphics();
     Graphics(sf::RenderWindow& window);
 
     ~Graphics();

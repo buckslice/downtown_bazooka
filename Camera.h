@@ -27,8 +27,8 @@ public:
 
     GLfloat mouseSensitivity;
     
+	Camera();
     Camera(GLfloat yaw, GLfloat pitch);
-    void setParent(Transform* t);
 
     glm::mat4 getViewMatrix();
     glm::mat4 getProjMatrix(GLuint w, GLuint h);

@@ -1,6 +1,13 @@
 #include "camera.h"
 #include <iostream>
 
+Camera::Camera()
+	: mouseSensitivity{SENSITIVITY}, yaw{0.0f}, pitch{0.0f}
+{
+	worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	updateCameraVectors();
+}
+
 // scalar constructor
 Camera::Camera(GLfloat yaw, GLfloat pitch)
     : mouseSensitivity(SENSITIVITY) {

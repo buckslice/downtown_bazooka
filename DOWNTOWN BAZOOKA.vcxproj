@@ -160,6 +160,8 @@
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
+    <ClCompile Include="enemy.cpp" />
+    <ClCompile Include="gameWindow.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
@@ -179,6 +181,7 @@
     <ClInclude Include="entityManager.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="gameObject.h" />
+    <ClInclude Include="gameWindow.h" />
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="hsbColor.h" />

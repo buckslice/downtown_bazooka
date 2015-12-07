@@ -18,6 +18,11 @@ GLuint HEIGHT;
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
 
+Graphics::Graphics()
+{
+
+}
+
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
     HEIGHT = window.getSize().y;
