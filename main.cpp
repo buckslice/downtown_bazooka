@@ -31,8 +31,8 @@ sf::Vector2i center;
 int main() {
 
     // set default game width and height
-    GLuint width = 1280;
-    GLuint height = 960;
+    GLuint width = 1024;
+    GLuint height = 768;
     center.x = width / 2;
     center.y = height / 2;
 
@@ -50,8 +50,10 @@ int main() {
         std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
     }
 
+
     // main systems
     Graphics graphics(*window);
+    Resources::get();   // load resources
     Physics physics;
     Input input;
 
@@ -61,7 +63,7 @@ int main() {
     CityGenerator cg;
 
     // generate a random city
-    cg.generate(false, false, 7500, graphics, physics);
+    cg.generate(false, false, 7500, physics);
 
     // init camera
     Camera cam(0.0f, 0.0f);
@@ -69,7 +71,7 @@ int main() {
     cam.transform.parent = player->transform;
     cam.transform.pos = glm::vec3(0.0f, 1.8f, 0.0f);
 
-    EntityManager em(graphics, player);
+    EntityManager em(player);
     
     Menu menu(width, height, player);
 
@@ -154,7 +156,7 @@ int main() {
         // build square or circular city if prompted
         if (Input::justPressed(sf::Keyboard::F) || Input::justPressed(sf::Keyboard::G)) {
             physics.clearStatics();
-            cg.generate(false, Input::justPressed(sf::Keyboard::F), 7500, graphics, physics);
+            cg.generate(false, Input::justPressed(sf::Keyboard::F), 7500, physics);
         }
 
         //update menu
@@ -165,7 +167,7 @@ int main() {
             em.init(2000);
         }
         if (menu.justOpened) {
-            em.deleteEntities(1);
+            em.deleteEntities();
             physics.clearDynamics();
         }
 
@@ -190,7 +192,8 @@ int main() {
         physics.update(delta);
 
         // render graphics
-        graphics.renderScene(cam, !menu.getVisible());
+        Graphics::setMeshVisible(em.dudeMesh, !menu.getVisible());
+        graphics.renderScene(cam);
 
         // draw UI
         window->resetGLStates();

@@ -2,19 +2,27 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "graphics.h"
+#include "resources.h"
 
-extern GLfloat vertices[];
-extern GLuint elements[];
+// so can declare at bottom of file
+//extern GLfloat vertices[];
+//extern GLuint elements[];
+
+extern std::vector<Vertex> regVerts;
+extern std::vector<Vertex> offsetVerts;
+extern std::vector<GLuint> elems;
 
 GLuint WIDTH;
 GLuint HEIGHT;
+
+// have to do statics in implementation i guess??
+static std::vector<Mesh*> meshes;
 
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
     HEIGHT = window.getSize().y;
 
     initGL(window);
-
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
@@ -51,23 +59,7 @@ void Graphics::initGL(sf::RenderWindow& window) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     glBindVertexArray(0);
 
-    // build cube mesh
-    GLuint cubeVerts = 120;
-    GLuint floatsPerVert = 5;
-    std::vector<Vertex> verts;
-    for (int i = 0; i < cubeVerts / floatsPerVert; i++) {
-        Vertex v;
-        int j = i * floatsPerVert;
-        v.position = glm::vec3(vertices[j], vertices[j + 1], vertices[j + 2]);
-        v.texcoord = glm::vec2(vertices[j + 3], vertices[j + 4]);
-
-        verts.push_back(v);
-    }
-    GLuint numElements = 36;
-    std::vector<GLuint> tris(elements, elements + numElements);
-    tex = GLHelper::loadTexture("assets/images/grid.png");
-    cube = new Mesh(verts, tris, tex);
-    guy = new Mesh(verts, tris, tex);
+    floorMesh = new Mesh(regVerts, elems, Resources::get().gridTex);
 
     // more stuff
     buildShaders();
@@ -106,8 +98,8 @@ void Graphics::renderQuad() {
     glBindVertexArray(0);
 }
 
-void Graphics::renderScene(Camera& cam, bool drawDudes) {
-    // RENDER SCENE TO FRAMEBUFFER
+// RENDER SCENE TO FRAMEBUFFER
+void Graphics::renderScene(Camera& cam) {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -115,17 +107,23 @@ void Graphics::renderScene(Camera& cam, bool drawDudes) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    buildingShader.use();
+    instanceShader.use();
     // set projection and view matrices
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    // draw instanced mesh a bunch of times (sets model matrix internally)
-    cube->draw(buildingShader);
-    if (drawDudes) {
-        guy->draw(buildingShader);
+
+    for (int i = 0; i < meshes.size(); i++) {
+        if (meshes[i]->visible) {
+            meshes[i]->draw();
+        }
     }
+
+    tiledShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    floorMesh->draw();
 
     // clear states
     glBindVertexArray(0);
@@ -171,9 +169,9 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
     GLuint lookups[4] = { 1, 3, 7, 13 };
     //GLuint lookups[4] = { 2, 5, 9, 17 };
 
-    // iterations * 2 since does width then height
-    // could have simplified below code but left it
-    // incase we want directional blurs later
+// iterations * 2 since does width then height
+// could have simplified below code but left it
+// incase we want directional blurs later
     for (GLuint i = 0; i < iterations * 2; i++) {
         GLuint blurRadius = i / 2 + 1;
         //blurRadius = pow(2, (i / 2 + 1)); //or pow(3,
@@ -208,21 +206,30 @@ bool loadedShadersBefore = false;
 
 void Graphics::buildShaders() {
     bool success = true;
-    success = success && buildingShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
-    buildingShader.use();
-    glUniform1i(glGetUniformLocation(buildingShader.program, "tex"), 0);
+    success &= instanceShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
+    instanceShader.use();
+    glUniform1i(glGetUniformLocation(instanceShader.program, "tex"), 0);
     // save matrix locations from shader
-    projLoc = glGetUniformLocation(buildingShader.program, "proj");
-    viewLoc = glGetUniformLocation(buildingShader.program, "view");
+    projLoc = glGetUniformLocation(instanceShader.program, "proj");
+    viewLoc = glGetUniformLocation(instanceShader.program, "view");
 
-    // shader that blurs a colorbuffer
-    success = success && blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
-    success = success && screenShader.build("assets/shaders/screen.vert", "assets/shaders/screen.frag");
+    success &= tiledShader.build("assets/shaders/default.vert", "assets/shaders/tiled.frag");
+    tiledShader.use();
+    glUniform1i(glGetUniformLocation(tiledShader.program, "tex"), 0);
+    //glUniform3f(glGetUniformLocation(tiledShader.program, "Color"), 1.0f, 0.0f, 0.0f);
+    glm::mat4 model;
+    model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(2000.0f, 10.0f, 2000.0f));  // too lazy to import citygen for CITY_SIZE lol
+    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    // shaders that blurs a colorbuffer
+    success &= blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
+    success &= screenShader.build("assets/shaders/screen.vert", "assets/shaders/screen.frag");
     screenShader.use();
     glUniform1i(glGetUniformLocation(screenShader.program, "screen"), 0);
 
     // shader that blends the blur with the scene
-    success = success && blendShader.build("assets/shaders/screen.vert", "assets/shaders/blend.frag");
+    success &= blendShader.build("assets/shaders/screen.vert", "assets/shaders/blend.frag");
     blendShader.use();
     glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
     glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
@@ -237,7 +244,8 @@ void Graphics::deleteShaders() {
     if (!loadedShadersBefore) {
         return;
     }
-    glDeleteProgram(buildingShader.program);
+    glDeleteProgram(instanceShader.program);
+    glDeleteProgram(tiledShader.program);
     glDeleteProgram(blurShader.program);
     glDeleteProgram(screenShader.program);
     glDeleteProgram(blendShader.program);
@@ -245,14 +253,48 @@ void Graphics::deleteShaders() {
 
 Graphics::~Graphics() {
     deleteShaders();
-    delete cube;
-    delete guy;
-    glDeleteTextures(1, &tex);
+    for (int i = 0; i < meshes.size(); i++) {
+        glDeleteBuffers(1, &meshes[i]->colorBuffer);
+        glDeleteBuffers(1, &meshes[i]->modelBuffer);
+        delete meshes[i];
+    }
+    meshes.erase(meshes.begin(), meshes.end());
+
+    delete floorMesh;
 }
 
-GLuint Graphics::genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors) {
-    mesh.setInstanceAmount(colors.size());
-    GLuint VAO = mesh.getVAO();
+// should eventually just reuse same buffer lol
+void Graphics::setColors(GLuint mesh_id, std::vector<glm::vec3>& colors) {
+    if (colors.size() == 0) {
+        return;
+    }
+
+    Mesh* m = meshes[mesh_id];
+    if (m->builtColors) {
+        glDeleteBuffers(1, &m->colorBuffer);
+    }
+    m->colorBuffer = Graphics::genColorBuffer(m, colors);
+}
+
+void Graphics::setModels(GLuint mesh_id, std::vector<glm::mat4>& models) {
+    Mesh* m = meshes[mesh_id];
+    if (models.size() == 0) {
+        m->visible = false;
+        return;
+    }
+    m->visible = true;
+
+    if (m->builtModels) {
+        glDeleteBuffers(1, &m->modelBuffer);
+    }
+    m->modelBuffer = Graphics::genModelBuffer(m, models);
+}
+
+GLuint Graphics::genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors) {
+    mesh->builtColors = true;
+    //mesh.setInstanceAmount(colors.size());
+
+    GLuint VAO = mesh->getVAO();
     GLuint colorBuffer;
     glBindVertexArray(VAO);
 
@@ -268,9 +310,10 @@ GLuint Graphics::genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors) {
     return colorBuffer;
 }
 
-GLuint Graphics::genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models) {
-    mesh.setInstanceAmount(models.size());
-    GLuint VAO = mesh.getVAO();
+GLuint Graphics::genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models) {
+    mesh->builtModels = true;
+    mesh->setInstanceAmount(models.size());
+    GLuint VAO = mesh->getVAO();
     GLuint modelBuffer;
     glBindVertexArray(VAO);
 
@@ -305,48 +348,109 @@ GLuint Graphics::genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models) {
 //
 //}
 
+GLuint Graphics::registerMesh() {
+    return registerMesh(Resources::get().gridTex);
+}
+
+// no way to delete meshes currently but can just set
+// visibility to false if you need
+// really no need to delete mesh ever
+GLuint Graphics::registerMesh(GLuint tex) {
+
+    meshes.push_back(new Mesh(offsetVerts, elems, tex));
+
+    return meshes.size() - 1;
+
+}
+
+void Graphics::setMeshVisible(GLuint id, bool value) {
+    if (!isValidMeshID(id)) {
+        return;
+    }
+    meshes[id]->visible = value;
+}
+
+bool Graphics::isValidMeshID(GLuint id) {
+    if (id < 0 || id >= meshes.size()) {
+        std::cout << "ERROR::MESH_ID_INVALID" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+
 // helps make square texture look better on buildings
 GLfloat _vn = 1.0f / 32.0f;
+
 // each uv starts in bottom left (when looking at face) and progresses clockwise around
-GLfloat vertices[] = {
-    // front
-    -0.5f, -0.5f, -0.5f,  0.0f, _vn,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f - _vn,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f - _vn,
-    0.5f, -0.5f, -0.5f,  1.0f, _vn,
+std::vector<Vertex> regVerts = {
+    //front
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)},
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    //back
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    //left
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    //right
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    //bottom
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    //top
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
 
-    // back   
-    0.5f, -0.5f,  0.5f,  0.0f, _vn,
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f - _vn,
-    -0.5f,  0.5f,  0.5f,  1.0f, 1.0f - _vn,
-    -0.5f, -0.5f,  0.5f,  1.0f, _vn,
-
-    // left
-    -0.5f, -0.5f,  0.5f,  0.0f, _vn,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f - _vn,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f - _vn,
-    -0.5f, -0.5f, -0.5f,  1.0f, _vn,
-
-    // right
-    0.5f, -0.5f, -0.5f,  0.0f, _vn,
-    0.5f,  0.5f, -0.5f,  0.0f, 1.0f - _vn,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f - _vn,
-    0.5f, -0.5f,  0.5f,  1.0f, _vn,
-
-    // bottom
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-
-    // top
-    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
 };
 
-GLuint elements[] = {
+std::vector<Vertex> offsetVerts = {
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+
+};
+
+std::vector<GLuint> elems = {
     0,1,2,
     2,3,0,
 

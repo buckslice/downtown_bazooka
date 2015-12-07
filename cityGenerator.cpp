@@ -28,11 +28,13 @@ bool tooClose(float minDist, glm::vec2 city, std::vector<glm::vec2> cities) {
 }
 
 CityGenerator::CityGenerator() {
+    buildingMesh = Graphics::registerMesh();
 }
 
 // generate a random city
 // uploads data to graphics and physics systems
-void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Graphics& g, Physics& phys) {
+// should remove need for physics reference and make it static
+void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physics& phys) {
     models.clear();
     colors.clear();
     std::vector<glm::vec2> cities;
@@ -138,11 +140,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Graph
         colors.push_back(c);
     }
 
-    if (!first) {
-        glDeleteBuffers(1, &colorBuffer);
-        glDeleteBuffers(1, &modelBuffer);
-    }
-    g.genColorBuffer(*g.cube, colors);
-    g.genModelBuffer(*g.cube, models);
-    first = false;
+    Graphics::setColors(buildingMesh, colors);
+    Graphics::setModels(buildingMesh, models);
+
 }

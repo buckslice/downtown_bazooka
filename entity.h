@@ -10,12 +10,15 @@ const int MAX_COMPONENTS = 10;
 
 class Entity {
 public:
-    Entity(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f)) {
+    //glm::vec3 color;
+    //bool alive = true;
+
+    Entity(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f), glm::vec3 vel = glm::vec3(0.0f)) {
         transform = Physics::registerDynamic(scale);
         PhysicsTransform* pt = getTransform();
         pt->pos = pos;
         pt->scale = scale;
-        pt->vel = glm::vec3(0.0f);
+        pt->vel = vel;
     }
 
     // derived classes have to override this
@@ -31,6 +34,15 @@ public:
     }
 
     int transform;
+
+    /*void setAlive(bool value) {
+        alive = value;
+        if (alive) {
+            transform = Physics::registerDynamic(scale);
+        }else{
+            Physics::releaseDynamic() // something like this   
+        }
+    }*/
 
     ~Entity() {
 

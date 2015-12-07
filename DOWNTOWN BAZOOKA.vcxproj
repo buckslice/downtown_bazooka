@@ -192,6 +192,7 @@
     <ClInclude Include="physics.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="projectile.h" />
+    <ClInclude Include="resources.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="transform.h" />
   </ItemGroup>

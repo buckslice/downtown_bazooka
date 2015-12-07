@@ -23,6 +23,9 @@ class PhysicsTransform : public Transform {
 public:
     glm::vec3 vel;
     bool grounded = false;
+    // should be stored in entity but temporary fix
+    // until i get physicsTransform checking in/out better
+    bool alive = true;
     float gravityMultiplier = 1.0f;
 
     // default is 1x1x1 box centered on bottom

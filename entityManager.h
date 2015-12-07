@@ -4,34 +4,29 @@
 #include "enemy.h"
 #include "mathutil.h"
 #include "Particle.h"
+#include "resources.h"
 
 class EntityManager {
 public:
-    //EntityManager(Graphics& g, Player* player);
-	
-	EntityManager(Graphics& g, Player* player) :g(g), player(player) {
-		entities.push_back(player);
-	}
 
-	int ENEMIES_START,ENEMIES_END;
+    EntityManager(Player* player) : player(player) {
+        dudeMesh = Graphics::registerMesh();
+        projectileMesh = Graphics::registerMesh(Resources::get().solidTex);
+        particleMesh = Graphics::registerMesh(Resources::get().solidTex);
+    }
 
-	int PROJECTILES_START,PROJECTILES_END;
-	const int PROJECTILES_MAX = 100;
-
-	int PARTICLES_START,PARTICLES_END;
-	const int PARTICLES_MAX = 1000;
+    const int MAX_PROJECTILES = 1000;
+    const int MAX_PARTICLES = 5000;
 
     // should add in support for adding single entities dynamically next
     // main problem is need to redo the graphics to just create buffer with fixed MAX_ENTITIES size
     // then update it each time a new entity is spawned using glBufferSubData()
     // or maybe glMapBuffer() or glMapBufferRange()
-	std::vector<glm::vec3> cols;
-    void init(int numenemies) {
-        deleteEntities(1);  // player is at index 0
+    void init(int numberOfDudes) {
+        deleteEntities();
 
-		ENEMIES_START = 1;
-		ENEMIES_END = ENEMIES_START+numenemies;
-        for (int i = 0; i < numenemies; i++) {
+        std::vector<glm::vec3> colors;
+        for (int i = 0; i < numberOfDudes; i++) {
             glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
             bool elite = rand() % 50 == 0;
 
@@ -47,55 +42,40 @@ public:
             if (elite) { // gold elites 
                 e->speed = Mth::rand01() * 5.0f + 10.0f;
                 e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-                cols.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
+                colors.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
             } else {    // red grunts
-                cols.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
+                colors.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
             }
 
             entities.push_back(e);
             //cols.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
         }
-        if (initColors) {
-            glDeleteBuffers(1, &dudeColorBuffer);
+        Graphics::setColors(dudeMesh, colors);
+
+        colors.clear();
+
+        for (int i = 0; i < MAX_PROJECTILES; i++) {
+            colors.push_back(glm::vec3(1.0f, 0.2f, 0.0f));
         }
 
-		// put stuff for particles (colors may be changed when the particle is actually created)
-		PARTICLES_START = ENEMIES_END+1;
-		PARTICLES_END = PARTICLES_START+PARTICLES_MAX;
-		for(int i = 0; i < PARTICLES_MAX; i++){
-			cols.push_back(glm::vec3(1.0f,1.0f,1.0f));
-			Particle* particle = new Particle();
-			entities.push_back(particle);
-		}
+        Graphics::setColors(projectileMesh, colors);
 
-        // push on extra colors at end for projectiles
-		PROJECTILES_START = PARTICLES_END+1;
-		PROJECTILES_END = PROJECTILES_START+PROJECTILES_MAX;
-        for (int i = 0; i < PROJECTILES_MAX; i++) {
-            cols.push_back(glm::vec3(0.95f, 1.0f, 0.5f));
+        // init particles
+        particles.clear();
+        for (int i = 0; i < MAX_PARTICLES; i++) {
+            Particle p;
+            particles.push_back(p);
         }
 
-        initColors = true;
-        dudeColorBuffer = g.genColorBuffer(*g.guy, cols);
     }
 
     void update(float delta) {
-        std::vector<glm::mat4> models;
-		int colorsindex = 0;
-        for (int i = 0; i < entities.size(); i++) {
-			if (i >= PARTICLES_START && i <= PARTICLES_END){
-				Particle *particle = (Particle*)entities[i];
-				if(!particle->alive)
-					continue;
-				if (particle->effect == Particle::FIRE) {
-					cols[colorsindex] = glm::vec3(1.0f,particle->lifetime/particle->maxlifetime,0.0f);
-				}
-			}
+        player->update(delta);
 
+        std::vector<glm::mat4> models;
+        for (int i = 0; i < entities.size(); i++) {
             entities[i]->update(delta);
-            if (i == 0) {   // player is always first
-				 continue;
-            }
+
             // update dudes model
             glm::mat4 model;
             glm::vec3 pos = entities[i]->getTransform()->pos;
@@ -104,73 +84,109 @@ public:
             model = glm::translate(model, pos);
             model = glm::scale(model, scale);
             models.push_back(model);
-			++colorsindex;
         }
+        Graphics::setModels(dudeMesh, models);
+        models.clear();
 
-        // add projectiles onto end
+        // add projectiles
         std::vector<Projectile>& projectiles = player->getProjectiles();
-        for (int j = 0; j < projectiles.size(); j++) {
+        for (int i = 0; i < projectiles.size(); i++) {
+            PhysicsTransform* pt = projectiles[i].getTransform();
+
             glm::mat4 model;
-            glm::vec3 pos = projectiles[j].getTransform()->pos;
-            glm::vec3 scale = projectiles[j].getTransform()->scale;
+            glm::vec3 pos = pt->getPos();
+            glm::vec3 scale = pt->scale;
             model = glm::translate(model, pos);
             model = glm::scale(model, scale);
             models.push_back(model);
-			for(int k = 0; k < 2; k++)
-				SpawnParticle(projectiles[j].getTransform()->getPos(),Particle::FIRE,5);//,projectiles[j].getTransform()->vel);
-			for(int k = 0; k < 3; k++)
-				SpawnParticle(projectiles[j].getTransform()->getPos(),Particle::SPARK,5);//,projectiles[j].getTransform()->vel);
+            for (int j = 0; j < 2; j++)
+                SpawnParticle(pt->getPos(), Particle::FIRE, 5);//,projectiles[j].getTransform()->vel);
+            for (int j = 0; j < 3; j++)
+                SpawnParticle(pt->getPos(), Particle::SPARK, 5);//,projectiles[j].getTransform()->vel);
         }
-        if (initModels) {
-            glDeleteBuffers(1, &dudeModelBuffer);
-			//glDeleteBuffers(1, &projectileModelBuffer);
-        }
-        dudeModelBuffer = g.genModelBuffer(*g.guy, models);
-		//projectileModelBuffer = g.genModelBuffer(*g.guy, projectileModels);
-        initModels = true;
-        dudeColorBuffer = g.genColorBuffer(*g.guy, cols);
-		initColors = true;
-    }
 
-    void deleteEntities(int startIndex) {
-        if (startIndex < entities.size()) {
-            for (int i = startIndex; i < entities.size(); i++) {
-                delete entities[i];
+        Graphics::setModels(projectileMesh, models);
+        models.clear();
+
+        // update and build particles
+        // should probably remove this into seperate class..
+        std::vector<glm::vec3> colors;
+        for (int i = 0; i < particles.size(); i++) {
+            Particle* p = &particles[i];
+
+            p->update(delta);
+
+            if (p->getTransform()->alive) {
+
+                glm::mat4 model;
+                PhysicsTransform* pt = p->getTransform();
+                glm::vec3 pos = pt->pos;
+                glm::vec3 scale = pt->scale;
+                pos.y += scale.y / 2.0f;
+                model = glm::translate(model, pos);
+                model = glm::scale(model, scale);
+                models.push_back(model);
+
+                if (p->effect == Particle::FIRE) {
+                    colors.push_back(glm::vec3(1.0f, p->lifetime / p->maxlifetime, 0.0f));
+                } else {
+                    colors.push_back(glm::vec3(1.0f));
+                }
+
             }
-            entities.erase(entities.begin() + startIndex, entities.end());
         }
+
+        Graphics::setModels(particleMesh, models);
+        Graphics::setColors(particleMesh, colors);
     }
 
-	int curParticle;
-	Particle *getNextParticle(){
-		Particle *p = (Particle*)entities.at(PARTICLES_START+curParticle);
-		curParticle = (++curParticle)%(PARTICLES_MAX-1);
-		return p;
-	}
 
-	void SpawnParticle(glm::vec3 pos,int effect = Particle::SPARK,float randvel = 0,glm::vec3 vel = glm::vec3(0,0,0)) {
-		Particle* p = getNextParticle();
-		p->effect = effect;
-		p->setPosition(pos);
-		p->getTransform()->scale = glm::vec3(.5f,.5f,.5f);
-		p->getTransform()->vel = vel+glm::vec3(vel.x+((float)rand()/RAND_MAX-.5f)*2*randvel,vel.y+((float)rand()/RAND_MAX-.5f)*2*randvel,vel.z+((float)rand()/RAND_MAX-.5f)*2*randvel);//TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
-		p->activate();
-	}
+    void deleteEntities() {
+        for (int i = 0; i < entities.size(); i++) {
+            delete entities[i];
+        }
+        entities.erase(entities.begin(), entities.end());
+    }
+    //void deleteEntities(int startIndex) {
+    //    if (startIndex < entities.size()) {
+    //        for (int i = startIndex; i < entities.size(); i++) {
+    //            delete entities[i];
+    //        }
+    //        entities.erase(entities.begin() + startIndex, entities.end());
+    //    }
+    //}
+
+
+    int curParticle = 0;
+    Particle *getNextParticle() {
+        Particle *p = &particles[curParticle];
+        curParticle = (++curParticle) % (MAX_PARTICLES - 1);
+        return p;
+    }
+
+    void SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float randvel = 0, glm::vec3 vel = glm::vec3(0, 0, 0)) {
+        Particle* p = getNextParticle();
+        p->effect = effect;
+        PhysicsTransform* pt = p->getTransform();
+        pt->pos = pos;
+        pt->scale = glm::vec3(.5f, .5f, .5f);
+        pt->vel = vel + glm::vec3(vel.x + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.y + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.z + ((float)rand() / RAND_MAX - .5f) * 2 * randvel);//TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
+        p->activate();
+    }
 
     ~EntityManager() {
-        deleteEntities(0);
+        delete player;
+        deleteEntities();
     }
 
+    GLuint dudeMesh;
 private:
+    GLuint projectileMesh;
+
+    GLuint particleMesh;
+    GLuint particleTex;
+
     std::vector<Entity*> entities;
-    GLuint dudeColorBuffer;
-    GLuint dudeModelBuffer;
-	//GLuint projectileModelBuffer;
-    Graphics& g;
+    std::vector<Particle> particles;
     Player* player;
-    bool initColors = false;
-    bool initModels = false;
-
 };
-
-//EntityManager* GetEntityManager(){return (EntityManager*)EntityManagerInstance;}

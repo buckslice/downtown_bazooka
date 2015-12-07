@@ -8,9 +8,7 @@ public:
 
 	void update(GLfloat delta) override;
 
-	bool isAlive() const;
 private:
 	float timer = 5.0f;
-	bool alive = true;
 };
 

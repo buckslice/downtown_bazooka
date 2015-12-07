@@ -10,36 +10,40 @@ const GLuint BLUR_DOWNSAMPLE = 2;
 
 class Graphics {
 public:
-
-    Mesh* cube;
-    Mesh* guy;
-
     Graphics(sf::RenderWindow& window);
+
     ~Graphics();
 
-    void renderScene(Camera& cam, bool drawDudes);
+    void renderScene(Camera& cam);
     void resize(int width, int height);
     //void renderUI();
     void postProcess();
     void buildShaders();
     void buildBuffers();
 
-    GLuint genColorBuffer(Mesh& mesh, std::vector<glm::vec3>& colors);
-    GLuint genModelBuffer(Mesh& mesh, std::vector<glm::mat4>& models);
 
-    // should make gen buffers functions above just build buffer given a max_size
-    // then use below functions to update it during runtime
-    //void updateColorBuffer(GLuint buffer, std::vector<glm::vec3>& colors);
-    //void updateModelBuffer(GLuint buffer, std::vector<glm::mat4>& models);
+    // should later add options for mesh type
+    static GLuint registerMesh();   // because i cant figure out how to give default argument to static function
+    static GLuint registerMesh(GLuint tex);
+    static void setColors(GLuint mesh_id, std::vector<glm::vec3>& colors);
+    static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
+
+    static void setMeshVisible(GLuint id, bool value);
+
 
 private:
+
+    static GLuint genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors);
+    static GLuint genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models);
+    static bool isValidMeshID(GLuint id);
 
     void initGL(sf::RenderWindow& window);
     void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iters, Shader screen, Shader blur);
     void renderQuad();
     void deleteShaders();
 
-    Shader buildingShader;
+    Shader instanceShader;
+    Shader tiledShader;
     Shader blurShader;
     Shader screenShader;
     Shader blendShader;
@@ -52,6 +56,5 @@ private:
     GLint projLoc;
     GLint viewLoc;
 
-    GLuint tex;
-
+    Mesh* floorMesh;
 };

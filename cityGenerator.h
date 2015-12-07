@@ -17,11 +17,8 @@ public:
 
 	CityGenerator();
 
-    void generate(bool square, bool colorByAngle, GLuint count, Graphics& g, Physics& phys);
+    void generate(bool square, bool colorByAngle, GLuint count, Physics& phys);
 
 private:
-    bool first = true;
-    GLuint colorBuffer;
-    GLuint modelBuffer;
-
+    GLuint buildingMesh;
 };

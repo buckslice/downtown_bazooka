@@ -83,12 +83,19 @@ void Physics::update(float delta) {
     dynamicLeafLists.resize(dynamicObjects.size());
     for (int i = 0; i < dynamicLeafLists.size(); i++) {
         dynamicLeafLists[i].clear();
+        if (!dynamicObjects[i].alive) {
+            continue;
+        }
         getLeafs(dynamicLeafLists[i], 0, dynamicObjects[i].getSwept(delta));
     }
 
     // for each dynamic object
     for (int dynamicIndex = 0; dynamicIndex < dynamicObjects.size(); dynamicIndex++) {
         PhysicsTransform& pt = dynamicObjects[dynamicIndex];
+
+        if (!pt.alive) {
+            continue;
+        }
 
         resolvedSet.clear();
 
@@ -272,6 +279,8 @@ int Physics::registerDynamic(glm::vec3 scale) {
     dynamicObjects.push_back(PhysicsTransform(scale));
     return dynamicObjects.size() - 1;
 }
+
+//void releaseDynamic
 
 PhysicsTransform* Physics::getTransform(int index) {
     return &dynamicObjects[index];

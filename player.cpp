@@ -37,7 +37,7 @@ void Player::update(GLfloat delta) {
 	int size = projectiles.size();
 	for (int i = 0; i < size; i++) {
 		projectiles[i].update(delta);
-		if (!projectiles[i].isAlive()) {
+		if (!projectiles[i].getTransform()->alive) {
 			projectiles[i] = projectiles[size - 1];
 			projectiles.pop_back();
 			size--;
@@ -60,13 +60,13 @@ void Player::update(GLfloat delta) {
         if (pt.vel.y != 0.0f) {
             pt.grounded = false;
         }
-		
         GLfloat oldy = pt.vel.y;
 
-		if (!pt.grounded && Input::pressed(sf::Keyboard::Space) && oldy > 0)//If the player is holding down Space and moving up, then they'll decelerate more slowly
-			pt.gravityMultiplier = 1.0f;
-		else
-			pt.gravityMultiplier = 3.0f;
+        pt.gravityMultiplier = 1.0f;
+		//if (!pt.grounded && Input::pressed(sf::Keyboard::Space) && oldy > 0)//If the player is holding down Space and moving up, then they'll decelerate more slowly
+		//	pt.gravityMultiplier = 1.0f;
+		//else
+		//	pt.gravityMultiplier = 3.0f;
 
         GLfloat accel = pt.grounded ? 10.0f : 2.0f;
         accel *= speed * delta;
