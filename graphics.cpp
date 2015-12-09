@@ -18,8 +18,7 @@ GLuint HEIGHT;
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
 
-Graphics::Graphics()
-{
+Graphics::Graphics() {
 
 }
 
@@ -443,15 +442,15 @@ std::vector<Vertex> offsetVerts = {
     Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
     Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
 
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
 
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
 
 };
 

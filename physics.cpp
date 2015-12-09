@@ -10,7 +10,7 @@ static std::vector<PhysicsTransform> dynamicObjects;
 
 Physics::Physics() {
 
-    int splits = 5;
+    int splits = 6;
 
     // aabb encapsulate whole city
     // should make aabb encapsulate method and change to actually check against all static

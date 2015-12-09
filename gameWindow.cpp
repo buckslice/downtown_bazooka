@@ -1,7 +1,5 @@
 #include "gameWindow.h"
 
-
-
 GameWindow::GameWindow(int width, int height)
 	: width{width}, height{height}, running{true},
 	lastFocused{false}, gameFocused{false}, clickedInside{true}, mouseVisible{false}, lastMouseVisible{false}
@@ -51,26 +49,23 @@ GameWindow::GameWindow(int width, int height)
 	mainTrack.setVolume(20.0f);
 	mainTrack.play();
 
-
-
-
 	// mouse and window focusing variables
 	sf::Mouse::setPosition(center, *window);
 	window->setMouseCursorVisible(false);
 	window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be useful
-
 
 }
 
 
 GameWindow::~GameWindow()
 {
-	delete window;
-	delete player;
-	delete graphics;
-	delete physics;
-	delete em;
-	delete menu;
+    delete window;
+    delete graphics;
+    delete physics;
+    delete cg;
+    delete player;
+    delete em;
+    delete menu;
 }
 
 void GameWindow::mainLoop()
