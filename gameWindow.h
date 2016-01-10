@@ -16,6 +16,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "cityGenerator.h"
+#include "terrainGenerator.h"
 #include "glHelper.h"
 #include "physics.h"
 #include "menu.h"
@@ -45,10 +46,12 @@ private:
 	Physics* physics;
 	Input input;
 	CityGenerator* cg;
+    TerrainGenerator* tg;
 	Camera cam;
 	Player* player;
 	EntityManager* em;
 	Menu* menu;
+
 	// some utility clocks
 	sf::Clock frameTime;
 	sf::Clock animTime;

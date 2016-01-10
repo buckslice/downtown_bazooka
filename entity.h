@@ -16,7 +16,7 @@ public:
     Entity(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 scale = glm::vec3(1.0f), glm::vec3 vel = glm::vec3(0.0f)) {
         transform = Physics::registerDynamic(scale);
         PhysicsTransform* pt = getTransform();
-        pt->pos = pos;
+        pt->lpos = pos;
         pt->scale = scale;
         pt->vel = vel;
     }
@@ -30,10 +30,12 @@ public:
     }
 
     void setPosition(glm::vec3 pos) {
-        getTransform()->pos = pos;
+        getTransform()->lpos = pos;
     }
 
     int transform;
+
+    //long long id;
 
     /*void setAlive(bool value) {
         alive = value;

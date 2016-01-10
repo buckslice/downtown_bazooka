@@ -52,7 +52,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
             }
             tries++;
         } while (tooClose(400.0f, city, cities) && tries < 100);
-
+        
         cities.push_back(city);
     }
     float seedX = Mth::rand0X(1000.0f);

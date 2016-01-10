@@ -78,7 +78,7 @@ void Menu::draw(sf::RenderWindow& window) {
     } else {
         healthBar.setPosition(0.0f, height - HEALTH_BAR_HEIGHT);
         healthBar.setSize(sf::Vector2f(width * player->getHealth() / MAX_HEALTH, HEALTH_BAR_HEIGHT));
-        window.draw(healthBar);
+        //window.draw(healthBar);
     }
 }
 

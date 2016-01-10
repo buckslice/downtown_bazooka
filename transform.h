@@ -4,7 +4,7 @@
 
 class Transform {
 public:
-    glm::vec3 pos;  //local pos
+    glm::vec3 lpos;  //local pos
     glm::vec3 scale;
     //glm::vec3 rot;
 

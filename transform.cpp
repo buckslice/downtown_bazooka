@@ -5,13 +5,13 @@
 // returns world pos of transform
 glm::vec3 Transform::getPos() {
     if (parent >= 0) {
-        return Physics::getTransform(parent)->getPos() + pos;
+        return Physics::getTransform(parent)->getPos() + lpos;
     }
-    return pos;
+    return lpos;
 }
 
 AABB PhysicsTransform::getAABB() {
-    return AABB(glm::vec3(pos + extmin), glm::vec3(pos + extmax));
+    return AABB(glm::vec3(lpos + extmin), glm::vec3(lpos + extmax));
 }
 
 AABB PhysicsTransform::getSwept(float delta) {

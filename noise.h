@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: go through and rename scale to frequency for arguments
 class Noise {
 public:
     // Multi-octave Simplex noise
@@ -20,7 +21,7 @@ public:
     static float scaled_2D(float x, float y, float low, float high);
     static float scaled_3D(float x, float y, float z, float low, float high);
 
-    // Raw Simplex noise - a single noise value.
+    // Raw Simplex noise - a single noise value. [-1,1]
     static float raw_2D(float x, float y);
     static float raw_3D(float x, float y, float z);
 

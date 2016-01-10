@@ -5,6 +5,7 @@
 #include "glHelper.h"
 #include "camera.h"
 #include "mesh.h"
+#include "terrainGenerator.h"
 
 const GLuint BLUR_DOWNSAMPLE = 2;
 
@@ -15,7 +16,7 @@ public:
 
     ~Graphics();
 
-    void renderScene(Camera& cam);
+    void renderScene(Camera& cam, TerrainGenerator& tg);
     void resize(int width, int height);
     //void renderUI();
     void postProcess();
@@ -45,6 +46,7 @@ private:
 
     Shader instanceShader;
     Shader tiledShader;
+    Shader terrainShader;
     Shader blurShader;
     Shader screenShader;
     Shader blendShader;

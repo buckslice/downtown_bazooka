@@ -101,6 +101,7 @@ struct HSBColor {
         return glm::vec4(hsbColor.toRGB(), hsbColor.a);
     }
 
+    // convert to RGB color
     glm::vec3 toRGB() {
         return toRGB(*this);
     }

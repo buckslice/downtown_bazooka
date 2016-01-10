@@ -3,6 +3,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "graphics.h"
 #include "resources.h"
+#include "hsbColor.h"
+#include "mathutil.h"
 
 // so can declare at bottom of file
 //extern GLfloat vertices[];
@@ -65,7 +67,6 @@ void Graphics::initGL(sf::RenderWindow& window) {
 
     floorMesh = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    // more stuff
     buildShaders();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
@@ -103,7 +104,7 @@ void Graphics::renderQuad() {
 }
 
 // RENDER SCENE TO FRAMEBUFFER
-void Graphics::renderScene(Camera& cam) {
+void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -124,10 +125,17 @@ void Graphics::renderScene(Camera& cam) {
         }
     }
 
-    tiledShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    floorMesh->draw();
+    //tiledShader.use();
+    //glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    //glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    //floorMesh->draw();
+
+    terrainShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    tg.render();
+
+    // render all terrain chunks
 
     // clear states
     glBindVertexArray(0);
@@ -208,8 +216,11 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
 
 bool loadedShadersBefore = false;
 
+// would be better to only rebuild shaders if they have been changed
 void Graphics::buildShaders() {
     bool success = true;
+
+    // instancedShader
     success &= instanceShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
     instanceShader.use();
     glUniform1i(glGetUniformLocation(instanceShader.program, "tex"), 0);
@@ -217,6 +228,7 @@ void Graphics::buildShaders() {
     projLoc = glGetUniformLocation(instanceShader.program, "proj");
     viewLoc = glGetUniformLocation(instanceShader.program, "view");
 
+    // tiledShader
     success &= tiledShader.build("assets/shaders/default.vert", "assets/shaders/tiled.frag");
     tiledShader.use();
     glUniform1i(glGetUniformLocation(tiledShader.program, "tex"), 0);
@@ -226,13 +238,23 @@ void Graphics::buildShaders() {
     model = glm::scale(model, glm::vec3(2000.0f, 10.0f, 2000.0f));  // too lazy to import citygen for CITY_SIZE lol
     glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-    // shaders that blurs a colorbuffer
+    // terrainShader
+    success &= terrainShader.build("assets/shaders/colormesh.vert", "assets/shaders/default.frag");
+    terrainShader.use();
+    glUniform1i(glGetUniformLocation(terrainShader.program, "tex"), 0);
+    model = glm::mat4();
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    // blurShader and screenShader
     success &= blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
     success &= screenShader.build("assets/shaders/screen.vert", "assets/shaders/screen.frag");
     screenShader.use();
     glUniform1i(glGetUniformLocation(screenShader.program, "screen"), 0);
 
-    // shader that blends the blur with the scene
+    // blendShader
+    // blends the blur with the scene
     success &= blendShader.build("assets/shaders/screen.vert", "assets/shaders/blend.frag");
     blendShader.use();
     glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
@@ -359,6 +381,7 @@ GLuint Graphics::registerMesh() {
 // no way to delete meshes currently but can just set
 // visibility to false if you need
 // really no need to delete mesh ever
+// these methods are pretty retarded actually wtf am i doing?
 GLuint Graphics::registerMesh(GLuint tex) {
 
     meshes.push_back(new Mesh(offsetVerts, elems, tex));

@@ -11,12 +11,14 @@ public:
     }
 
     GLuint gridTex;
+    GLuint terrainTex;
     GLuint solidTex;
 
 
 private:
     Resources() {
         gridTex = GLHelper::loadTexture("assets/images/grid.png");
+        terrainTex = GLHelper::loadTexture("assets/images/grid2.png");
         solidTex = GLHelper::loadTexture("assets/images/solid.png");
 
         //gridFloorTex = GLHelper::loadTex
@@ -24,6 +26,7 @@ private:
 
     ~Resources() {
         glDeleteTextures(1, &gridTex);
+        glDeleteTextures(1, &terrainTex);
         glDeleteTextures(1, &solidTex);
     }
 

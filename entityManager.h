@@ -78,7 +78,7 @@ public:
 
             // update dudes model
             glm::mat4 model;
-            glm::vec3 pos = entities[i]->getTransform()->pos;
+            glm::vec3 pos = entities[i]->getTransform()->lpos;
             glm::vec3 scale = entities[i]->getTransform()->scale;
             pos.y += scale.y / 2.0f;
             model = glm::translate(model, pos);
@@ -120,7 +120,7 @@ public:
 
                 glm::mat4 model;
                 PhysicsTransform* pt = p->getTransform();
-                glm::vec3 pos = pt->pos;
+                glm::vec3 pos = pt->lpos;
                 glm::vec3 scale = pt->scale;
                 pos.y += scale.y / 2.0f;
                 model = glm::translate(model, pos);
@@ -168,7 +168,7 @@ public:
         Particle* p = getNextParticle();
         p->effect = effect;
         PhysicsTransform* pt = p->getTransform();
-        pt->pos = pos;
+        pt->lpos = pos;
         pt->scale = glm::vec3(.5f, .5f, .5f);
         pt->vel = vel + glm::vec3(vel.x + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.y + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.z + ((float)rand() / RAND_MAX - .5f) * 2 * randvel);//TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
         p->activate();
