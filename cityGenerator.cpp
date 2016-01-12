@@ -8,18 +8,8 @@
 
 const float PI = 3.14159265f;
 
-// checks if box collides with any of the boxes on the list
-bool collidesWithAny(AABB box, std::vector<AABB> boxes) {
-    for (GLuint i = 0; i < boxes.size(); i++) {
-        if (AABB::check(box, boxes[i])) {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool tooClose(float minDist, glm::vec2 city, std::vector<glm::vec2> cities) {
-    for (int i = 0; i < cities.size(); i++) {
+    for (size_t i = 0, len = cities.size(); i < len; ++i) {
         if (glm::distance(city, cities[i]) < minDist) {
             return true;
         }
@@ -41,7 +31,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
 
     // generate some random city centers
     const int numCitys = (int)(Mth::rand01() * 9.0f + 3.0f);
-    for (GLuint i = 0; i < numCitys; i++) {
+    for (int i = 0; i < numCitys; ++i) {
         glm::vec2 city;
         int tries = 0;
         do {
@@ -59,7 +49,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
     float seedY = Mth::rand0X(1000.0f);
     // generate randomly located buildings
     // sized based on their distance to nearest city center
-    for (GLuint i = 0; i < count; i++) {
+    for (GLuint i = 0; i < count; ++i) {
         glm::mat4 model;
 
         float sx, sy, sz;
@@ -74,7 +64,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
 
             float distToClosestCity = std::numeric_limits<float>::max();
             glm::vec2 closestCity;
-            for (int i = 0; i < cities.size(); i++) {
+            for (size_t i = 0, len = cities.size(); i < len; ++i){
                 distToClosestCity = std::min(distToClosestCity, glm::distance(p, cities[i]));
             }
             float d = distToClosestCity;

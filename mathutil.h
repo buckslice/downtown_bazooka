@@ -66,11 +66,4 @@ public:
         return a + (b - a) * t;
     }
 
-    static glm::vec3 generateRandomColor() {
-        GLfloat r = rand() % 101;
-        GLfloat g = rand() % 101;
-        GLfloat b = rand() % 101;
-        return glm::vec3(r / 100.0f, g / 100.0f, b / 100.0f);
-
-    }
 };

@@ -2,7 +2,7 @@
 #include "input.h"
 #include <iostream>
 
-Menu::Menu(float width, float height, Player* player) {
+Menu::Menu(Player* player) {
     if (!font.loadFromFile("assets/fonts/cour.ttf")) {
         //handle error
         std::cout << "ERROR::FONT::LOAD_FAILURE";
@@ -76,8 +76,10 @@ void Menu::draw(sf::RenderWindow& window) {
             }
         }
     } else {
-        healthBar.setPosition(0.0f, height - HEALTH_BAR_HEIGHT);
-        healthBar.setSize(sf::Vector2f(width * player->getHealth() / MAX_HEALTH, HEALTH_BAR_HEIGHT));
+        healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
+        float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
+        float y = static_cast<float>(HEALTH_BAR_HEIGHT);
+        healthBar.setSize(sf::Vector2f(x,y));
         //window.draw(healthBar);
     }
 }

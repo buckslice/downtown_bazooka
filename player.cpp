@@ -136,7 +136,7 @@ glm::vec3 Player::getMovementDir() {
         dir.y += 1.0f;
     }
 
-	float len = dir.length();
+	float len = static_cast<float>(dir.length());
 	if(len > 1)
 		dir /= len;//normalize the movement vector so the player doesn't move faster diagonally
 

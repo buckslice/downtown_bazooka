@@ -73,7 +73,7 @@ public:
         player->update(delta);
 
         std::vector<glm::mat4> models;
-        for (int i = 0; i < entities.size(); i++) {
+        for (size_t i = 0, len = entities.size(); i < len; ++i){
             entities[i]->update(delta);
 
             // update dudes model
@@ -90,7 +90,7 @@ public:
 
         // add projectiles
         std::vector<Projectile>& projectiles = player->getProjectiles();
-        for (int i = 0; i < projectiles.size(); i++) {
+        for (size_t i = 0, len = projectiles.size(); i < len; ++i){
             PhysicsTransform* pt = projectiles[i].getTransform();
 
             glm::mat4 model;
@@ -111,7 +111,7 @@ public:
         // update and build particles
         // should probably remove this into seperate class..
         std::vector<glm::vec3> colors;
-        for (int i = 0; i < particles.size(); i++) {
+        for (size_t i = 0, len = particles.size(); i < len; ++i){
             Particle* p = &particles[i];
 
             p->update(delta);
@@ -142,7 +142,7 @@ public:
 
 
     void deleteEntities() {
-        for (int i = 0; i < entities.size(); i++) {
+        for (size_t i = 0, len = entities.size(); i < len; ++i) {
             delete entities[i];
         }
         entities.erase(entities.begin(), entities.end());

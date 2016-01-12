@@ -162,6 +162,7 @@
     <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="gameWindow.cpp" />
+    <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />

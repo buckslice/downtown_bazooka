@@ -91,7 +91,7 @@ public:
         glDeleteShader(vertex);
         glDeleteShader(fragment);
 
-        return success;
+        return (success == 1);
     }
 
     // Uses the current shader

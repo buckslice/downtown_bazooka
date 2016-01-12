@@ -27,7 +27,7 @@ public:
 
 private:
 
-    void getLeafs(std::vector<int>& locs, int node, AABB swept);
+    void getLeafs(std::vector<int>& locs, AABB swept);
 
     // list of static objects (dynamic list is in implementation)
     std::vector<AABB> staticObjects;

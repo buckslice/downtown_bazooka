@@ -38,19 +38,16 @@ void Camera::updateCameraVectors() {
     //std::cout << forward.x << " " << forward.y << " " << forward.z << std::endl;
 }
 
-void Camera::update(GLfloat mdx, GLfloat mdy) {
+void Camera::update(GLint mdx, GLint mdy) {
     // update yaw and pitch from mouse deltas
-    mdx *= mouseSensitivity;
-    mdy *= mouseSensitivity;
-
-    yaw += mdx;
+    yaw += mdx * mouseSensitivity;
     if (yaw > 360.0f) {
         yaw -= 360.0f;
     }
     if (yaw < 0.0f) {
         yaw += 360.0f;
     }
-    pitch -= mdy;
+    pitch -= mdy * mouseSensitivity;
     pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
     updateCameraVectors();

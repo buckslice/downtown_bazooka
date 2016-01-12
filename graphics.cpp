@@ -70,6 +70,7 @@ void Graphics::initGL(sf::RenderWindow& window) {
     buildShaders();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
+    //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 }
 
@@ -119,7 +120,7 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-    for (int i = 0; i < meshes.size(); i++) {
+    for (size_t i = 0, len = meshes.size(); i < len; ++i) {
         if (meshes[i]->visible) {
             meshes[i]->draw();
         }
@@ -181,9 +182,9 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
     GLuint lookups[4] = { 1, 3, 7, 13 };
     //GLuint lookups[4] = { 2, 5, 9, 17 };
 
-// iterations * 2 since does width then height
-// could have simplified below code but left it
-// incase we want directional blurs later
+    // iterations * 2 since does width then height
+    // could have simplified below code but left it
+    // incase we want directional blurs later
     for (GLuint i = 0; i < iterations * 2; i++) {
         GLuint blurRadius = i / 2 + 1;
         //blurRadius = pow(2, (i / 2 + 1)); //or pow(3,
@@ -191,8 +192,8 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
             blurRadius = lookups[i / 2];
         }
 
-        glUniform1f(radLoc, blurRadius);
-        glUniform1f(resLoc, horizontal ? WIDTH : HEIGHT);
+        glUniform1f(radLoc, static_cast<GLfloat>(blurRadius));
+        glUniform1f(resLoc, horizontal ? static_cast<GLfloat>(WIDTH) : static_cast<GLfloat>(HEIGHT));
         GLfloat hz = horizontal ? 1.0f : 0.0f;
         glUniform2f(dirLoc, hz, 1.0f - hz);
         glBindTexture(GL_TEXTURE_2D, blurBuffers[!horizontal].color);
@@ -279,7 +280,7 @@ void Graphics::deleteShaders() {
 
 Graphics::~Graphics() {
     deleteShaders();
-    for (int i = 0; i < meshes.size(); i++) {
+    for (size_t i = 0, len = meshes.size(); i < len; ++i) {
         glDeleteBuffers(1, &meshes[i]->colorBuffer);
         glDeleteBuffers(1, &meshes[i]->modelBuffer);
         delete meshes[i];

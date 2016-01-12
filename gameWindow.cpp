@@ -28,7 +28,7 @@ GameWindow::GameWindow(int width, int height)
 
 
     // init random seed and build city
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
     //srand(1); //my testing seed for physics bugs lol
 
 
@@ -42,7 +42,7 @@ GameWindow::GameWindow(int width, int height)
 
     em = new EntityManager(player);
 
-    menu = new Menu(width, height, player);
+    menu = new Menu(player);
 
     // set up music
     mainTrack.setLoop(true);
@@ -81,11 +81,15 @@ void GameWindow::mainLoop() {
                 running = false;
                 break;
             case sf::Event::Resized:
-                window->setView(sf::View(sf::FloatRect(0.0f, 0.0f, e.size.width, e.size.height)));
+            {   // need these brackets
+                float w = static_cast<float>(e.size.width);
+                float h = static_cast<float>(e.size.height);
+                window->setView(sf::View(sf::FloatRect(0.0f, 0.0f, w, h)));
                 graphics->resize(e.size.width, e.size.height);
                 center.x = e.size.width / 2;
                 center.y = e.size.height / 2;
                 break;
+            }
             default:
                 break;
             }

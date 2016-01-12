@@ -18,7 +18,7 @@ public:
 private:
     Resources() {
         gridTex = GLHelper::loadTexture("assets/images/grid.png");
-        terrainTex = GLHelper::loadTexture("assets/images/grid2.png");
+        terrainTex = GLHelper::loadTexture("assets/images/grid.png");
         solidTex = GLHelper::loadTexture("assets/images/solid.png");
 
         //gridFloorTex = GLHelper::loadTex

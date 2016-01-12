@@ -10,7 +10,7 @@
 
 class Menu {
 public:
-    Menu(float width, float height, Player* player);
+    Menu(Player* player);
     ~Menu();
 
     void draw(sf::RenderWindow& window);

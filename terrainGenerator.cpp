@@ -20,10 +20,9 @@ void Chunk::generate(point chunkPos) {
             if (h < 0.0f) {
                 h = 0.0f;
             }
-            h *= scale;  // scale 
+            h *= scale;
             // to make it look blocky
-            h = (int)(h / 4.0);
-            h *= 4;
+            h = floorf(h / 4.0f) * 4;
 
             glm::vec3 pos = glm::vec3(xo, h, yo);
             pos -= glm::vec3(CHUNK_SIZE / 2.0f, 0.0f, CHUNK_SIZE / 2.0f);   // offset by half to center
@@ -105,7 +104,7 @@ void TerrainGenerator::update(glm::vec3 pl) {
         return;
     }
     frames = 0;
-    for (int i = 0; i < chunks.size(); i++) {
+    for (size_t i = 0; i < chunks.size(); ++i) {
         Chunk* c = chunks[i];
         float cx = c->pos.first * CHUNK_SIZE;
         float cy = c->pos.second * CHUNK_SIZE;
@@ -123,13 +122,13 @@ void TerrainGenerator::update(glm::vec3 pl) {
 
 void TerrainGenerator::render() {
     //std::cout << chunks.size() << std::endl;
-    for (int i = 0; i < chunks.size(); i++) {
+    for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->draw();
     }
 }
 
 TerrainGenerator::~TerrainGenerator() {
-    for (int i = 0; i < chunks.size(); i++) {
+    for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->destroy();
         delete chunks[i];
     }

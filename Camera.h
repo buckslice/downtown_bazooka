@@ -34,7 +34,7 @@ public:
     glm::mat4 getProjMatrix(GLuint w, GLuint h);
 
     void updateCameraVectors();
-    void update(GLfloat mdx, GLfloat mdy);
+    void update(GLint mdx, GLint mdy);
 
 };
 

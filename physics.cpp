@@ -51,25 +51,6 @@ Physics::Physics() {
 
 int totalAABBChecks = 0;
 
-// searches tree and returns a list of leaf indices AABB collides with
-// externally you always call it with node = 0 so you start at root node
-// but wasnt sure how to enforce that
-void Physics::getLeafs(std::vector<int>& locs, int node, AABB swept) {
-    totalAABBChecks++;
-    if (AABB::check(aabbTree[node], swept)) {
-        // check if you are leaf node
-        if (node * 4 + 1 >= aabbTree.size()) {
-            locs.push_back(node);
-        } else {
-            // exlore children
-            getLeafs(locs, node * 4 + 1, swept);
-            getLeafs(locs, node * 4 + 2, swept);
-            getLeafs(locs, node * 4 + 3, swept);
-            getLeafs(locs, node * 4 + 4, swept);
-        }
-    }
-}
-
 void Physics::update(float delta) {
 
     totalAABBChecks = 0;
@@ -81,17 +62,17 @@ void Physics::update(float delta) {
     bool printedErrorThisFrame = false;
     // find list of leaf(s) each dynamic object is in
     dynamicLeafLists.resize(dynamicObjects.size());
-    for (int i = 0; i < dynamicLeafLists.size(); i++) {
+    for (size_t i = 0, len = dynamicLeafLists.size(); i < len; ++i) {
         dynamicLeafLists[i].clear();
         if (!dynamicObjects[i].alive) {
             continue;
         }
-        getLeafs(dynamicLeafLists[i], 0, dynamicObjects[i].getSwept(delta));
+        getLeafs(dynamicLeafLists[i], dynamicObjects[i].getSwept(delta));
     }
 
     // for each dynamic object
-    for (int dynamicIndex = 0; dynamicIndex < dynamicObjects.size(); dynamicIndex++) {
-        PhysicsTransform& pt = dynamicObjects[dynamicIndex];
+    for (size_t dndx = 0, dlen = dynamicObjects.size(); dndx < dlen; ++dndx) {
+        PhysicsTransform& pt = dynamicObjects[dndx];
 
         if (!pt.alive) {
             continue;
@@ -106,7 +87,7 @@ void Physics::update(float delta) {
         glm::vec3 rvel = pt.vel;
 
         // try to resolve up to 10 collisions for this object this frame
-        for (int resolutionAttempts = 0; resolutionAttempts < 10; resolutionAttempts++) {
+        for (int resolutionAttempts = 0; resolutionAttempts < 10; ++resolutionAttempts) {
             // probly an error when this happens
             // my aabb sweeptest fix needs a little tweaking
             // could also be something else though perhaps with the quadtree
@@ -129,13 +110,13 @@ void Physics::update(float delta) {
             // returns closest collision found
             bool fullTest = false;
             // for each leaf this dynamic is in
-            std::vector<int>& leafList = dynamicLeafLists[dynamicIndex];
-            for (int li = 0; li < leafList.size(); li++) {
-                int leaf = leafList[li];
+            std::vector<int>& leafList = dynamicLeafLists[dndx];
+            for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
+                int leaf = leafList[lndx];
                 // for each object in this leaf
                 std::vector<int>& leafObjects = treeMatrix[leaf];
-                for (int i = 0; i < leafObjects.size(); i++) {
-                    int curStaticIndex = leafObjects[i];
+                for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
+                    int curStaticIndex = leafObjects[ondx];
                     if (resolvedSet.count(curStaticIndex) || checkSet.count(curStaticIndex)) {
                         continue;
                     }
@@ -216,27 +197,26 @@ void Physics::addStatic(AABB obj) {
 
     // get list of leaves this object collides with
     std::vector<int> indices;
-    getLeafs(indices, 0, obj);
+    getLeafs(indices, obj);
     // then add this objects index to each collision list
-    for (int i = 0; i < indices.size(); i++) {
+    for (size_t i = 0, len = indices.size(); i < len; ++i) {
         treeMatrix[indices[i]].push_back(objIndex);
     }
 }
 
 void Physics::addStatics(const std::vector<AABB>& objs) {
-    for (int i = 0; i < objs.size(); i++) {
+    for (size_t i = 0, len = objs.size(); i < len; ++i) {
         addStatic(objs[i]);
     }
 }
 
 bool Physics::checkStatic(AABB obj) {
     std::vector<int> indices;
-    getLeafs(indices, 0, obj);
+    getLeafs(indices, obj);
 
-    for (int i = 0; i < indices.size(); i++) {
-        for (int j = 0; j < treeMatrix[indices[i]].size(); j++) {
-            int o = treeMatrix[indices[i]][j];
-            if (AABB::check(obj, staticObjects[o])) {
+    for (size_t i = 0, ilen = indices.size(); i < ilen; ++i) {
+        for (size_t j = 0, jlen = treeMatrix[indices[i]].size(); j < jlen; ++j) {
+            if (AABB::check(obj, staticObjects[treeMatrix[indices[i]][j]])) {
                 return true;
             }
         }
@@ -258,10 +238,10 @@ void Physics::clearDynamics() {
 }
 
 void Physics::printStaticMatrix() {
-    for (int i = 0; i < treeMatrix.size(); i++) {
+    for (size_t i = 0, ilen = treeMatrix.size(); i < ilen; ++i) {
         if (treeMatrix[i].size() > 0) {
             std::cout << i << " ";
-            for (int j = 0; j < treeMatrix[i].size(); j++) {
+            for (size_t j = 0, jlen = treeMatrix[i].size(); j < jlen; ++j) {
                 std::cout << treeMatrix[i][j] << " ";
             }
             std::cout << std::endl;
@@ -285,5 +265,39 @@ int Physics::registerDynamic(glm::vec3 scale) {
 
 PhysicsTransform* Physics::getTransform(int index) {
     return &dynamicObjects[index];
+}
+
+
+// this should never be called directly so its hidden down here super sketchily
+// so things cant see it, except the one function that calls it below #prostrats 
+// should probably just make another class lol
+// also took all the variables out of function call for #maxperfomance
+int htreesize = 0;
+std::vector<AABB> *htree;
+std::vector<int>* hnodes;
+AABB hswept;
+void checkLeaves(int node) {
+    totalAABBChecks++;
+    if (AABB::check((*htree)[node], hswept)) {
+        // check if you are leaf node
+        if (node * 4 + 1 >= htreesize) {
+            hnodes->push_back(node);
+        } else {
+            // exlore children
+            checkLeaves(node * 4 + 1);
+            checkLeaves(node * 4 + 2);
+            checkLeaves(node * 4 + 3);
+            checkLeaves(node * 4 + 4);
+        }
+    }
+}
+
+// searches tree and returns a list of leaf indices AABB collides with
+void Physics::getLeafs(std::vector<int>& locs, AABB swept) {
+    htreesize = static_cast<int>(aabbTree.size());
+    htree = &aabbTree;
+    hnodes = &locs;
+    hswept = swept;
+    checkLeaves(0);
 }
 
