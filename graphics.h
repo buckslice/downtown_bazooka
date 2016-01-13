@@ -20,9 +20,7 @@ public:
     void resize(int width, int height);
     //void renderUI();
     void postProcess();
-    void buildShaders();
     void buildBuffers();
-
 
     // should later add options for mesh type
     static GLuint registerMesh();   // because i cant figure out how to give default argument to static function
@@ -31,7 +29,6 @@ public:
     static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
 
     static void setMeshVisible(GLuint id, bool value);
-
 
 private:
 
@@ -42,22 +39,11 @@ private:
     void initGL(sf::RenderWindow& window);
     void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iters, Shader screen, Shader blur);
     void renderQuad();
-    void deleteShaders();
-
-    Shader instanceShader;
-    Shader tiledShader;
-    Shader terrainShader;
-    Shader blurShader;
-    Shader screenShader;
-    Shader blendShader;
 
     FBO sceneBuffer;
     FBO blurResult;
     FBO blurBuffers[2];
     GLuint quadVAO;
-
-    GLint projLoc;
-    GLint viewLoc;
 
     Mesh* floorMesh;
 };

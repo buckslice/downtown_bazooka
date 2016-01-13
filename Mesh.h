@@ -119,24 +119,19 @@ private:
 
 class ColorMesh {
 public:
-    // why the foke am i saving the data?
-    std::vector<CVertex> vertices;
-    std::vector<GLuint> indices;
     GLuint texture;
+    GLuint indicesSize;
 
     GLuint modelBuffer;
     GLuint colorBuffer;
 
     ColorMesh() {
-
     }
 
-    ColorMesh(std::vector<CVertex> vertices, std::vector<GLuint> indices, GLuint texture) {
-        this->vertices = vertices;
-        this->indices = indices;
+    ColorMesh(std::vector<CVertex>& vertices, std::vector<GLuint>& indices, GLuint texture) {
         this->texture = texture;
-
-        setupMesh();
+        indicesSize = indices.size();
+        setupMesh(vertices, indices);
     }
 
     void draw() {
@@ -146,7 +141,7 @@ public:
         glBindVertexArray(VAO);
 
         // draw
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, 0);
 
         // unbind stuff
         glBindVertexArray(0);
@@ -167,7 +162,7 @@ private:
     // render handles
     GLuint VAO, VBO, EBO;
 
-    void setupMesh() {
+    void setupMesh(std::vector<CVertex>& vertices, std::vector<GLuint>& indices) {
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);

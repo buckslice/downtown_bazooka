@@ -1,6 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include "glHelper.h"
+#include "shader.h"
 
 // follows meyers singleton pattern
 class Resources {
@@ -14,23 +15,22 @@ public:
     GLuint terrainTex;
     GLuint solidTex;
 
+    Shader instanceShader;
+    Shader tiledShader;
+    Shader terrainShader;
+    Shader blurShader;
+    Shader screenShader;
+    Shader blendShader;
+
+    void buildShaders();
 
 private:
-    Resources() {
-        gridTex = GLHelper::loadTexture("assets/images/grid.png");
-        terrainTex = GLHelper::loadTexture("assets/images/grid.png");
-        solidTex = GLHelper::loadTexture("assets/images/solid.png");
+    Resources();
 
-        //gridFloorTex = GLHelper::loadTex
-    }
-
-    ~Resources() {
-        glDeleteTextures(1, &gridTex);
-        glDeleteTextures(1, &terrainTex);
-        glDeleteTextures(1, &solidTex);
-    }
+    ~Resources();
 
     Resources(Resources const&);   // hide copy ctor
     Resources& operator=(Resources const&); // hide assign op
 
+    void deleteShaders();
 };

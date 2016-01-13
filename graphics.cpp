@@ -21,7 +21,6 @@ GLuint HEIGHT;
 static std::vector<Mesh*> meshes;
 
 Graphics::Graphics() {
-
 }
 
 Graphics::Graphics(sf::RenderWindow& window) {
@@ -67,7 +66,7 @@ void Graphics::initGL(sf::RenderWindow& window) {
 
     floorMesh = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    buildShaders();
+    Resources::get().buildShaders();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
     //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -106,6 +105,7 @@ void Graphics::renderQuad() {
 
 // RENDER SCENE TO FRAMEBUFFER
 void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
+    Resources& r = Resources::get();
     glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -113,30 +113,25 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    instanceShader.use();
+    r.instanceShader.use();
     // set projection and view matrices
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
+    // draw all cube meshes
+    glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
     for (size_t i = 0, len = meshes.size(); i < len; ++i) {
         if (meshes[i]->visible) {
             meshes[i]->draw();
         }
     }
 
-    //tiledShader.use();
-    //glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
-    //glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    //floorMesh->draw();
-
-    terrainShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    // draw terrain
+    r.terrainShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
     tg.render();
-
-    // render all terrain chunks
 
     // clear states
     glBindVertexArray(0);
@@ -146,19 +141,21 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
 
 
 void Graphics::postProcess() {
+    Resources& r = Resources::get();
+
     // BLUR PASS
     glDisable(GL_DEPTH_TEST);	//dont need this now
-    blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, screenShader, blurShader);
+    blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, r.screenShader, r.blurShader);
 
     // FINAL PASS (combines blur buffer with original scene buffer)
     glClear(GL_COLOR_BUFFER_BIT);
-    blendShader.use();
+    r.blendShader.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneBuffer.color);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, blurResult.color);
     // blur strength is how bright the blur is
-    glUniform1f(glGetUniformLocation(blendShader.program, "blurStrength"), 3.0f);
+    glUniform1f(glGetUniformLocation(r.blendShader.program, "blurStrength"), 3.0f);
     renderQuad();
 }
 
@@ -215,71 +212,7 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
 }
 
 
-bool loadedShadersBefore = false;
-
-// would be better to only rebuild shaders if they have been changed
-void Graphics::buildShaders() {
-    bool success = true;
-
-    // instancedShader
-    success &= instanceShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
-    instanceShader.use();
-    glUniform1i(glGetUniformLocation(instanceShader.program, "tex"), 0);
-    // save matrix locations from shader
-    projLoc = glGetUniformLocation(instanceShader.program, "proj");
-    viewLoc = glGetUniformLocation(instanceShader.program, "view");
-
-    // tiledShader
-    success &= tiledShader.build("assets/shaders/default.vert", "assets/shaders/tiled.frag");
-    tiledShader.use();
-    glUniform1i(glGetUniformLocation(tiledShader.program, "tex"), 0);
-    //glUniform3f(glGetUniformLocation(tiledShader.program, "Color"), 1.0f, 0.0f, 0.0f);
-    glm::mat4 model;
-    model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(2000.0f, 10.0f, 2000.0f));  // too lazy to import citygen for CITY_SIZE lol
-    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-    // terrainShader
-    success &= terrainShader.build("assets/shaders/colormesh.vert", "assets/shaders/default.frag");
-    terrainShader.use();
-    glUniform1i(glGetUniformLocation(terrainShader.program, "tex"), 0);
-    model = glm::mat4();
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-    // blurShader and screenShader
-    success &= blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
-    success &= screenShader.build("assets/shaders/screen.vert", "assets/shaders/screen.frag");
-    screenShader.use();
-    glUniform1i(glGetUniformLocation(screenShader.program, "screen"), 0);
-
-    // blendShader
-    // blends the blur with the scene
-    success &= blendShader.build("assets/shaders/screen.vert", "assets/shaders/blend.frag");
-    blendShader.use();
-    glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
-    glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
-
-    if (success && loadedShadersBefore) {
-        std::cout << "SHADERS::RECOMPILE::SUCCESS" << std::endl;
-    }
-    loadedShadersBefore = true;
-}
-
-void Graphics::deleteShaders() {
-    if (!loadedShadersBefore) {
-        return;
-    }
-    glDeleteProgram(instanceShader.program);
-    glDeleteProgram(tiledShader.program);
-    glDeleteProgram(blurShader.program);
-    glDeleteProgram(screenShader.program);
-    glDeleteProgram(blendShader.program);
-}
-
 Graphics::~Graphics() {
-    deleteShaders();
     for (size_t i = 0, len = meshes.size(); i < len; ++i) {
         glDeleteBuffers(1, &meshes[i]->colorBuffer);
         glDeleteBuffers(1, &meshes[i]->modelBuffer);
@@ -413,68 +346,68 @@ GLfloat _vn = 1.0f / 32.0f;
 // each uv starts in bottom left (when looking at face) and progresses clockwise around
 std::vector<Vertex> regVerts = {
     //front
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)},
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
     //back
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
-    //left
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
-    //right
     Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
     Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    //left
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    //right
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
     //bottom
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
     //top
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
 
 };
 
 std::vector<Vertex> offsetVerts = {
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
-
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
-
     Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
     Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
 
     Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
     Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
 
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
 
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
+
+    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
+
+    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
+    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
 
 };
 

@@ -1,4 +1,6 @@
 #include "terrainGenerator.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 float seedX = Mth::rand0X(1000.0f);
 float seedY = Mth::rand0X(1000.0f);
@@ -121,10 +123,14 @@ void TerrainGenerator::update(glm::vec3 pl) {
 }
 
 void TerrainGenerator::render() {
+    // render all terrain chunks
+    Resources& r = Resources::get();
+
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->draw();
     }
+    
 }
 
 TerrainGenerator::~TerrainGenerator() {

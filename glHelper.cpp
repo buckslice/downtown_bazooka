@@ -6,7 +6,7 @@ GLuint GLHelper::loadTexture(std::string path) {
     glGenTextures(1, &tex);
     sf::Image image;
     image.loadFromFile(path);
-
+    image.flipVertically(); // to align with OpenGL bottom left origin
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getSize().x, image.getSize().y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());

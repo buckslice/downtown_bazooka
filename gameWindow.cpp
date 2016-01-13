@@ -18,14 +18,12 @@ GameWindow::GameWindow(int width, int height)
         std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
     }
 
-
     // main systems
     graphics = new Graphics(*window);
     Resources::get();   // load resources
     physics = new Physics();
     cg = new CityGenerator();
     tg = new TerrainGenerator();
-
 
     // init random seed and build city
     srand(static_cast<unsigned int>(time(NULL)));
@@ -127,7 +125,7 @@ void GameWindow::mainLoop() {
 
         // recompile shaders if prompted
         if (Input::justPressed(sf::Keyboard::R)) {
-            graphics->buildShaders();
+            Resources::get().buildShaders();
         }
 
         // build square or circular city if prompted
