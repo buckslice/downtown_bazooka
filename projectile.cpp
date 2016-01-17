@@ -1,5 +1,6 @@
 #include "projectile.h"
 #include "graphics.h"
+#include "entityManager.h"
 
 Projectile::Projectile(glm::vec3 pos, glm::vec3 vel) : Entity(pos, glm::vec3(1.0f), vel) {
 }
@@ -15,5 +16,8 @@ void Projectile::update(GLfloat delta) {
         getTransform()->alive = false;
     }
 
-    //GetEntityManager()->SpawnParticle(getTransform()->getPos());
+    for (int j = 0; j < 2; j++)
+        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::FIRE, 3);//,projectiles[j].getTransform()->vel);
+    for (int j = 0; j < 3; j++)
+        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::SPARK, 50);//,projectiles[j].getTransform()->vel);
 }

@@ -161,6 +161,9 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="enemy.cpp" />
+    <ClCompile Include="entity.cpp" />
+    <ClCompile Include="entityManager.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="gameWindow.cpp" />
     <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
@@ -168,6 +171,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="noise.cpp" />
+    <ClCompile Include="Particle.cpp" />
     <ClCompile Include="physics.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="projectile.cpp" />
