@@ -1,6 +1,6 @@
 #pragma once
 #include "mesh.h"
-#include <unordered_set>
+#include <unordered_map>
 #include "hsbColor.h"
 #include "mathutil.h"
 #include "resources.h"
@@ -36,15 +36,18 @@ typedef std::pair<int, int> point;
 
 class Chunk {
 public:
-    std::pair<int, int> pos;
-    ColorMesh* mesh;
-
     Chunk(point pos);
     ~Chunk();
 
-private:
-    void generate(point chunkPos);
+    float getHeight(float x, float z);
 
+    std::pair<int, int> pos;
+    ColorMesh* mesh;
+
+private:
+    std::vector<CVertex> verts; // save these for collision detection
+
+    void generate();
 };
 
 class TerrainGenerator {
@@ -58,7 +61,11 @@ public:
 
     void render();
 
+    float queryHeight(float x, float z);
+
 private:
     std::vector<Chunk*> chunks; // list of actual chunk objects
-    std::unordered_set<point> chunkCoords;   // holds world coords of all active chunks for quick checking
+    //std::unordered_map<point, int> chunkCoords;   // maps chunk coordinates to the chunk vector index
+    std::unordered_map<point, size_t> coordsByIndices;
+    point worldToChunk(float x, float z);
 };

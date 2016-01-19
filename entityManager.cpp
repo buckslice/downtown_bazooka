@@ -12,7 +12,7 @@ EntityManager::EntityManager(Player* player) : player(player) {
 // then update it each time a new entity is spawned using glBufferSubData()
 // or maybe glMapBuffer() or glMapBufferRange()
 void EntityManager::init(int numberOfDudes) {
-	EntityManagerInstance = this;
+    EntityManagerInstance = this;
     deleteEntities();
 
     std::vector<glm::vec3> colors;
@@ -21,7 +21,7 @@ void EntityManager::init(int numberOfDudes) {
         bool elite = rand() % 50 == 0;
 
         glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-        glm::vec3 variance = Mth::randInsideUnitSphere();
+        glm::vec3 variance = Mth::randInsideUnitCube();
         variance.x = variance.z = abs(variance.x);
         scale += variance * .25f;
         if (elite) {
@@ -63,7 +63,7 @@ void EntityManager::update(float delta) {
     player->update(delta);
 
     std::vector<glm::mat4> models;
-    for (size_t i = 0, len = entities.size(); i < len; ++i){
+    for (size_t i = 0, len = entities.size(); i < len; ++i) {
         entities[i]->update(delta);
 
         // update dudes model
@@ -80,7 +80,7 @@ void EntityManager::update(float delta) {
 
     // add projectiles
     std::vector<Projectile>& projectiles = player->getProjectiles();
-    for (size_t i = 0, len = projectiles.size(); i < len; ++i){
+    for (size_t i = 0, len = projectiles.size(); i < len; ++i) {
         PhysicsTransform* pt = projectiles[i].getTransform();
 
         glm::mat4 model;
@@ -101,7 +101,7 @@ void EntityManager::update(float delta) {
     // update and build particles
     // should probably remove this into seperate class..
     std::vector<glm::vec3> colors;
-    for (size_t i = 0, len = particles.size(); i < len; ++i){
+    for (size_t i = 0, len = particles.size(); i < len; ++i) {
         Particle* p = &particles[i];
 
         p->update(delta);
@@ -117,7 +117,7 @@ void EntityManager::update(float delta) {
             model = glm::scale(model, scale);
             models.push_back(model);
 
-			colors.push_back(p->getColor());
+            colors.push_back(p->getColor());
         }
     }
 
@@ -144,7 +144,10 @@ void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm:
     p->effect = effect;
     PhysicsTransform* pt = p->getTransform();
     pt->lpos = pos;
-    pt->scale = glm::vec3(.5f, .5f, .5f);
-    pt->vel = vel + glm::vec3(vel.x + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.y + ((float)rand() / RAND_MAX - .5f) * 2 * randvel, vel.z + ((float)rand() / RAND_MAX - .5f) * 2 * randvel);//TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
+    pt->scale = glm::vec3(.25f);
+
+    //TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
+    pt->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
+    //pt->vel = vel + Mth::randInsideUnitCube() * randvel;
     p->activate();
 }

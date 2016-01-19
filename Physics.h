@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "transform.h"
+#include "terrainGenerator.h"
 
 
 class Physics {
@@ -24,6 +25,8 @@ public:
     void printStaticMatrix();
 
     Physics();
+
+    TerrainGenerator* tg;   // ref to terrain
 
 private:
 

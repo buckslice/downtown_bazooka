@@ -158,14 +158,17 @@ void Physics::update(float delta) {
             // ground dynamic if hit bottom or if normal of what you hit points in the y direction
             // should technically only set grounded if normal is > 0.0f actually..
             // also just made all PhysicsTransforms have a grounded variable cuz might be useful, and im lazy
-            if (pt.lpos.y < 0.0f || norm.y != 0.0f) {
+
+            float h = tg->queryHeight(pt.lpos.x, pt.lpos.z);
+
+            if (pt.lpos.y < h || norm.y != 0.0f) {
                 pt.grounded = true;
                 pt.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
 
             // dont let dynamic go below 0.0f;
-            pt.lpos.y = fmax(pt.lpos.y, 0.0f);
+            pt.lpos.y = fmax(pt.lpos.y, h);
 
             // if there was a collision then update remaining velocity for subsequent collision tests
             if (time < 1.0f) {

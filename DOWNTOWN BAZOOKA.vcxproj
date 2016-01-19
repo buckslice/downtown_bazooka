@@ -163,7 +163,6 @@
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entityManager.cpp" />
-    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="gameWindow.cpp" />
     <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
@@ -188,7 +187,6 @@
     <ClInclude Include="entityManager.h" />
     <ClInclude Include="slotMap.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="gameObject.h" />
     <ClInclude Include="gameWindow.h" />
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="graphics.h" />

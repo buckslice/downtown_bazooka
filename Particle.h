@@ -13,12 +13,12 @@ public:
     static const int CLOUD = 1;
     static const int FIRE = 2;
 
-    float maxlifetime, lifetime;
+    float lifetime, curlife;
     int effect;
     //DO NOT CREATE A NEW PARTICLE outside of EntityManager
     Particle() : Entity() {
         getTransform()->alive = false;
-        lifetime = 0;
+        curlife = 0;
     }
 
 	void activate();

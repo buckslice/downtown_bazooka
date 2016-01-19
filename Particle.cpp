@@ -7,25 +7,25 @@ void Particle::activate() {
 	switch (effect) {
 	case SPARK:
 		gravmult = 5.0f;
-		maxlifetime = 3.0f;
+		lifetime = 1.0f;
 		break;
 	case CLOUD:
 		gravmult = -.25f;
-		maxlifetime = .5f;
+        lifetime = .5f;
 		break;
 	case FIRE:
 		gravmult = -.5f;
-		maxlifetime = 2.0f;
+        lifetime = 2.0f;
 		break;
 	}
 	this->getTransform()->gravityMultiplier = gravmult;
-	lifetime = maxlifetime;
+	curlife = lifetime;
 }
 
 void Particle::update(GLfloat dt) {
 	PhysicsTransform* pt = getTransform();
 
-	if ((lifetime -= dt) <= 0) {
+	if ((curlife -= dt) <= 0) {
 		pt->alive = false;
 		return;
 	}
@@ -36,7 +36,7 @@ void Particle::update(GLfloat dt) {
 		scalemult = .97f;
 		break;
 	case CLOUD:
-		if (lifetime > maxlifetime*.25f)
+		if (curlife > lifetime*.25f)
 			scalemult = 1.02f;
 		else
 			scalemult = .9f;
@@ -46,13 +46,13 @@ void Particle::update(GLfloat dt) {
 		break;
 	}
 	//pt->scale *= scalemult;
-	pt->scale = (lifetime / maxlifetime) * glm::vec3(1.0f);
+	pt->scale = (curlife / lifetime) * glm::vec3(1.0f);
 }
 
 glm::vec3 Particle::getColor() {
 	switch (effect) {
 	case FIRE:
-		return glm::vec3(1.0f, lifetime / maxlifetime, 0.0f);
+		return glm::vec3(1.0f, curlife / lifetime, 0.0f);
 	}
 	return glm::vec3(1.0f);
 }

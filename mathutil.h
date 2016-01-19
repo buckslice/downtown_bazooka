@@ -9,8 +9,10 @@
 #include <functional>
 #include <algorithm>
 
+const float PI = 3.14159265358979f;
 class Mth {
 public:
+
     static float rand01() {
         return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
@@ -20,11 +22,21 @@ public:
     }
 
     static float randUnit() {
-        return rand01() * 2.0f - 1.0f;
+        return static_cast <float> (rand()) / static_cast <float> (RAND_MAX) * 2.0f - 1.0f;
     }
 
-    static glm::vec3 randInsideUnitSphere() {
+    static glm::vec3 randInsideUnitCube() {
         return glm::vec3(randUnit(), randUnit(), randUnit());
+    }
+
+    static glm::vec3 randInsideSphere(float radius) {
+        float phi = rand0X(PI*2.0f);
+        float costheta = randUnit();
+        float u = rand01();
+
+        float theta = acos(costheta);
+        float r = radius * std::pow(u, 1.0f / 3.0f);
+        return glm::vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta))*r;
     }
 
     static glm::vec2 randomPointInSquare(float size) {
@@ -32,14 +44,18 @@ public:
     }
 
     static glm::vec2 randomPointInCircle(float radius) {
-        float t = 2 * 3.14159f * rand01();
+        float t = PI*2.0f* rand01();
         float u = rand01() + rand01();
         float r = u > 1 ? 2.0f - u : u;
         return glm::vec2(r * cos(t), r * sin(t)) * radius;
     }
 
-    static float clamp(float n, float lower, float upper) {
-        return std::max(lower, std::min(n, upper));
+    static float clamp(float n, float min, float max) {
+        return std::max(min, std::min(n, max));
+    }
+
+    static int clamp(int n, int min, int max) {
+        return std::min(std::max(n, min), max);
     }
 
     static float saturate(float n) {

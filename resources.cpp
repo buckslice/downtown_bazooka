@@ -5,14 +5,14 @@
 
 Resources::Resources() {
     gridTex = GLHelper::loadTexture("assets/images/grid.png");
-    terrainTex = gridTex;//Masana: I got a runtime error here when it tried to load grid.ping again //GLHelper::loadTexture("assets/images/grid.png");
+    //terrainTex = gridTex;//Masana: I got a runtime error here when it tried to load grid.ping again //GLHelper::loadTexture("assets/images/grid.png");
     solidTex = GLHelper::loadTexture("assets/images/solid.png");
 
 }
 
 Resources::~Resources() {
     glDeleteTextures(1, &gridTex);
-    glDeleteTextures(1, &terrainTex);
+    //glDeleteTextures(1, &terrainTex);
     glDeleteTextures(1, &solidTex);
     deleteShaders();
 }

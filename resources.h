@@ -12,7 +12,7 @@ public:
     }
 
     GLuint gridTex;
-    GLuint terrainTex;
+    //GLuint terrainTex;
     GLuint solidTex;
 
     Shader instanceShader;

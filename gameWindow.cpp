@@ -24,6 +24,7 @@ GameWindow::GameWindow(int width, int height)
     physics = new Physics();
     cg = new CityGenerator();
     tg = new TerrainGenerator();
+    physics->tg = tg;
 
     // init random seed and build city
     srand(static_cast<unsigned int>(time(NULL)));
@@ -31,7 +32,7 @@ GameWindow::GameWindow(int width, int height)
 
 
     // generate a random city
-    cg->generate(false, false, 7500, *physics);
+    cg->generate(false, true, 7500, *physics);
 
     // init camera
     player = new Player(&cam);
@@ -139,7 +140,7 @@ void GameWindow::mainLoop() {
 
         if (menu->justClosed) {
             player->flying = false;
-            em->init(2000);
+            em->init(0);
         }
         if (menu->justOpened) {
             em->deleteEntities();

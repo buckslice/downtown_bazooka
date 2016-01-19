@@ -6,8 +6,6 @@
 #include "noise.h"
 #include "hsbColor.h"
 
-const float PI = 3.14159265f;
-
 bool tooClose(float minDist, glm::vec2 city, std::vector<glm::vec2> cities) {
     for (size_t i = 0, len = cities.size(); i < len; ++i) {
         if (glm::distance(city, cities[i]) < minDist) {
