@@ -1,8 +1,11 @@
 #include "game.h"
 
 Game::Game(int width, int height)
-    : width{ width }, height{ height }, running{ true },
-    lastFocused{ false }, gameFocused{ false }, clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false } {
+    : width{ width }, height{ height },
+    running{ true }, lastFocused{ false }, gameFocused{ false },
+    clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
+    mipmapping{ true }, blurring{ true } {
+
     center.x = width / 2;
     center.y = height / 2;
     // build window
@@ -124,15 +127,44 @@ void Game::mainLoop() {
             input.update();
         }
 
-        // recompile shaders if prompted
-        if (Input::justPressed(sf::Keyboard::R)) {
-            Resources::get().buildShaders();
-        }
-
-        // build square or circular city if prompted
-        if (Input::justPressed(sf::Keyboard::F) || Input::justPressed(sf::Keyboard::G)) {
+        // rebuild color wheel city
+        if (Input::justPressed(sf::Keyboard::F)) {
             physics->clearStatics();
-            cg->generate(false, Input::justPressed(sf::Keyboard::F), 7500, *physics);
+            cg->generate(false, true, 7500, *physics);
+            std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
+        }
+        // rebuild regular city
+        if (Input::justPressed(sf::Keyboard::G)) {
+            physics->clearStatics();
+            cg->generate(false, false, 7500, *physics);
+            std::cout << ("BUILT NORMAL CITY") << std::endl;
+        }
+        // randomize terrain
+        if (Input::justPressed(sf::Keyboard::V)) {
+            tg->deleteChunks();
+            tg->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
+            std::cout << "RANDOMIZED TERRAIN" << std::endl;
+        }
+        // toggle terrain color
+        if (Input::justPressed(sf::Keyboard::B)) {
+            tg->deleteChunks();
+            tg->toggleDebugColors();
+            std::cout << "TOGGLED TERRAIN COLORS" << std::endl;
+        }
+        // toggle mipmaps
+        if (Input::justPressed(sf::Keyboard::R)) {
+            mipmapping = !mipmapping;
+            Resources::get().loadTextures(mipmapping);
+            std::cout << "MIPMAPS " << (mipmapping ? "ON" : "OFF") << std::endl;
+        }
+        // toggle blur
+        if (Input::justPressed(sf::Keyboard::T)) {
+            blurring = !blurring;
+            std::cout << "BLUR " << (blurring ? "ON" : "OFF") << std::endl;
+        }
+        // recompile shaders if prompted
+        if (Input::justPressed(sf::Keyboard::Y)) {
+            Resources::get().buildShaders();
         }
 
         //update menu
@@ -172,14 +204,15 @@ void Game::mainLoop() {
         // render graphics
         Graphics::setMeshVisible(em->dudeMesh, false);
         //Graphics::setMeshVisible(em->dudeMesh, !menu->getVisible());
-        graphics->renderScene(cam, *tg);
+        graphics->renderScene(cam, *tg, blurring);
 
         // draw UI
         window->resetGLStates();
         menu->draw(*window);
 
-        // apply bloom
-        graphics->postProcess();
+        if (blurring) {
+            graphics->postProcess();
+        }
 
         // swap buffers
         window->display();

@@ -16,13 +16,17 @@ public:
     static float rand01() {
         return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
-
     static float rand0X(float X) {
         return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
     }
-
     static float randUnit() {
         return static_cast <float> (rand()) / static_cast <float> (RAND_MAX) * 2.0f - 1.0f;
+    }
+    static float randRange(float a, float b) {
+        if (a < b) {
+            return rand0X(b - a) + a;
+        }
+        return rand0X(a - b) + b;
     }
 
     static glm::vec3 randInsideUnitCube() {
@@ -70,6 +74,7 @@ public:
         return value*value*value;
     }
 
+    // returns a value from 0-1 that you can scale stuff by
     static float blend(float d, float low, float high, std::function<float(float)> f) {
         return f((d - low) / (high - low));
     }

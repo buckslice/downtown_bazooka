@@ -55,12 +55,14 @@ private:
 	// some utility clocks
 	sf::Clock frameTime;
 	sf::Clock animTime;
+
+    // state tracking flags
 	bool lastFocused;
 	bool gameFocused;
 	bool clickedInside;
 	bool mouseVisible;
 	bool lastMouseVisible;
-
-
+    bool mipmapping;
+    bool blurring;
 };
 

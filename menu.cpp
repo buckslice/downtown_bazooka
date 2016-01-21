@@ -3,7 +3,7 @@
 #include <iostream>
 
 Menu::Menu(Player* player) {
-    if (!font.loadFromFile("assets/fonts/cour.ttf")) {
+    if (!font.loadFromFile("assets/fonts/OCRAEXT.ttf")) {
         //handle error
         std::cout << "ERROR::FONT::LOAD_FAILURE";
     }
@@ -26,8 +26,10 @@ Menu::Menu(Player* player) {
 
     title.setFont(font);
     title.setColor(TITLE_COLOR);
+    title.setScale(sf::Vector2f(2.0f, 2.0f));
     title.setString("DOWNTOWN BAZOOKA");
-    title.setStyle(sf::Text::Bold);
+    //title.setString("I FIGHT FOR THE USERS");
+    //title.setStyle(sf::Text::Bold);
     title.setScale(sf::Vector2f(3.0f, 3.0f));
 
     instructions.setFont(font);
@@ -38,10 +40,16 @@ Menu::Menu(Player* player) {
         " ESC  : menu, quit\n"
         " Q    : toggle flymode\n"
         " E    : shoot\n"
-        " G    : gen normal\n"
+        "\n"
         " F    : gen colorwheel\n"
-        " R    : recompile shaders");
-    instructions.setScale(sf::Vector2f(2.0f, 2.0f));
+        " G    : gen normal\n"
+        " V    : randomize terrain\n"
+        " B    : toggle terrain colors\n"
+        "\n"
+        " R    : toggle mipmaps\n"
+        " T    : toggle blur\n"
+        " Y    : recompile shaders");
+    instructions.setScale(sf::Vector2f(1.5f, 1.5f));
 
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
@@ -51,6 +59,7 @@ Menu::Menu(Player* player) {
     // but too bad it crashes the game so hard lol whyyyyyy???
     // some sort of weird access violation where we arent reseting states right??? bugged pos???
     //sf::FloatRect rect = title.getLocalBounds();
+
 
 }
 
@@ -65,10 +74,10 @@ void Menu::draw(sf::RenderWindow& window) {
             window.draw(instructions);
         } else {
             // set positions incase resize
-            title.setPosition(sf::Vector2f(width / 2 - 460.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
-            menu[0].setPosition(sf::Vector2f(width / 2 - 85.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
-            menu[1].setPosition(sf::Vector2f(width / 2 - 210.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
-            menu[2].setPosition(sf::Vector2f(width / 2 - 85.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
+            title.setPosition(sf::Vector2f(width / 2 - 440.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
+            menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
+            menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
+            menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
 
             window.draw(title);
             for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
@@ -79,7 +88,7 @@ void Menu::draw(sf::RenderWindow& window) {
         healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
         float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
         float y = static_cast<float>(HEALTH_BAR_HEIGHT);
-        healthBar.setSize(sf::Vector2f(x,y));
+        healthBar.setSize(sf::Vector2f(x, y));
         //window.draw(healthBar);
     }
 }

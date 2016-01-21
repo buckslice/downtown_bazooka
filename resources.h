@@ -12,7 +12,7 @@ public:
     }
 
     GLuint gridTex;
-    //GLuint terrainTex;
+    GLuint terrainTex;
     GLuint solidTex;
 
     Shader instanceShader;
@@ -23,6 +23,7 @@ public:
     Shader blendShader;
 
     void buildShaders();
+    void loadTextures(bool mipmapped);
 
 private:
     Resources();
@@ -33,4 +34,5 @@ private:
     Resources& operator=(Resources const&); // hide assign op
 
     void deleteShaders();
+    void deleteTextures();
 };

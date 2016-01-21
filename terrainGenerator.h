@@ -9,7 +9,7 @@
 const int NUM_TILES = 20;
 const float TILE_SIZE = 5.0f;
 const float CHUNK_SIZE = NUM_TILES*TILE_SIZE;
-const int CHUNK_RAD = 10;
+const int CHUNK_RAD = 15;
 const float DIST = CHUNK_RAD * CHUNK_SIZE + 10.0f;
 
 // hash function for pairs
@@ -53,8 +53,8 @@ private:
 class TerrainGenerator {
 public:
 
-    TerrainGenerator() {
-    }
+    TerrainGenerator();
+
     ~TerrainGenerator();
 
     void update(glm::vec3 pl);
@@ -63,9 +63,17 @@ public:
 
     float queryHeight(float x, float z);
 
+    void deleteChunks();
+
+    void setSeed(glm::vec2 seed);
+
+    void toggleDebugColors();
+
 private:
-    std::vector<Chunk*> chunks; // list of actual chunk objects
-    //std::unordered_map<point, int> chunkCoords;   // maps chunk coordinates to the chunk vector index
+    // list of chunk objects
+    std::vector<Chunk*> chunks;
+    // map from chunks coords to vector index
     std::unordered_map<point, size_t> coordsByIndices;
+
     point worldToChunk(float x, float z);
 };

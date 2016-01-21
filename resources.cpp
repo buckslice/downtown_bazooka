@@ -4,21 +4,35 @@
 #include <glm/gtc/type_ptr.hpp>
 
 Resources::Resources() {
-    gridTex = GLHelper::loadTexture("assets/images/grid.png");
-    //terrainTex = gridTex;//Masana: I got a runtime error here when it tried to load grid.ping again //GLHelper::loadTexture("assets/images/grid.png");
-    solidTex = GLHelper::loadTexture("assets/images/solid.png");
-
+    loadTextures(true);
+    buildShaders();
 }
 
 Resources::~Resources() {
-    glDeleteTextures(1, &gridTex);
-    //glDeleteTextures(1, &terrainTex);
-    glDeleteTextures(1, &solidTex);
+    deleteTextures();
     deleteShaders();
 }
 
+bool loadedTexturesBefore = false;
+void Resources::deleteTextures() {
+    if (!loadedTexturesBefore) {
+        return;
+    }
+    glDeleteTextures(1, &gridTex);
+    glDeleteTextures(1, &terrainTex);
+    glDeleteTextures(1, &solidTex);
+}
+
+void Resources::loadTextures(bool mipmapped) {
+    deleteTextures();
+    gridTex = GLHelper::loadTexture("assets/images/grid.png", mipmapped);
+    terrainTex = GLHelper::loadTexture("assets/images/grid2.png", mipmapped);
+    solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
+    loadedTexturesBefore = true;
+}
+
 bool loadedShadersBefore = false;
-// would be better to only rebuild shaders if they have been changed
+
 void Resources::buildShaders() {
     bool success = true;
 

@@ -4,8 +4,16 @@
 
 #include "input.h"
 
-float seedX = Mth::rand0X(1000.0f);
-float seedY = Mth::rand0X(1000.0f);
+// just public here in the class so chunk can see
+glm::vec2 seed;
+bool debugColors = false;
+
+void TerrainGenerator::setSeed(glm::vec2 sd) {
+    seed = sd;
+}
+void TerrainGenerator::toggleDebugColors() {
+    debugColors = !debugColors;
+}
 
 void Chunk::generate() {
     std::vector<GLuint> tris;
@@ -13,43 +21,57 @@ void Chunk::generate() {
     verts.reserve((NUM_TILES + 1)*(NUM_TILES + 1));
 
     bool bot = true;
+    glm::vec3 color;
     glm::vec3 rand = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB() * Mth::randUnit() * 0.1f;
+    color = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
+    //color = HSBColor(Mth::rand0X(0.25f) + 0.5f, 1.0f, Mth::rand0X(0.2f) + 0.1f).toRGB();
+    //color = HSBColor(Mth::randRange(0.65f, 0.75f), Mth::randRange(0.5f, 0.8f), 0.25f).toRGB();
     for (int y = 0; y < NUM_TILES + 1; y++) {
         bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
-            float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE;
-            float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE;
+            float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
+            float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
             float scale = 100.0f;
-            float h = Noise::fractal_2D(xo + seedX, yo + seedY, 4, 0.002f);
-            if (h < 0.0f) {
+            float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
+
+            float sqrdist = xo*xo + yo*yo;
+            float cityLimit = 1000.0f;;
+            float range = 100.0f;
+            if (h < 0.0f || sqrdist < cityLimit * cityLimit) {
                 h = 0.0f;
+            } else if (sqrdist < (cityLimit + range)*(cityLimit + range)) {
+                float d = glm::distance(glm::vec2(0.0f), glm::vec2(xo, yo));
+                float b = Mth::blend(d, cityLimit, cityLimit + range, Mth::cubic);
+                h *= b;
             }
-            h *= scale;
             // to make it look blocky
             h = floorf(h / 4.0f) * 4;
 
             glm::vec3 p = glm::vec3(xo, h, yo);
-            p -= glm::vec3(CHUNK_SIZE / 2.0f, 0.0f, CHUNK_SIZE / 2.0f);   // offset by half to center
-            float t = h / scale;
-            glm::vec3 color;
-            if (t < .01f) {
-                color = glm::vec3(0.02f, 0.02f, 0.05f);
-                color += glm::vec3(Noise::ridged_2D(xo + seedX, yo + seedY, 2, 0.05f)*1.0f);
-            } else if (t < .25f) {
-                color = glm::vec3(0.05f, 0.05f, 0.1f);
-                color += glm::vec3(Noise::ridged_2D(xo + seedX, yo + seedY, 2, 0.03f)*.75f);
-            } else if (t < .45f) {
-                color = glm::vec3(0.1f, 0.2f, 0.3f);
-                color += glm::vec3(Noise::ridged_2D(xo + seedX, yo + seedY, 2, 0.015f)*0.75f);
-            } else {
-                color = glm::vec3(0.2f, 0.4f, 0.6f);
-                color += glm::vec3(Noise::ridged_2D(xo + seedX, yo + seedY, 2, 0.0075f)*0.5f);
+
+            if (!debugColors) {
+                // generate the color for this point
+                float t = h / scale;
+                if (t < .01f) {
+                    color = glm::vec3(0.02f, 0.02f, 0.05f);
+                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.05f)*1.0f);
+                } else if (t < .25f) {
+                    color = glm::vec3(0.05f, 0.05f, 0.1f);
+                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.03f)*.75f);
+                } else if (t < .45f) {
+                    color = glm::vec3(0.1f, 0.2f, 0.3f);
+                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.015f)*0.75f);
+                } else {
+                    color = glm::vec3(0.1f, 0.1f, 0.5f);
+                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.0075f)*0.5f);
+                }
+                //color.b += Mth::randUnit() * 0.1f + 0.1f;
+                color.b += 0.2f;
+                color += rand;
+                color.b = std::max(color.b, 0.1f);
             }
-            //color.b += Mth::randUnit() * 0.1f + 0.1f;
-            color.b += 0.2f;
-            color += rand;
-            color.b = std::max(color.b, 0.1f);
+            //color = glm::vec3(0.8f, 1.0f, 0.95f);
             //color.r -= 0.2f;
             verts.push_back(CVertex{ p, color, glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f) });
             left = !left;
@@ -70,7 +92,7 @@ void Chunk::generate() {
         tris.push_back(i);
     }
     //std::cout << tris.size() << std::endl;
-    mesh = new ColorMesh(verts, tris, Resources::get().gridTex);
+    mesh = new ColorMesh(verts, tris, Resources::get().terrainTex);
 }
 
 Chunk::Chunk(point pos) {
@@ -115,7 +137,7 @@ float Chunk::getHeight(float x, float z) {
 float TerrainGenerator::queryHeight(float x, float z) {
     point p = worldToChunk(x, z);
     if (!coordsByIndices.count(p)) {
-        return -10000.0f;   // basically -infinity
+        return -10000.0f;   // basically -infinity right? lol
     }
 
     return chunks[coordsByIndices[p]]->getHeight(x, z);
@@ -134,6 +156,8 @@ void TerrainGenerator::update(glm::vec3 pl) {
     point pcc = worldToChunk(pl.x, pl.z);
     //std::cout << pcc.first << " " << pcc.second << " " << pl.x << " " << pl.z << std::endl;
 
+    int numBuiltThisFrame = 0;
+    int maxBuiltPerFrame = 10;
     for (int y = -CHUNK_RAD; y <= CHUNK_RAD; y++) {
         for (int x = -CHUNK_RAD; x <= CHUNK_RAD; x++) {
             point ccc = point{ pcc.first + x, pcc.second + y };
@@ -151,12 +175,16 @@ void TerrainGenerator::update(glm::vec3 pl) {
             if (sqrdist < DIST * DIST) {
                 coordsByIndices[ccc] = chunks.size();
                 chunks.push_back(new Chunk(ccc));
+                if (++numBuiltThisFrame >= maxBuiltPerFrame) {
+                    goto outer;
+                }
             }
         }
     }
+outer:  // jump here if built max this frame
 
-    // delete chunks no longer nearby player
-    // dont need to check every frame
+// delete chunks no longer nearby player
+// dont need to check every frame
     if (frames < 10) {
         frames++;
         return;
@@ -185,9 +213,7 @@ void TerrainGenerator::update(glm::vec3 pl) {
         }
     }
 
-    //std::cout << chunks.size() << " " << freeList.size() << std::endl;
 }
-
 
 void TerrainGenerator::render() {
     // render all terrain chunks
@@ -200,10 +226,20 @@ void TerrainGenerator::render() {
 
 }
 
-TerrainGenerator::~TerrainGenerator() {
+void TerrainGenerator::deleteChunks() {
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->destroy();
         delete chunks[i];
     }
     chunks.erase(chunks.begin(), chunks.end());
+    coordsByIndices.clear();
+}
+
+TerrainGenerator::TerrainGenerator() {
+    setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
+}
+
+
+TerrainGenerator::~TerrainGenerator() {
+    deleteChunks();
 }

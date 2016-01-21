@@ -66,8 +66,6 @@ void Graphics::initGL(sf::RenderWindow& window) {
 
     floorMesh = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    Resources::get().buildShaders();
-
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
     //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -104,9 +102,13 @@ void Graphics::renderQuad() {
 }
 
 // RENDER SCENE TO FRAMEBUFFER
-void Graphics::renderScene(Camera& cam, TerrainGenerator& tg) {
+void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer) {
     Resources& r = Resources::get();
-    glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
+    if (toFrameBuffer) {
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
+    } else {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);

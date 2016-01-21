@@ -16,7 +16,7 @@ public:
 
     ~Graphics();
 
-    void renderScene(Camera& cam, TerrainGenerator& tg);
+    void renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer);
     void resize(int width, int height);
     //void renderUI();
     void postProcess();

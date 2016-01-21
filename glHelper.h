@@ -17,7 +17,7 @@ struct FBO {
 
 class GLHelper {
 public:
-    static GLuint loadTexture(std::string path);
+    static GLuint loadTexture(std::string path, bool mipped);
 
     static FBO buildFBO(GLuint width, GLuint height, bool withDepth);
 };
