@@ -163,14 +163,14 @@
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entityManager.cpp" />
-    <ClCompile Include="gameWindow.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="noise.cpp" />
-    <ClCompile Include="Particle.cpp" />
+    <ClCompile Include="particle.cpp" />
     <ClCompile Include="physics.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="projectile.cpp" />
@@ -187,7 +187,6 @@
     <ClInclude Include="entityManager.h" />
     <ClInclude Include="slotMap.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="gameWindow.h" />
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="hsbColor.h" />
@@ -197,7 +196,7 @@
     <ClInclude Include="menu.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="noise.h" />
-    <ClInclude Include="Particle.h" />
+    <ClInclude Include="particle.h" />
     <ClInclude Include="physics.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="projectile.h" />
