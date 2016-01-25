@@ -31,6 +31,12 @@ void Resources::loadTextures(bool mipmapped) {
     loadedTexturesBefore = true;
 }
 
+void Resources::toggleBuilding(bool b) {
+    glDeleteTextures(1, &gridTex);
+    //gridTex = GLHelper::loadTexture("assets/images/")
+}
+
+
 bool loadedShadersBefore = false;
 
 void Resources::buildShaders() {

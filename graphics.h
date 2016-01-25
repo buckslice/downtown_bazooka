@@ -25,15 +25,19 @@ public:
     // should later add options for mesh type
     static GLuint registerMesh();   // because i cant figure out how to give default argument to static function
     static GLuint registerMesh(GLuint tex);
+
+    // builds or updates color buffer for given mesh
     static void setColors(GLuint mesh_id, std::vector<glm::vec3>& colors);
+
+    // builds or updates model buffer for given mesh
     static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
 
     static void setMeshVisible(GLuint id, bool value);
 
 private:
 
-    static GLuint genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors);
-    static GLuint genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models);
+    static void genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors);
+    static void genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models);
     static bool isValidMeshID(GLuint id);
 
     void initGL(sf::RenderWindow& window);

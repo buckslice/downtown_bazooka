@@ -92,10 +92,10 @@ void Physics::update(float delta) {
             // my aabb sweeptest fix needs a little tweaking
             // could also be something else though perhaps with the quadtree
             // or the different sets pruning too aggresively
-            //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
-            //    std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
-            //    printedErrorThisFrame = true;   // to avoid spam
-            //}
+            if (resolutionAttempts == 9 && !printedErrorThisFrame) {
+                std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
+                printedErrorThisFrame = true;   // to avoid spam
+            }
 
             checkSet.clear();
 
@@ -155,19 +155,17 @@ void Physics::update(float delta) {
             // update dynamic position
             pt.lpos += rvel * delta * time;
 
-            // ground dynamic if hit bottom or if normal of what you hit points in the y direction
-            // should technically only set grounded if normal is > 0.0f actually..
-            // also just made all PhysicsTransforms have a grounded variable cuz might be useful, and im lazy
-
+            // check height of terrain
             float h = tg->queryHeight(pt.lpos.x, pt.lpos.z);
 
+            // ground the object if it hits terrain or normal of what it hits is flat (top of building)
             if (pt.lpos.y < h || norm.y != 0.0f) {
                 pt.grounded = true;
                 pt.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
 
-            // dont let dynamic go below 0.0f;
+            // dont let dynamic go below terrain height
             pt.lpos.y = fmax(pt.lpos.y, h);
 
             // if there was a collision then update remaining velocity for subsequent collision tests
@@ -177,7 +175,22 @@ void Physics::update(float delta) {
                 glm::vec3 pvel = rvel - glm::proj(rvel, norm);
                 // update remaining velocity to projected velocity * remaining time
                 rvel = pvel * (1.0f - time);
+
                 // should add different collision type for reflect bounce too
+                //rvel *= time;
+                //float eps = 0.0001f;
+                //if (abs(norm.x) > eps) {
+                //    rvel.x = -rvel.x;
+                //    pt.vel.x = -pt.vel.x;
+                //}
+                //if (abs(norm.y > eps)) {
+                //    rvel.y = -rvel.y;
+                //    pt.vel.y = -pt.vel.y;
+                //}
+                //if (abs(norm.z > eps)) {
+                //    rvel.z = -rvel.z;
+                //    pt.vel.z = -pt.vel.z;
+                //}
             }
 
             // if there was no full collision test then this object is resolved

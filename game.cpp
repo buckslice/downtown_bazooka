@@ -4,7 +4,7 @@ Game::Game(int width, int height)
     : width{ width }, height{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
     clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
-    mipmapping{ true }, blurring{ true } {
+    mipmapping{ true }, blurring{ true }, wireframe{ false } {
 
     center.x = width / 2;
     center.y = height / 2;
@@ -165,6 +165,10 @@ void Game::mainLoop() {
         // recompile shaders if prompted
         if (Input::justPressed(sf::Keyboard::Y)) {
             Resources::get().buildShaders();
+        }
+        if (Input::justPressed(sf::Keyboard::H)) {
+            wireframe = !wireframe;
+            glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
         }
 
         //update menu

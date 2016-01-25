@@ -23,7 +23,7 @@ bool Input::justPressed(sf::Keyboard::Key key) {
 }
 
 bool Input::justReleased(sf::Keyboard::Key key) {
-    return lastframe[key] && !thisframe[key];
+    return !thisframe[key] && lastframe[key];
 }
 
 sf::Vector2i Input::getMouseMovement(sf::Window& window, bool centerAndIgnore, sf::Vector2i center) {

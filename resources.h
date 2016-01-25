@@ -24,6 +24,7 @@ public:
 
     void buildShaders();
     void loadTextures(bool mipmapped);
+    void toggleBuilding(bool b);
 
 private:
     Resources();

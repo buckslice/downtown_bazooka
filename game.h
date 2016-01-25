@@ -64,5 +64,6 @@ private:
 	bool lastMouseVisible;
     bool mipmapping;
     bool blurring;
+    bool wireframe;
 };
 
