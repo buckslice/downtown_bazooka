@@ -1,5 +1,7 @@
 #include "game.h"
 
+int numBuildings = 7500;   // 7500
+
 Game::Game(int width, int height)
     : width{ width }, height{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
@@ -33,9 +35,8 @@ Game::Game(int width, int height)
     srand(static_cast<unsigned int>(time(NULL)));
     //srand(1); //my testing seed for physics bugs lol
 
-
     // generate a random city
-    cg->generate(false, true, 7500, *physics);
+    cg->generate(false, true, numBuildings, *physics);
 
     // init camera
     player = new Player(&cam);
@@ -70,9 +71,15 @@ Game::~Game() {
     delete menu;
 }
 
+float avgfps = 0.0f;
+int fr = 0;
 void Game::mainLoop() {
     while (running) {
         GLfloat delta = frameTime.restart().asSeconds();
+
+        fr++;
+        avgfps += 1.0f / delta;
+        //std::cout << avgfps / fr << std::endl;
 
         // should check for window.resize event too and resize window?
         // check for events that will quit game
@@ -130,13 +137,13 @@ void Game::mainLoop() {
         // rebuild color wheel city
         if (Input::justPressed(sf::Keyboard::F)) {
             physics->clearStatics();
-            cg->generate(false, true, 7500, *physics);
+            cg->generate(false, true, numBuildings, *physics);
             std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
         }
         // rebuild regular city
         if (Input::justPressed(sf::Keyboard::G)) {
             physics->clearStatics();
-            cg->generate(false, false, 7500, *physics);
+            cg->generate(false, false, numBuildings, *physics);
             std::cout << ("BUILT NORMAL CITY") << std::endl;
         }
         // randomize terrain
@@ -200,7 +207,9 @@ void Game::mainLoop() {
             cam.updateCameraVectors();
         }
 
-        tg->update(player->getTransform()->getPos());
+        glm::vec3 pp = player->getTransform()->getPos();
+        //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
+        tg->update(pp);
 
         // resolve collisions
         physics->update(delta);

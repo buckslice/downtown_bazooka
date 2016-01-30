@@ -52,6 +52,14 @@ Physics::Physics() {
 int totalAABBChecks = 0;
 
 void Physics::update(float delta) {
+    //for (int i = 0; i < dynamicObjects.size(); i++) {
+    //    PhysicsTransform& pt = dynamicObjects[i];
+    //    if (!pt.alive) {
+    //        continue;
+    //    }
+    //    pt.lpos += pt.vel * delta;
+    //}
+    //return;
 
     totalAABBChecks = 0;
     // if in corner between two statics this will be 3 which seems weird, but its because

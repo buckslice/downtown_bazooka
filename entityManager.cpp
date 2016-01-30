@@ -4,7 +4,6 @@ EntityManager *EntityManagerInstance;//An extern from entityManager.h
 EntityManager::EntityManager(Player* player) : player(player) {
     dudeMesh = Graphics::registerMesh();
     projectileMesh = Graphics::registerMesh(Resources::get().solidTex);
-    particleMesh = Graphics::registerMesh(Resources::get().solidTex);
 }
 
 // should add in support for adding single entities dynamically next
@@ -89,10 +88,6 @@ void EntityManager::update(float delta) {
         model = glm::translate(model, pos);
         model = glm::scale(model, scale);
         models.push_back(model);
-        /*for (int j = 0; j < 2; j++)
-            SpawnParticle(pt->getPos(), Particle::FIRE, 5);//,projectiles[j].getTransform()->vel);
-        for (int j = 0; j < 3; j++)
-            SpawnParticle(pt->getPos(), Particle::SPARK, 5);//,projectiles[j].getTransform()->vel);*/
     }
 
     Graphics::setModels(projectileMesh, models);
@@ -121,8 +116,9 @@ void EntityManager::update(float delta) {
         }
     }
 
-    Graphics::setModels(particleMesh, models);
-    Graphics::setColors(particleMesh, colors);
+    // add particles to solid box stream
+    Graphics::addToStream(true, models, colors);
+
 }
 
 

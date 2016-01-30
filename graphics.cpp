@@ -14,6 +14,11 @@ extern std::vector<Vertex> regVerts;
 extern std::vector<Vertex> offsetVerts;
 extern std::vector<GLuint> elems;
 
+std::vector<glm::vec3> scolors;
+std::vector<glm::mat4> smodels;
+std::vector<glm::vec3> gcolors;
+std::vector<glm::mat4> gmodels;
+
 GLuint WIDTH;
 GLuint HEIGHT;
 
@@ -28,6 +33,12 @@ Graphics::Graphics(sf::RenderWindow& window) {
     HEIGHT = window.getSize().y;
 
     initGL(window);
+
+    //solidBox = Graphics::registerMesh(Resources::get().solidTex);
+    //gridBox = Graphics::registerMesh(Resources::get().gridTex);
+
+    solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
+    gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
@@ -120,7 +131,8 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
-    // draw all cube meshes
+
+    // draw all instanced cube meshes
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
     for (size_t i = 0, len = meshes.size(); i < len; ++i) {
@@ -128,6 +140,26 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
             meshes[i]->draw();
         }
     }
+
+    Graphics::setStream(solidBox, smodels, scolors);
+    if (solidBox->visible) {
+        solidBox->draw();
+    }
+    // turn on other stream here later
+    //Graphics::setStream(gridBox, gmodels, gcolors);
+
+
+    //int num = 100000;
+    //smodels.clear();
+    //scolors.clear();
+    //for (int i = 0; i < num; i++) {
+    //    glm::mat4 model;
+    //    model = glm::translate(model, Mth::randInsideUnitCube()*50.0f + glm::vec3(0.0f, 50.0f, 0.0f));
+    //    model = glm::scale(model, glm::vec3(Mth::randRange(0.1f, 1.0f), Mth::randRange(0.1f, 1.0f), Mth::randRange(0.1f, 1.0f)));
+    //    smodels.push_back(model);
+    //    //scolors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    //    scolors.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
+    //}
 
     // draw terrain
     r.terrainShader.use();
@@ -225,19 +257,66 @@ Graphics::~Graphics() {
     delete floorMesh;
 }
 
+void Graphics::addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+    int len = models.size();
+    if (len == 0 || len != colors.size()) {
+        return;
+    }
+
+    if (solid) {
+        smodels.reserve(smodels.size() + len);
+        smodels.insert(smodels.end(), models.begin(), models.end());
+        scolors.reserve(scolors.size() + len);
+        scolors.insert(scolors.end(), colors.begin(), colors.end());
+    } else {
+        gmodels.reserve(gmodels.size() + len);
+        gmodels.insert(gmodels.end(), models.begin(), models.end());
+        gcolors.reserve(gcolors.size() + len);
+        gcolors.insert(gcolors.end(), colors.begin(), colors.end());
+    }
+
+}
+
+void Graphics::setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+    int len = models.size();
+    if (len == 0 || len != colors.size()) {
+        m->visible = false;
+        return;
+    }
+    m->visible = true;
+
+    m->setInstanceAmount(len);
+    if (!m->builtModels) {
+        Graphics::genModelBuffer(m);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, m->modelBuffer);
+    glBufferData(GL_ARRAY_BUFFER, len * sizeof(glm::mat4), &models[0], GL_STREAM_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    if (!m->builtColors) {
+        Graphics::genColorBuffer(m);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, len * sizeof(glm::vec3), &colors[0], GL_STREAM_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    models.clear();
+    colors.clear();
+}
+
+
 void Graphics::setColors(GLuint mesh_id, std::vector<glm::vec3>& colors) {
     if (colors.size() == 0) {
         return;
     }
 
     Mesh* m = meshes[mesh_id];
-    if (m->builtColors) {
-        glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
-        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    } else {
-        Graphics::genColorBuffer(m, colors);
+    if (!m->builtColors) {
+        Graphics::genColorBuffer(m);
     }
+    glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Graphics::setModels(GLuint mesh_id, std::vector<glm::mat4>& models) {
@@ -249,38 +328,35 @@ void Graphics::setModels(GLuint mesh_id, std::vector<glm::mat4>& models) {
     m->visible = true;
 
     m->setInstanceAmount(models.size());
-    if (m->builtModels) {
-        glBindBuffer(GL_ARRAY_BUFFER, m->modelBuffer);
-        glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    } else {
-        Graphics::genModelBuffer(m, models);
+    if (!m->builtModels) {
+        Graphics::genModelBuffer(m);
     }
+    glBindBuffer(GL_ARRAY_BUFFER, m->modelBuffer);
+    glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Graphics::genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors) {
+// builds color buffer
+void Graphics::genColorBuffer(Mesh* mesh) {
     GLuint colorBuffer;
     glGenBuffers(1, &colorBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
-
     glBindVertexArray(mesh->getVAO());
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
     glVertexAttribDivisor(2, 1);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     mesh->colorBuffer = colorBuffer;
     mesh->builtColors = true;
 }
 
-void Graphics::genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models) {
-
+// builds model buffer for instanced mesh
+void Graphics::genModelBuffer(Mesh* mesh) {
     GLuint modelBuffer;
     glGenBuffers(1, &modelBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
-    glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
-
     glBindVertexArray(mesh->getVAO());
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
@@ -295,6 +371,7 @@ void Graphics::genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models) {
     glVertexAttribDivisor(5, 1);
     glVertexAttribDivisor(6, 1);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     mesh->modelBuffer = modelBuffer;
     mesh->builtModels = true;

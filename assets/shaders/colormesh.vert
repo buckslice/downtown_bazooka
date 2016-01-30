@@ -11,9 +11,12 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
+out vec3 wpos;
+
 void main()
 {
 	Color = color;
 	Texcoord = texcoord;
     gl_Position = proj * view * model * vec4(position, 1.0);
+	wpos = (model * vec4(position,1.0)).xyz;
 }

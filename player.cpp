@@ -54,7 +54,7 @@ void Player::update(GLfloat delta) {
     PhysicsTransform& pt = *getTransform();
     if (flying) {
         pt.gravityMultiplier = 0.0f;
-        pt.vel = (cam->right * input.x + xzforward * input.z + cam->worldUp * input.y) * speed * 8.0f;
+        pt.vel = (cam->right * input.x + xzforward * input.z + cam->worldUp * input.y) * speed * 20.0f;
     } else {
         input.y = 0.0f; // ignore this part of input when not flying
         if (pt.vel.y != 0.0f) {

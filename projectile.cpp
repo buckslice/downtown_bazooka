@@ -16,8 +16,11 @@ void Projectile::update(GLfloat delta) {
         getTransform()->alive = false;
     }
 
-    for (int j = 0; j < 2; j++)
-        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::FIRE, 3);//,projectiles[j].getTransform()->vel);
-    for (int j = 0; j < 3; j++)
-        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::SPARK, 50);//,projectiles[j].getTransform()->vel);
+    // 2 and 3
+    for (int i = 0; i < 2; i++) {
+        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::FIRE, 3);
+    }
+    for (int i = 0; i < 3; i++) {
+        EntityManagerInstance->SpawnParticle(getTransform()->getPos(), Particle::SPARK, 50);
+    }
 }

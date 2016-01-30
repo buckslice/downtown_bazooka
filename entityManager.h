@@ -47,9 +47,6 @@ public:
 private:
     GLuint projectileMesh;
 
-    GLuint particleMesh;
-    GLuint particleTex;
-
     std::vector<Entity*> entities;
     std::vector<Particle> particles;
     Player* player;

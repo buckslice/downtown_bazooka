@@ -11,8 +11,8 @@
 const int MAX_HEALTH = 100;
 const int HEALTH_BAR_HEIGHT = 20;
 
-const GLfloat SPEED = 15.0f;
-const GLfloat JUMPSPEED = 25.0f;
+const GLfloat SPEED = 5.0f;
+const GLfloat JUMPSPEED = 15.0f;
 
 class Player : public Entity {
 public:

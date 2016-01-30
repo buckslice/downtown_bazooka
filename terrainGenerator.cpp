@@ -20,12 +20,16 @@ void Chunk::generate() {
     tris.reserve(NUM_TILES*NUM_TILES * 6);
     verts.reserve((NUM_TILES + 1)*(NUM_TILES + 1));
 
+    // used for texture coordinates
     bool bot = true;
+
     glm::vec3 color;
+
+    // random hue adjustment for whole chunk
     glm::vec3 rand = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB() * Mth::randUnit() * 0.1f;
+    // debug color
     color = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
-    //color = HSBColor(Mth::rand0X(0.25f) + 0.5f, 1.0f, Mth::rand0X(0.2f) + 0.1f).toRGB();
-    //color = HSBColor(Mth::randRange(0.65f, 0.75f), Mth::randRange(0.5f, 0.8f), 0.25f).toRGB();
+
     for (int y = 0; y < NUM_TILES + 1; y++) {
         bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
@@ -33,7 +37,9 @@ void Chunk::generate() {
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
             float scale = 100.0f;
-            float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
+            //float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
+            float h = Noise::ridged_2D(xo + seed.x, yo + seed.y, 6, 0.001f) * scale;
+            //h += Noise::ridged_2D(xo + seed.x, yo + seed.y, 3, 0.008f) * 10.0f;
 
             float sqrdist = xo*xo + yo*yo;
             float cityLimit = 1000.0f;;
@@ -46,7 +52,7 @@ void Chunk::generate() {
                 h *= b;
             }
             // to make it look blocky
-            h = floorf(h / 4.0f) * 4;
+            //h = floorf(h / 4.0f) * 4;
 
             glm::vec3 p = glm::vec3(xo, h, yo);
 
@@ -54,25 +60,23 @@ void Chunk::generate() {
                 // generate the color for this point
                 float t = h / scale;
                 if (t < .01f) {
-                    color = glm::vec3(0.02f, 0.02f, 0.05f);
-                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.05f)*1.0f);
-                } else if (t < .25f) {
-                    color = glm::vec3(0.05f, 0.05f, 0.1f);
-                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.03f)*.75f);
-                } else if (t < .45f) {
-                    color = glm::vec3(0.1f, 0.2f, 0.3f);
-                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.015f)*0.75f);
+                    color = glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.05f));
+                    color += glm::vec3(0.02f, 0.02f, 0.25f);
+                    color += rand;
+                    color.r = Mth::clamp(color.r, 0.0f, 0.5f);
+                    color.g = Mth::clamp(color.g, 0.0f, 0.5f);
+                    color.b = Mth::clamp(color.b, 0.15f, 1.0f);
                 } else {
-                    color = glm::vec3(0.1f, 0.1f, 0.5f);
-                    color += glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.0075f)*0.5f);
+                    color = glm::vec3(t*t, t*t, 0.1f + t);
+
                 }
-                //color.b += Mth::randUnit() * 0.1f + 0.1f;
-                color.b += 0.2f;
-                color += rand;
-                color.b = std::max(color.b, 0.1f);
+                //still ironing out bugs in this type of noise
+                //color = glm::vec3(Noise::worley(glm::vec3(xo*0.01f, yo*0.01f, 0.0f)));
+
             }
-            //color = glm::vec3(0.8f, 1.0f, 0.95f);
-            //color.r -= 0.2f;
+
+            // texcoords done in sneaky way to work with XTREME vertex sharing,
+            // limitation is that textures have to be symmetric otherwise you will see mirroring
             verts.push_back(CVertex{ p, color, glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f) });
             left = !left;
         }

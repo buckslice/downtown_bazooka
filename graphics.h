@@ -11,7 +11,7 @@ const GLuint BLUR_DOWNSAMPLE = 2;
 
 class Graphics {
 public:
-	Graphics();
+    Graphics();
     Graphics(sf::RenderWindow& window);
 
     ~Graphics();
@@ -32,12 +32,16 @@ public:
     // builds or updates model buffer for given mesh
     static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
 
+    static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+
     static void setMeshVisible(GLuint id, bool value);
 
 private:
 
-    static void genColorBuffer(Mesh* mesh, std::vector<glm::vec3>& colors);
-    static void genModelBuffer(Mesh* mesh, std::vector<glm::mat4>& models);
+    static void genColorBuffer(Mesh* mesh);
+    static void genModelBuffer(Mesh* mesh);
+    static void setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+
     static bool isValidMeshID(GLuint id);
 
     void initGL(sf::RenderWindow& window);
@@ -50,4 +54,7 @@ private:
     GLuint quadVAO;
 
     Mesh* floorMesh;
+
+    Mesh* solidBox;
+    Mesh* gridBox;
 };

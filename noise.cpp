@@ -1,5 +1,5 @@
 #include "noise.h"
-
+#include <algorithm>
 #include <math.h>
 
 // The gradients are the midpoints of the vertices of a cube.
@@ -298,3 +298,131 @@ int Noise::fastfloor(float x) { return x > 0 ? (int)x : (int)x - 1; }
 
 float Noise::dot(const int* g, float x, float y) { return g[0] * x + g[1] * y; }
 float Noise::dot(const int* g, float x, float y, float z) { return g[0] * x + g[1] * y + g[2] * z; }
+
+// worley noise now
+
+
+typedef unsigned int uint;
+const uint OFFSET_BASIS = 2166136261;
+const uint FNV_PRIME = 16777619;
+const int seed = 3221;
+static float darray[3];
+
+float Noise::cf1(float ar[]) {
+    return ar[0];
+}
+float Noise::cf2(float ar[]) {
+    return ar[1] - ar[0];
+}
+float Noise::cf3(float ar[]) {
+    return ar[2] - ar[0];
+}
+
+float Noise::euclidian(glm::vec3 a, glm::vec3 b) {
+    return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z);
+}
+float Noise::manhattan(glm::vec3 a, glm::vec3 b) {
+    return abs(a.x - b.x) + abs(a.y - b.y) + abs(a.z - b.z);
+}
+float Noise::chebyshev(glm::vec3 a, glm::vec3 b) {
+    return std::max(std::max(abs(a.x - b.x), abs(a.y - b.y)), abs(a.z - b.z));
+}
+
+void Noise::insert(float ar[], float value) {
+    float temp;
+
+    int arraySize = sizeof(ar);
+
+    for (int i = arraySize - 1; i >= 0; i--) {
+        if (value > ar[i]) break;
+        temp = ar[i];
+        ar[i] = value;
+        if (i + 1 < arraySize) ar[i + 1] = temp;
+    }
+}
+
+
+uint Noise::prob(uint value) {
+    if (value < 393325350) return 1;
+    if (value < 1022645910) return 2;
+    if (value < 1861739990) return 3;
+    if (value < 2700834071) return 4;
+    if (value < 3372109335) return 5;
+    if (value < 3819626178) return 6;
+    if (value < 4075350088) return 7;
+    if (value < 4203212043) return 8;
+    return 9;
+}
+
+uint Noise::lcgRandom(uint lastValue) {
+    return (uint)((1103515245u * lastValue + 12345u) % 0x100000000u);
+}
+
+uint Noise::hash(uint i, uint j, uint k) {
+    return (uint)((((((OFFSET_BASIS ^ (uint)i) * FNV_PRIME) ^ (uint)j) * FNV_PRIME) ^ (uint)k) * FNV_PRIME);
+}
+
+int Noise::hash(glm::vec3 input) {
+    return (int)(input.x * 73856093) ^ (int)(input.y * 19349663) ^ (int)(input.z * 83492791);
+}
+
+float Noise::worley(glm::vec3 in) {
+    float value = 0;
+    uint lastRandom;
+    uint numberFeaturePoints;
+    glm::vec3 randomDiff = glm::vec3(0.0f);
+    glm::vec3 featurePoint = glm::vec3(0.0f);
+    int cubeX, cubeY, cubeZ;
+
+    for (int i = 0; i < 3; ++i) {
+        darray[i] = 9999999;
+    }
+    
+    int evalCubeX = fastfloor(in.x);
+    int evalCubeY = fastfloor(in.y);
+    int evalCubeZ = fastfloor(in.z);
+
+    for (int i = -1; i < 2; ++i) {
+        for (int j = -1; j < 2; ++j) {
+            for (int k = -1; k < 2; ++k) {
+                cubeX = evalCubeX + i;
+                cubeY = evalCubeY + j;
+                cubeZ = evalCubeZ + k;
+
+                lastRandom = lcgRandom(hash((uint)(cubeX + seed), (uint)(cubeY), (uint)(cubeZ)));
+
+                numberFeaturePoints = prob(lastRandom);
+
+                for (uint l = 0; l < numberFeaturePoints; ++l) {
+                    lastRandom = lcgRandom(lastRandom);
+                    randomDiff.x = (float)lastRandom / 0x100000000;
+
+                    lastRandom = lcgRandom(lastRandom);
+                    randomDiff.y = (float)lastRandom / 0x100000000;
+
+                    lastRandom = lcgRandom(lastRandom);
+                    randomDiff.z = (float)lastRandom / 0x100000000;
+
+                    featurePoint.x = randomDiff.x + (float)cubeX;
+                    featurePoint.y = randomDiff.y + (float)cubeY;
+                    featurePoint.z = randomDiff.z + (float)cubeZ;
+
+                    insert(darray, euclidian(in, featurePoint));
+                }
+            }
+        }
+    }
+
+    // some weird shit is going on with the random number generator
+    // or something. works but has random artifacts?
+    // when you regenerate sometimes its just white or black ??? wtf blazzard
+    // prob since im using statics or something and shits weird
+    float ret = cf2(darray);
+    if (ret < 0) {
+        ret = 0;
+    }
+    if (ret > 1) {
+        ret = 1;
+    }
+    return ret;
+}
