@@ -32,6 +32,7 @@ public:
     // builds or updates model buffer for given mesh
     static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
 
+    static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
     static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
     static void setMeshVisible(GLuint id, bool value);

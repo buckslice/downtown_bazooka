@@ -10,6 +10,8 @@ glm::vec3 Transform::getPos() {
     return lpos;
 }
 
+// set world pos (updates local pos based on parent stuff)
+
 AABB PhysicsTransform::getAABB() {
     return AABB(glm::vec3(lpos + extmin), glm::vec3(lpos + extmax));
 }

@@ -12,6 +12,9 @@ const GLfloat YAW = -90.0f;
 const GLfloat PITCH = 0.0f;
 const GLfloat SENSITIVITY = 0.25f;
 
+const GLfloat NEAR_PLANE = 0.1f;
+const GLfloat FAR_PLANE = 2000.0f;
+
 class Camera {
 
 public:
@@ -31,6 +34,8 @@ public:
     Camera(GLfloat yaw, GLfloat pitch);
 
     glm::mat4 getViewMatrix();
+    glm::mat4 getViewMatrixThird();
+
     glm::mat4 getProjMatrix(GLuint w, GLuint h);
 
     void updateCameraVectors();

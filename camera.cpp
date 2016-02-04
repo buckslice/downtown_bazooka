@@ -2,10 +2,9 @@
 #include <iostream>
 
 Camera::Camera()
-	: mouseSensitivity{SENSITIVITY}, yaw{0.0f}, pitch{0.0f}
-{
-	worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-	updateCameraVectors();
+    : mouseSensitivity{ SENSITIVITY }, yaw{ 0.0f }, pitch{ 0.0f } {
+    worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    updateCameraVectors();
 }
 
 // scalar constructor
@@ -23,8 +22,15 @@ glm::mat4 Camera::getViewMatrix() {
     return glm::lookAt(p, p + forward, up);
 }
 
+glm::mat4 Camera::getViewMatrixThird() {
+    float camDist = 10.0f;
+    glm::vec3 p = transform.getPos();
+    p = p - forward * camDist;
+    return glm::lookAt(p, p + forward, up);
+}
+
 glm::mat4 Camera::getProjMatrix(GLuint w, GLuint h) {
-    return glm::perspective(45.0f, (GLfloat)w / (GLfloat)h, 0.1f, 2000.0f);
+    return glm::perspective(45.0f, (GLfloat)w / (GLfloat)h, NEAR_PLANE, FAR_PLANE);
 }
 
 void Camera::updateCameraVectors() {

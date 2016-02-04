@@ -128,7 +128,7 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
 
     r.instanceShader.use();
     // set projection and view matrices
-    glm::mat4 view = cam.getViewMatrix();
+    glm::mat4 view = cam.getViewMatrixThird();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
 
@@ -146,7 +146,10 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
         solidBox->draw();
     }
     // turn on other stream here later
-    //Graphics::setStream(gridBox, gmodels, gcolors);
+    Graphics::setStream(gridBox, gmodels, gcolors);
+    if (gridBox->visible) {
+        gridBox->draw();
+    }
 
 
     //int num = 100000;
@@ -255,6 +258,16 @@ Graphics::~Graphics() {
     meshes.erase(meshes.begin(), meshes.end());
 
     delete floorMesh;
+}
+
+void Graphics::addToStream(bool solid, glm::mat4& model, glm::vec3& color) {
+    if (solid) {
+        smodels.push_back(model);
+        scolors.push_back(color);
+    } else {
+        gmodels.push_back(model);
+        gcolors.push_back(color);
+    }
 }
 
 void Graphics::addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {

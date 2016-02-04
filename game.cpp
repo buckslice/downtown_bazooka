@@ -214,6 +214,15 @@ void Game::mainLoop() {
         // resolve collisions
         physics->update(delta);
 
+        // update dudes model
+        glm::mat4 model;
+        glm::vec3 pos = player->getTransform()->lpos;
+        glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+        pos.y += 1.0f;
+        model = glm::translate(model, pos);
+        model = glm::scale(model, scale);
+        Graphics::addToStream(false , model, glm::vec3(1.0f, 1.0f, 0.0f));
+
         // render graphics
         Graphics::setMeshVisible(em->dudeMesh, false);
         //Graphics::setMeshVisible(em->dudeMesh, !menu->getVisible());
