@@ -66,6 +66,10 @@ public:
         return std::max(0.0f, std::min(n, 1.0f));
     }
 
+    static float quadratic(float value) {
+        return value*value;
+    }
+
     static float cubicSCurve(float value) {
         return value * value * (3.0f - 2.0f * value);
     }
@@ -79,8 +83,12 @@ public:
         return f((d - low) / (high - low));
     }
 
-    static float gett(float d, float low, float high) {
+    static float blendl(float d, float low, float high) {
         return (d - low) / (high - low);
+    }
+
+    static float blendll(float d, float low, float high) {
+        return std::max(0.0f, std::min((d - low) / (high - low), 1.0f));
     }
 
     static glm::vec3 lerp(const glm::vec3& a, const glm::vec3& b, float t) {

@@ -1,6 +1,7 @@
 #include "noise.h"
 #include <algorithm>
 #include <math.h>
+#include "mathutil.h"
 
 // The gradients are the midpoints of the vertices of a cube.
 static const int grad3[12][3] = {
@@ -53,9 +54,8 @@ static const int perm[512] = {
 // 2D Multi-octave Simplex noise.
 // For each octave, a higher frequency/lower amplitude function will be added to the original.
 // The higher the persistence [0-1], the more of each succeeding octave will be added.
-float Noise::fractal_2D(float x, float y, float octaves, float scale, float persistence, float lacunarity) {
+float Noise::fractal_2D(float x, float y, float octaves, float frequency, float persistence, float lacunarity) {
     float total = 0;
-    float frequency = scale;
     float amplitude = 1;
 
     // We have to keep track of the largest possible amplitude,
@@ -75,9 +75,8 @@ float Noise::fractal_2D(float x, float y, float octaves, float scale, float pers
 // 3D Multi-octave Simplex noise.
 // For each octave, a higher frequency/lower amplitude function will be added to the original.
 // The higher the persistence [0-1], the more of each succeeding octave will be added.
-float Noise::fractal_3D(float x, float y, float z, float octaves, float scale, float persistence, float lacunarity) {
+float Noise::fractal_3D(float x, float y, float z, float octaves, float frequency, float persistence, float lacunarity) {
     float total = 0;
-    float frequency = scale;
     float amplitude = 1;
 
     // We have to keep track of the largest possible amplitude,
@@ -96,9 +95,8 @@ float Noise::fractal_3D(float x, float y, float z, float octaves, float scale, f
 }
 
 
-float Noise::ridged_2D(float x, float y, float octaves, float scale, float persistence, float lacunarity) {
+float Noise::ridged_2D(float x, float y, float octaves, float frequency, float persistence, float lacunarity) {
     float total = 0;
-    float frequency = scale;
     float amplitude = 1;
 
     for (int i = 0; i < octaves; i++) {
@@ -113,13 +111,15 @@ float Noise::ridged_2D(float x, float y, float octaves, float scale, float persi
 
 // 2D Scaled Multi-octave Simplex noise.
 // Returned value will be between loBound and hiBound.
-float Noise::fractal_scaled_2D(float x, float y, float octaves, float scale, float low, float high, float persistence, float lacunarity) {
-    return fractal_2D(x, y, octaves, scale, persistence, lacunarity) * (high - low) / 2 + (high + low) / 2;
+float Noise::fractal_scaled_2D(float x, float y,
+    float octaves, float frequency, float low, float high, float persistence, float lacunarity) {
+    return fractal_2D(x, y, octaves, frequency, persistence, lacunarity) * (high - low) / 2 + (high + low) / 2;
 }
 // 3D Scaled Multi-octave Simplex noise.
 // Returned value will be between loBound and hiBound.
-float Noise::fractal_scaled_3D(float x, float y, float z, float octaves, float scale, float low, float high, float persistence, float lacunarity) {
-    return fractal_3D(x, y, z, octaves, scale, persistence, lacunarity)  * (high - low) / 2 + (high + low) / 2;
+float Noise::fractal_scaled_3D(float x, float y, float z,
+    float octaves, float frequency, float low, float high, float persistence, float lacunarity) {
+    return fractal_3D(x, y, z, octaves, frequency, persistence, lacunarity)  * (high - low) / 2 + (high + low) / 2;
 }
 
 // 2D Scaled Simplex raw noise.
@@ -206,7 +206,7 @@ float Noise::raw_2D(float x, float y) {
 float Noise::raw_3D(float x, float y, float z) {
     float n0, n1, n2, n3; // Noise contributions from the four corners
 
-                          // Skew the input space to determine which simplex cell we're in
+    // Skew the input space to determine which simplex cell we're in
     float F3 = 1.0 / 3.0;
     float s = (x + y + z)*F3; // Very nice and simple skew factor for 3D
     int i = fastfloor(x + s);
@@ -299,130 +299,207 @@ int Noise::fastfloor(float x) { return x > 0 ? (int)x : (int)x - 1; }
 float Noise::dot(const int* g, float x, float y) { return g[0] * x + g[1] * y; }
 float Noise::dot(const int* g, float x, float y, float z) { return g[0] * x + g[1] * y + g[2] * z; }
 
-// worley noise now
 
 
-typedef unsigned int uint;
-const uint OFFSET_BASIS = 2166136261;
-const uint FNV_PRIME = 16777619;
-const int seed = 3221;
-static float darray[3];
 
-float Noise::cf1(float ar[]) {
-    return ar[0];
-}
-float Noise::cf2(float ar[]) {
-    return ar[1] - ar[0];
-}
-float Noise::cf3(float ar[]) {
-    return ar[2] - ar[0];
-}
+////////////////////////
+///// WORLEY NOISE /////
+////////////////////////
 
-float Noise::euclidian(glm::vec3 a, glm::vec3 b) {
-    return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z);
-}
-float Noise::manhattan(glm::vec3 a, glm::vec3 b) {
-    return abs(a.x - b.x) + abs(a.y - b.y) + abs(a.z - b.z);
-}
-float Noise::chebyshev(glm::vec3 a, glm::vec3 b) {
-    return std::max(std::max(abs(a.x - b.x), abs(a.y - b.y)), abs(a.z - b.z));
+static int poisson[256] =
+{ 4,3,1,1,1,2,4,2,2,2,5,1,0,2,1,2,2,0,4,3,2,1,2,1,3,2,2,4,2,2,5,1,2,3,2,2,2,2,2,3,
+  2,4,2,5,3,2,2,2,5,3,3,5,2,1,3,3,4,4,2,3,0,4,2,2,2,1,3,2,2,2,3,3,3,1,2,0,2,1,1,2,
+  2,2,2,5,3,2,3,2,3,2,2,1,0,2,1,1,2,1,2,2,1,3,4,2,2,2,5,4,2,4,2,2,5,4,3,2,2,5,4,3,
+  3,3,5,2,2,2,2,2,3,1,1,4,2,1,3,3,4,3,2,4,3,3,3,4,5,1,4,2,4,3,1,2,3,5,3,2,1,3,1,3,
+  3,3,2,3,1,5,5,4,2,2,4,1,3,4,1,5,3,3,5,3,4,3,2,2,1,1,1,1,1,2,4,5,4,5,4,2,1,5,1,1,
+  2,3,3,3,2,5,2,3,3,2,0,2,1,1,4,2,1,3,2,1,2,2,3,2,5,5,3,4,5,5,2,4,4,5,3,2,2,2,1,4,
+  2,3,3,4,2,5,4,2,4,2,2,2,4,5,3,2 };
+
+inline int32_t dfloor(double x) {
+    return x < 0 ? ((int32_t)x - 1) : ((int32_t)x);
 }
 
-void Noise::insert(float ar[], float value) {
-    float temp;
+inline double euclidian(double dx, double dy, double dz) {
+    return dx*dx + dy*dy + dz*dz;
+}
+inline double manhattan(double dx, double dy, double dz) {
+    return fabs(dx) + fabs(dy) + fabs(dz);
+}
+inline double chebyshev(double dx, double dy, double dz) {
+    return std::max(std::max(fabs(dx), fabs(dy)), fabs(dz));
+}
 
-    int arraySize = sizeof(ar);
+// private array for computation
+static double at[3];
+// pointer to distance function
+double(*distance_function)(double, double, double);
+// used to make sure mean value of F[0] is 1.0
+// easy way to scale cellular features
+//const double DENSITY_ADJUSTMENT = 0.398150;
+const double DENSITY_ADJUSTMENT = 0.85;
+//const double DENSITY_ADJUSTMENT = 1.0;
 
-    for (int i = arraySize - 1; i >= 0; i--) {
-        if (value > ar[i]) break;
-        temp = ar[i];
-        ar[i] = value;
-        if (i + 1 < arraySize) ar[i + 1] = temp;
+// commenting out delta calculations cuz dont need it for now
+//static double delta[3][3];
+
+void Noise::worley(float x, float y, float z,
+    size_t max_order, double* F, uint32_t* ID, DIST_FUNC dfunc, float frequency) {
+    if (dfunc == EUCLIDIAN) {
+        distance_function = &euclidian;
+    } else if (dfunc == MANHATTAN) {
+        distance_function = &manhattan;
+    } else {
+        distance_function = &chebyshev;
+    }
+
+    at[0] = x * frequency * DENSITY_ADJUSTMENT;
+    at[1] = y * frequency * DENSITY_ADJUSTMENT;
+    at[2] = z * frequency * DENSITY_ADJUSTMENT;
+
+    double x2, y2, z2, mx2, my2, mz2;
+    int32_t int_at[3];
+    size_t i;
+
+    for (i = 0; i < max_order; ++i) {
+        F[i] = 999999.9;
+    }
+
+    int_at[0] = dfloor(at[0]);
+    int_at[1] = dfloor(at[1]);
+    int_at[2] = dfloor(at[2]);
+
+    // less efficient / brute force method for calculating neigbors
+    // better and more stable for when MAX_ORDER > 5
+    //int32_t ii, jj, kk;
+    //for (ii = -1; ii <= 1; ii++) for (jj = -1; jj <= 1; jj++) for (kk = -1; kk <= 1; kk++)
+    //    addSamples(int_at[0] + ii, int_at[1] + jj, int_at[2] + kk);
+
+    addSamples(int_at[0], int_at[1], int_at[2], max_order, F, ID);
+    x2 = at[0] - int_at[0];
+    y2 = at[1] - int_at[1];
+    z2 = at[2] - int_at[2];
+    mx2 = (1.0 - x2)*(1.0 - x2);
+    my2 = (1.0 - y2)*(1.0 - y2);
+    mz2 = (1.0 - z2)*(1.0 - z2);
+    x2 *= x2;
+    y2 *= y2;
+    z2 *= z2;
+
+    // 6 facing neighbors of center cube are closest
+    // so they have greatest chance for feature point
+    if (x2 < F[max_order - 1])  addSamples(int_at[0] - 1, int_at[1], int_at[2], max_order, F, ID);
+    if (y2 < F[max_order - 1])  addSamples(int_at[0], int_at[1] - 1, int_at[2], max_order, F, ID);
+    if (z2 < F[max_order - 1])  addSamples(int_at[0], int_at[1], int_at[2] - 1, max_order, F, ID);
+    if (mx2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1], int_at[2], max_order, F, ID);
+    if (my2 < F[max_order - 1]) addSamples(int_at[0], int_at[1] + 1, int_at[2], max_order, F, ID);
+    if (mz2 < F[max_order - 1]) addSamples(int_at[0], int_at[1], int_at[2] + 1, max_order, F, ID);
+
+    // next closest is 12 edge cubes
+    if (x2 + y2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] - 1, int_at[2], max_order, F, ID);
+    if (x2 + z2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1], int_at[2] - 1, max_order, F, ID);
+    if (y2 + z2 < F[max_order - 1]) addSamples(int_at[0], int_at[1] - 1, int_at[2] - 1, max_order, F, ID);
+    if (mx2 + my2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] + 1, int_at[2], max_order, F, ID);
+    if (mx2 + mz2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1], int_at[2] + 1, max_order, F, ID);
+    if (my2 + mz2 < F[max_order - 1]) addSamples(int_at[0], int_at[1] + 1, int_at[2] + 1, max_order, F, ID);
+    if (x2 + my2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] + 1, int_at[2], max_order, F, ID);
+    if (x2 + mz2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1], int_at[2] + 1, max_order, F, ID);
+    if (y2 + mz2 < F[max_order - 1]) addSamples(int_at[0], int_at[1] - 1, int_at[2] + 1, max_order, F, ID);
+    if (mx2 + y2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] - 1, int_at[2], max_order, F, ID);
+    if (mx2 + z2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1], int_at[2] - 1, max_order, F, ID);
+    if (my2 + z2 < F[max_order - 1]) addSamples(int_at[0], int_at[1] + 1, int_at[2] - 1, max_order, F, ID);
+
+    // final 8 corners
+    if (x2 + y2 + z2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] - 1, int_at[2] - 1, max_order, F, ID);
+    if (x2 + y2 + mz2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] - 1, int_at[2] + 1, max_order, F, ID);
+    if (x2 + my2 + z2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] + 1, int_at[2] - 1, max_order, F, ID);
+    if (x2 + my2 + mz2 < F[max_order - 1]) addSamples(int_at[0] - 1, int_at[1] + 1, int_at[2] + 1, max_order, F, ID);
+    if (mx2 + y2 + z2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] - 1, int_at[2] - 1, max_order, F, ID);
+    if (mx2 + y2 + mz2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] - 1, int_at[2] + 1, max_order, F, ID);
+    if (mx2 + my2 + z2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] + 1, int_at[2] - 1, max_order, F, ID);
+    if (mx2 + my2 + mz2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] + 1, int_at[2] + 1, max_order, F, ID);
+
+    /* We're done! Convert everything to right size scale */
+    for (i = 0; i < max_order; i++) {
+        F[i] = sqrt(F[i]) * (1.0 / DENSITY_ADJUSTMENT);
+        //delta[i][0] *= (1.0 / DENSITY_ADJUSTMENT);
+        //delta[i][1] *= (1.0 / DENSITY_ADJUSTMENT);
+        //delta[i][2] *= (1.0 / DENSITY_ADJUSTMENT);
     }
 }
 
+void Noise::addSamples(int32_t xi, int32_t yi, int32_t zi,
+    size_t max_order, double* F, uint32_t* ID) {
 
-uint Noise::prob(uint value) {
-    if (value < 393325350) return 1;
-    if (value < 1022645910) return 2;
-    if (value < 1861739990) return 3;
-    if (value < 2700834071) return 4;
-    if (value < 3372109335) return 5;
-    if (value < 3819626178) return 6;
-    if (value < 4075350088) return 7;
-    if (value < 4203212043) return 8;
-    return 9;
-}
+    double dx, dy, dz, fx, fy, fz, d2;
+    int32_t count, index;
+    uint32_t seed;
+    uint32_t this_id;
 
-uint Noise::lcgRandom(uint lastValue) {
-    return (uint)((1103515245u * lastValue + 12345u) % 0x100000000u);
-}
+    // each cube has random number seed based on cubes ID
+    // LCG using Knuth constants for maximal periods
+    seed = 702395077 * xi + 915488749 * yi + 2120969693 * zi;
+    count = poisson[seed >> 24];    // 256 element table lookup. using MSB
+    seed = 1402024253 * seed + 586950981;   //churns seed
 
-uint Noise::hash(uint i, uint j, uint k) {
-    return (uint)((((((OFFSET_BASIS ^ (uint)i) * FNV_PRIME) ^ (uint)j) * FNV_PRIME) ^ (uint)k) * FNV_PRIME);
-}
+    for (int32_t j = 0; j < count; ++j) {
+        this_id = seed;
 
-int Noise::hash(glm::vec3 input) {
-    return (int)(input.x * 73856093) ^ (int)(input.y * 19349663) ^ (int)(input.z * 83492791);
-}
+        // get random values for fx,fy,fz based on seed
+        seed = 1402024253 * seed + 586950981;
+        fx = (seed + 0.5)*(1.0 / 4294967296.0);
+        seed = 1402024253 * seed + 586950981;
+        fy = (seed + 0.5)*(1.0 / 4294967296.0);
+        seed = 1402024253 * seed + 586950981;
+        fz = (seed + 0.5)*(1.0 / 4294967296.0);
+        seed = 1402024253 * seed + 586950981;
 
-float Noise::worley(glm::vec3 in) {
-    float value = 0;
-    uint lastRandom;
-    uint numberFeaturePoints;
-    glm::vec3 randomDiff = glm::vec3(0.0f);
-    glm::vec3 featurePoint = glm::vec3(0.0f);
-    int cubeX, cubeY, cubeZ;
+        dx = xi + fx - at[0];
+        dy = yi + fy - at[1];
+        dz = zi + fz - at[2];
 
-    for (int i = 0; i < 3; ++i) {
-        darray[i] = 9999999;
-    }
-    
-    int evalCubeX = fastfloor(in.x);
-    int evalCubeY = fastfloor(in.y);
-    int evalCubeZ = fastfloor(in.z);
+        // get distance squared using specified function
+        d2 = distance_function(dx, dy, dz);
 
-    for (int i = -1; i < 2; ++i) {
-        for (int j = -1; j < 2; ++j) {
-            for (int k = -1; k < 2; ++k) {
-                cubeX = evalCubeX + i;
-                cubeY = evalCubeY + j;
-                cubeZ = evalCubeZ + k;
+        // in order insertion
+        if (d2 < F[max_order - 1]) {
+            index = max_order;
+            while (index > 0 && d2 < F[index - 1]) index--;
 
-                lastRandom = lcgRandom(hash((uint)(cubeX + seed), (uint)(cubeY), (uint)(cubeZ)));
+            // insert this new point into slot # <index>
 
-                numberFeaturePoints = prob(lastRandom);
-
-                for (uint l = 0; l < numberFeaturePoints; ++l) {
-                    lastRandom = lcgRandom(lastRandom);
-                    randomDiff.x = (float)lastRandom / 0x100000000;
-
-                    lastRandom = lcgRandom(lastRandom);
-                    randomDiff.y = (float)lastRandom / 0x100000000;
-
-                    lastRandom = lcgRandom(lastRandom);
-                    randomDiff.z = (float)lastRandom / 0x100000000;
-
-                    featurePoint.x = randomDiff.x + (float)cubeX;
-                    featurePoint.y = randomDiff.y + (float)cubeY;
-                    featurePoint.z = randomDiff.z + (float)cubeZ;
-
-                    insert(darray, euclidian(in, featurePoint));
-                }
+            // bump down more distant information to make room for this new point.
+            for (int32_t i = max_order - 2; i >= index; i--) {
+                F[i + 1] = F[i];
+                ID[i + 1] = ID[i];
+                //delta[i + 1][0] = delta[i][0];
+                //delta[i + 1][1] = delta[i][1];
+                //delta[i + 1][2] = delta[i][2];
             }
+            // insert the new point's information into the list.
+            F[index] = d2;
+            ID[index] = this_id;
+            //delta[index][0] = dx;
+            //delta[index][1] = dy;
+            //delta[index][2] = dz;
         }
     }
-
-    // some weird shit is going on with the random number generator
-    // or something. works but has random artifacts?
-    // when you regenerate sometimes its just white or black ??? wtf blazzard
-    // prob since im using statics or something and shits weird
-    float ret = cf2(darray);
-    if (ret < 0) {
-        ret = 0;
-    }
-    if (ret > 1) {
-        ret = 1;
-    }
-    return ret;
 }
+
+//float Noise::fractal_worley_3D(float x, float y, float z, DIST_FUNC dfunc,
+//    float octaves, float frequency, float persistence, float lacunarity) {
+//
+//    float total = 0;
+//    float amplitude = 1;
+//
+//    float maxAmplitude = 0;
+//
+//    for (int i = 0; i < octaves; i++) {
+//        total += worley(x, y, z, dfunc, frequency) * amplitude;
+//
+//        maxAmplitude += amplitude;
+//        amplitude *= persistence;
+//        frequency *= lacunarity;
+//    }
+//
+//    return total;
+//}

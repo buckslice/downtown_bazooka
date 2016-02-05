@@ -128,7 +128,8 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
 
     r.instanceShader.use();
     // set projection and view matrices
-    glm::mat4 view = cam.getViewMatrixThird();
+    //glm::mat4 view = cam.getViewMatrixThird();
+    glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
 
@@ -145,11 +146,11 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
     if (solidBox->visible) {
         solidBox->draw();
     }
-    // turn on other stream here later
-    Graphics::setStream(gridBox, gmodels, gcolors);
-    if (gridBox->visible) {
-        gridBox->draw();
-    }
+    //// turn on other stream here later
+    //Graphics::setStream(gridBox, gmodels, gcolors);
+    //if (gridBox->visible) {
+    //    gridBox->draw();
+    //}
 
 
     //int num = 100000;

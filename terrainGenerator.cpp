@@ -30,59 +30,77 @@ void Chunk::generate() {
     // debug color
     color = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
 
+    float minh = 1000.0f;
+    float maxh = -1000.0f;
+
     for (int y = 0; y < NUM_TILES + 1; y++) {
         bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
             float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
-            float scale = 100.0f;
             //float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
-            float h = Noise::ridged_2D(xo + seed.x, yo + seed.y, 6, 0.001f) * scale;
-            //h += Noise::ridged_2D(xo + seed.x, yo + seed.y, 3, 0.008f) * 10.0f;
+            //float h = Noise::ridged_2D(xo + seed.x, yo + seed.y, 6, 0.001f) * scale;
 
+            const int max = 3;
+            double f[max];
+            uint32_t id[max];
+            Noise::worley(xo, yo, 0.0f, max, f, id, Noise::MANHATTAN, 0.0075f);
+
+            float h = static_cast<float>(f[1] - f[0]);
+            rand = glm::vec3((id[0] % 255) / 255.0f, (id[0] % 155) / 255.0f, (id[0] & 100) / 255.0f)*0.15f;
+
+            minh = std::min(minh, h);
+            maxh = std::max(maxh, h);
+
+            h -= .025f;
+            h = Mth::clamp(h, 0.0f, 1.0f);
+
+            // reduce noise height near center
             float sqrdist = xo*xo + yo*yo;
             float cityLimit = 1000.0f;;
             float range = 100.0f;
-            if (h < 0.0f || sqrdist < cityLimit * cityLimit) {
+            if (sqrdist < cityLimit * cityLimit) {  // inside city
                 h = 0.0f;
-            } else if (sqrdist < (cityLimit + range)*(cityLimit + range)) {
-                float d = glm::distance(glm::vec2(0.0f), glm::vec2(xo, yo));
-                float b = Mth::blend(d, cityLimit, cityLimit + range, Mth::cubic);
-                h *= b;
+            } else {
+                // add general mountain noise (should later just increase worley octaves
+                h += Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.008f) * 0.3f * h;
+                if (sqrdist < (cityLimit + range)*(cityLimit + range)) { // between city and mountains
+                    float d = glm::distance(glm::vec2(0.0f), glm::vec2(xo, yo));
+                    float b = Mth::blend(d, cityLimit, cityLimit + range, Mth::cubic);
+                    h *= b;
+                }
             }
+            h = Mth::clamp(h, 0.0f, 1.0f);
             // to make it look blocky
             //h = floorf(h / 4.0f) * 4;
 
-            glm::vec3 p = glm::vec3(xo, h, yo);
-
             if (!debugColors) {
-                // generate the color for this point
-                float t = h / scale;
-                if (t < .01f) {
+                if (h < 0.01f) {
                     color = glm::vec3(Noise::ridged_2D(xo + seed.x, yo + seed.y, 2, 0.05f));
                     color += glm::vec3(0.02f, 0.02f, 0.25f);
-                    color += rand;
                     color.r = Mth::clamp(color.r, 0.0f, 0.5f);
                     color.g = Mth::clamp(color.g, 0.0f, 0.5f);
                     color.b = Mth::clamp(color.b, 0.15f, 1.0f);
                 } else {
-                    color = glm::vec3(t*t, t*t, 0.1f + t);
-
+                    float r = Mth::blendll(h, 0.4f, 0.6f)*0.9f;
+                    float g = Mth::blendll(h, 0.2f, 0.5f);
+                    float b = Mth::blendll(h, 0.0f, 0.3f) * .85f + 0.15f;
+                    color = glm::vec3(r, g, b);
                 }
-                //still ironing out bugs in this type of noise
-                //color = glm::vec3(Noise::worley(glm::vec3(xo*0.01f, yo*0.01f, 0.0f)));
-
+                color += rand;
             }
-
-            // texcoords done in sneaky way to work with XTREME vertex sharing,
-            // limitation is that textures have to be symmetric otherwise you will see mirroring
-            verts.push_back(CVertex{ p, color, glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f) });
+            float scale = 100.0f;
+            h *= scale;
+            // texcoords are mirrored to work with XTREME!!! vertex sharing,
+            // limitation is that textures have to be symmetric
+            verts.push_back(CVertex{ glm::vec3(xo, h, yo), color, glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f) });
             left = !left;
         }
         bot = !bot;
     }
     //std::cout << verts.size() << std::endl;
+    //std::cout << minh << " " << maxh << std::endl;
 
     for (int i = 0, len = (NUM_TILES + 1)*NUM_TILES - 1; i < len; ++i) {
         if ((i + 1) % (NUM_TILES + 1) == 0) {
