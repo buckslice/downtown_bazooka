@@ -48,6 +48,10 @@ private:
     std::vector<CVertex> verts; // save these for collision detection
 
     void generate();
+
+    CVertex genPoint(float xo, float yo);
+    CVertex genTest(float xo, float yo);
+
 };
 
 class TerrainGenerator {
@@ -68,6 +72,7 @@ public:
     void setSeed(glm::vec2 seed);
 
     void toggleDebugColors();
+
 
 private:
     // list of chunk objects

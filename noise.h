@@ -7,7 +7,8 @@ class Noise {
 public:
     // Multi-octave Simplex noise
     // For each octave, a higher frequency/lower amplitude function will be added to the original.
-    // The higher the persistence [0-1], the more of each succeeding octave will be added.
+    // The higher the persistence (should be value from 0-1, the more of each succeeding octave will be added.
+    // noise returned in range [-1,1]
     static float fractal_2D(float x, float y,
         float octaves, float frequency, float persistence = 0.5f, float lacunarity = 2.0f);
     static float fractal_3D(float x, float y, float z,
@@ -34,6 +35,7 @@ public:
 
     // worley (cellular) noise
     // based off: https://github.com/bhickey/worley
+    // TODO: convert to use C++11 numerics library
     enum DIST_FUNC {
         EUCLIDIAN,
         MANHATTAN,
@@ -46,14 +48,15 @@ public:
     // dfunc specifies which distance function to use
     // common combinations: F[0], F[1]-F[0], F[2]-F[0], F[0]*F[1]
     // coloring can be based of IDs of each feature 
+    // output range is from [0-1]
     static void worley(float x, float y, float z, 
         size_t max_order, double* F, uint32_t* ID, DIST_FUNC dfunc, float frequency = 1.0f);
 
     // need to think about nice way to generate fractal since it has a more complicated return type
     // maybe just multiple different functions based on specified order? or just calculate all with array ptrs?
 
-    //static float fractal_worley_3D(float x, float y, float z, DIST_FUNC dfunc,
-    //    float octaves, float frequency, float persistence = 0.5f, float lacunarity = 2.0f);
+    static float fractal_worley_3D(float x, float y, float z, DIST_FUNC dfunc,
+        float octaves, float frequency, float persistence = 0.5f, float lacunarity = 2.0f);
 
 private:
     static int fastfloor(float x);
@@ -62,14 +65,6 @@ private:
     static float dot(const int* g, float x, float y, float z);
 
     // worley
-    //static float cf1(float ar[]);
-    //static float cf2(float ar[]);
-    //static float cf3(float ar[]);
-
-    //static float euclidian(glm::vec3 p1, glm::vec3 p2);
-    //static float manhattan(glm::vec3 p1, glm::vec3 p2);
-    //static float chebyshev(glm::vec3 p1, glm::vec3 p2);
-
     static void addSamples(int32_t xi, int32_t yi, int32_t zi,
         size_t max_order, double* F, uint32_t* ID);
 };

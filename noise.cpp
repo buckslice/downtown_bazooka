@@ -339,9 +339,6 @@ double(*distance_function)(double, double, double);
 const double DENSITY_ADJUSTMENT = 0.85;
 //const double DENSITY_ADJUSTMENT = 1.0;
 
-// commenting out delta calculations cuz dont need it for now
-//static double delta[3][3];
-
 void Noise::worley(float x, float y, float z,
     size_t max_order, double* F, uint32_t* ID, DIST_FUNC dfunc, float frequency) {
     if (dfunc == EUCLIDIAN) {
@@ -367,12 +364,6 @@ void Noise::worley(float x, float y, float z,
     int_at[0] = dfloor(at[0]);
     int_at[1] = dfloor(at[1]);
     int_at[2] = dfloor(at[2]);
-
-    // less efficient / brute force method for calculating neigbors
-    // better and more stable for when MAX_ORDER > 5
-    //int32_t ii, jj, kk;
-    //for (ii = -1; ii <= 1; ii++) for (jj = -1; jj <= 1; jj++) for (kk = -1; kk <= 1; kk++)
-    //    addSamples(int_at[0] + ii, int_at[1] + jj, int_at[2] + kk);
 
     addSamples(int_at[0], int_at[1], int_at[2], max_order, F, ID);
     x2 = at[0] - int_at[0];
@@ -418,12 +409,9 @@ void Noise::worley(float x, float y, float z,
     if (mx2 + my2 + z2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] + 1, int_at[2] - 1, max_order, F, ID);
     if (mx2 + my2 + mz2 < F[max_order - 1]) addSamples(int_at[0] + 1, int_at[1] + 1, int_at[2] + 1, max_order, F, ID);
 
-    /* We're done! Convert everything to right size scale */
+    // We're done! Convert to right size scale
     for (i = 0; i < max_order; i++) {
         F[i] = sqrt(F[i]) * (1.0 / DENSITY_ADJUSTMENT);
-        //delta[i][0] *= (1.0 / DENSITY_ADJUSTMENT);
-        //delta[i][1] *= (1.0 / DENSITY_ADJUSTMENT);
-        //delta[i][2] *= (1.0 / DENSITY_ADJUSTMENT);
     }
 }
 
@@ -466,40 +454,38 @@ void Noise::addSamples(int32_t xi, int32_t yi, int32_t zi,
             while (index > 0 && d2 < F[index - 1]) index--;
 
             // insert this new point into slot # <index>
-
             // bump down more distant information to make room for this new point.
             for (int32_t i = max_order - 2; i >= index; i--) {
                 F[i + 1] = F[i];
                 ID[i + 1] = ID[i];
-                //delta[i + 1][0] = delta[i][0];
-                //delta[i + 1][1] = delta[i][1];
-                //delta[i + 1][2] = delta[i][2];
             }
             // insert the new point's information into the list.
             F[index] = d2;
             ID[index] = this_id;
-            //delta[index][0] = dx;
-            //delta[index][1] = dy;
-            //delta[index][2] = dz;
         }
     }
 }
 
-//float Noise::fractal_worley_3D(float x, float y, float z, DIST_FUNC dfunc,
-//    float octaves, float frequency, float persistence, float lacunarity) {
-//
-//    float total = 0;
-//    float amplitude = 1;
-//
-//    float maxAmplitude = 0;
-//
-//    for (int i = 0; i < octaves; i++) {
-//        total += worley(x, y, z, dfunc, frequency) * amplitude;
-//
-//        maxAmplitude += amplitude;
-//        amplitude *= persistence;
-//        frequency *= lacunarity;
-//    }
-//
-//    return total;
-//}
+float Noise::fractal_worley_3D(float x, float y, float z, DIST_FUNC dfunc,
+    float octaves, float frequency, float persistence, float lacunarity) {
+
+    double total = 0;
+    double amplitude = 1;
+
+    float maxAmplitude = 0;
+
+    const int max = 3;
+    double f[max];
+    uint32_t id[max];
+    for (int i = 0; i < octaves; i++) {
+        worley(x, y, z, max, f, id, dfunc, frequency);
+        float n = static_cast<float>(f[1]-f[0]);
+        total += n * amplitude;
+
+        maxAmplitude += amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+
+    return total / maxAmplitude;
+}
