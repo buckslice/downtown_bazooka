@@ -18,6 +18,9 @@ public:
 
     //IntersectData getIntersect(const AABB& other) const;
 
+    glm::vec3 getCenter();
+    glm::vec3 getSize();
+
     static bool check(const AABB& a, const AABB& b);
 
     static AABB getSwept(const AABB& b, const glm::vec3& vel);

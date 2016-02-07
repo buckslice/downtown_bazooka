@@ -106,7 +106,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
                     }
                 }
             } else if (sy < 60.0f) {
-                float t = Mth::blendl(sy, 20.0f, 60.0f);
+                float t = Mth::blend(sy, 20.0f, 60.0f);
                 c = Mth::lerp(glm::vec3(0.3f, 0.0f, 1.0f), glm::vec3(1.0f, 0.4f, 0.0f), t);
 
                 //c = glm::vec3(Mth::rand01() * .25f + .5f, 0.0, 1.0f);	// purp

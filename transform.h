@@ -45,3 +45,18 @@ private:
     glm::vec3 extmax;   // (0.5f, 2.0f, 0.5f)
 
 };
+
+class Collider {
+public:
+    Transform parent;
+
+    // when register collider just specify whether static or dynamic
+    // and it gets put in seperate lists
+    //bool isStatic;
+
+
+private:
+    glm::vec3 min;
+    glm::vec3 max;
+
+};

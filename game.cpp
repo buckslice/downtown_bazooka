@@ -71,9 +71,16 @@ Game::~Game() {
     delete menu;
 }
 
-float avgfps = 0.0f;
-int fr = 0;
+
+
 void Game::mainLoop() {
+    const GLuint MAX_DEBUG = 20000;
+    std::vector<glm::mat4> dmodels(MAX_DEBUG);
+    std::vector<glm::vec3> dcolors(MAX_DEBUG);
+
+    float avgfps = 0.0f;
+    int fr = 0;
+
     while (running) {
         GLfloat delta = frameTime.restart().asSeconds();
 
@@ -175,7 +182,7 @@ void Game::mainLoop() {
         }
         if (Input::justPressed(sf::Keyboard::H)) {
             wireframe = !wireframe;
-            glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+            blurring = !wireframe;
         }
 
         //update menu
@@ -221,7 +228,14 @@ void Game::mainLoop() {
         pos.y += 1.0f;
         model = glm::translate(model, pos);
         model = glm::scale(model, scale);
-        Graphics::addToStream(false , model, glm::vec3(1.0f, 1.0f, 0.0f));
+        Graphics::addToStream(false, model, glm::vec3(1.0f, 1.0f, 0.0f));
+
+        if (wireframe) {    // maybe make it later only add in coliders near player
+            int curDebugLen = physics->getColliderModels(dmodels, dcolors);
+            graphics->setDebugStream(curDebugLen, &dmodels, &dcolors);
+        } else {
+            graphics->setDebugStream(0, &dmodels, &dcolors);
+        }        
 
         // render graphics
         Graphics::setMeshVisible(em->dudeMesh, false);

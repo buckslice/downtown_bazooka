@@ -17,6 +17,7 @@ public:
     ~Graphics();
 
     void renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer);
+
     void resize(int width, int height);
     //void renderUI();
     void postProcess();
@@ -35,13 +36,17 @@ public:
     static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
     static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
+
     static void setMeshVisible(GLuint id, bool value);
+
+    void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
 private:
 
     static void genColorBuffer(Mesh* mesh);
     static void genModelBuffer(Mesh* mesh);
-    static void setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+
+    void setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
     static bool isValidMeshID(GLuint id);
 
@@ -53,6 +58,11 @@ private:
     FBO blurResult;
     FBO blurBuffers[2];
     GLuint quadVAO;
+
+    // this parts kind of dumb but i did it through trying to diagnose something else
+    GLuint dstreamSize;
+    std::vector<glm::mat4>* dmodels;
+    std::vector<glm::vec3>* dcolors;
 
     Mesh* floorMesh;
 

@@ -24,12 +24,14 @@ CVertex Chunk::genPoint(float x, float y) {
 
     float h = static_cast<float>(f[1] - f[0]);
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.15f;
+    glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.2f;
 
     //float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
     //float h = Noise::ridged_2D(xo + seed.x, yo + seed.y, 6, 0.001f) * scale;
     //minh = std::min(minh, h);
     //maxh = std::max(maxh, h);
+
+    h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 2, 0.005f);
 
     h -= .025f;
     h = Mth::clamp(h, 0.0f, 1.0f);
@@ -62,9 +64,9 @@ CVertex Chunk::genPoint(float x, float y) {
             color.g = Mth::clamp(color.g, 0.0f, 0.5f);
             color.b = Mth::clamp(color.b, 0.15f, 1.0f);
         } else {
-            float r = Mth::blendll(h, 0.4f, 0.6f)*0.9f;
-            float g = Mth::blendll(h, 0.2f, 0.5f);
-            float b = Mth::blendll(h, 0.0f, 0.3f) * .85f + 0.15f;
+            float r = Mth::cblend(h, 0.4f, 0.6f)*0.9f;
+            float g = Mth::cblend(h, 0.2f, 0.5f);
+            float b = Mth::cblend(h, 0.0f, 0.3f) * .85f + 0.15f;
             color = glm::vec3(r, g, b);
         }
         color += rand;

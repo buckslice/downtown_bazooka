@@ -12,6 +12,8 @@ class Physics {
 public:
     const float GRAVITY = -30.0f;
 
+    Physics();
+
     void update(float delta);
 
     void addStatic(AABB obj);
@@ -24,9 +26,10 @@ public:
 
     void printStaticMatrix();
 
-    Physics();
+    // fills vectors with model matrices and colors representing all physics colliders
+    int getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
-    TerrainGenerator* tg;   // ref to terrain
+    TerrainGenerator* tg;   // ref to terrain for collision detection
 
 private:
 

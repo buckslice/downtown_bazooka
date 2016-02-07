@@ -6,6 +6,14 @@ bool AABB::check(const AABB& a, const AABB& b) {
     return glm::compMax(glm::max(a.min - b.max, b.min - a.max)) < 0;
 }
 
+glm::vec3 AABB::getCenter() {
+    return min + (max - min) / 2.0f;
+}
+
+glm::vec3 AABB::getSize() {
+    return max - min;
+}
+
 AABB AABB::getSwept(const AABB& b, const glm::vec3& vel) {
     AABB swept;
     swept.min.x = vel.x > 0 ? b.min.x : b.min.x + vel.x;

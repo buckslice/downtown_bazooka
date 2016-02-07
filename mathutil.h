@@ -12,7 +12,9 @@
 const float PI = 3.14159265358979f;
 class Mth {
 public:
-
+    // BIG TODO
+    // Redo all this shit to use new random from c++11
+    // its faster and more uniform!!!!!!!!!!!!!!!!!!
     static float rand01() {
         return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
@@ -83,11 +85,13 @@ public:
         return f((d - low) / (high - low));
     }
 
-    static float blendl(float d, float low, float high) {
+    // linear blend
+    static float blend(float d, float low, float high) {
         return (d - low) / (high - low);
     }
 
-    static float blendll(float d, float low, float high) {
+    // clamped linear blend
+    static float cblend(float d, float low, float high) {
         return std::max(0.0f, std::min((d - low) / (high - low), 1.0f));
     }
 

@@ -101,7 +101,7 @@ void Physics::update(float delta) {
             // could also be something else though perhaps with the quadtree
             // or the different sets pruning too aggresively
             if (resolutionAttempts == 9 && !printedErrorThisFrame) {
-                std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
+                //std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
                 printedErrorThisFrame = true;   // to avoid spam
             }
 
@@ -289,6 +289,43 @@ int Physics::registerDynamic(glm::vec3 scale) {
 
 PhysicsTransform* Physics::getTransform(int index) {
     return &dynamicObjects[index];
+}
+
+int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+    int count = 0;
+    int max = models.size();
+    for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
+        glm::vec3 pos = staticObjects[i].getCenter();
+        glm::vec3 scale = staticObjects[i].getSize();
+        glm::mat4 model;
+        model = glm::translate(model, pos);
+        model = glm::scale(model, scale);
+        models[count] = model;
+        colors[count] = glm::vec3(1.0f, 1.0f, 0.0f);
+        if (++count >= max) {
+            return count - 1;
+        }
+    }
+
+    for (size_t i = 0, len = dynamicObjects.size(); i < len; ++i) {
+        if (!dynamicObjects[i].alive) {
+            colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
+        } else {
+            colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        AABB b = dynamicObjects[i].getAABB();
+        glm::vec3 pos = b.getCenter();
+        glm::vec3 scale = b.getSize();
+        glm::mat4 model;
+        model = glm::translate(model, pos);
+        model = glm::scale(model, scale);
+        models[count] = model;
+        if (++count >= max) {
+            return count - 1;
+        }
+    }
+
+    return count;
 }
 
 

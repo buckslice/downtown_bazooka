@@ -136,34 +136,45 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
     // draw all instanced cube meshes
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    for (size_t i = 0, len = meshes.size(); i < len; ++i) {
-        if (meshes[i]->visible) {
-            meshes[i]->draw();
+
+    if (dstreamSize > 0) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        solidBox->visible = true;
+        solidBox->setInstanceAmount(dstreamSize);
+        if (!solidBox->builtModels) {
+            Graphics::genModelBuffer(solidBox);
+        }
+        if (!solidBox->builtColors) {
+            Graphics::genColorBuffer(solidBox);
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, solidBox->modelBuffer);
+        glBufferData(GL_ARRAY_BUFFER, dstreamSize * sizeof(glm::mat4), &(*dmodels)[0], GL_STREAM_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, solidBox->colorBuffer);
+        glBufferData(GL_ARRAY_BUFFER, dstreamSize * sizeof(glm::vec3), &(*dcolors)[0], GL_STREAM_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        solidBox->draw();
+
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        for (size_t i = 0, len = meshes.size(); i < len; ++i) {
+            if (meshes[i]->visible) {
+                meshes[i]->draw();
+            }
+        }
+
+        // should just make solidbox a different model without textures
+        Graphics::setStream(solidBox, smodels, scolors);
+        Graphics::setStream(gridBox, gmodels, gcolors);
+        if (solidBox->visible) {
+            solidBox->draw();
+        }
+        if (gridBox->visible) {
+            gridBox->draw();
         }
     }
-
-    Graphics::setStream(solidBox, smodels, scolors);
-    if (solidBox->visible) {
-        solidBox->draw();
-    }
-    //// turn on other stream here later
-    //Graphics::setStream(gridBox, gmodels, gcolors);
-    //if (gridBox->visible) {
-    //    gridBox->draw();
-    //}
-
-
-    //int num = 100000;
-    //smodels.clear();
-    //scolors.clear();
-    //for (int i = 0; i < num; i++) {
-    //    glm::mat4 model;
-    //    model = glm::translate(model, Mth::randInsideUnitCube()*50.0f + glm::vec3(0.0f, 50.0f, 0.0f));
-    //    model = glm::scale(model, glm::vec3(Mth::randRange(0.1f, 1.0f), Mth::randRange(0.1f, 1.0f), Mth::randRange(0.1f, 1.0f)));
-    //    smodels.push_back(model);
-    //    //scolors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-    //    scolors.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
-    //}
 
     // draw terrain
     r.terrainShader.use();
@@ -171,10 +182,17 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
     glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
     tg.render();
 
+    // clear stream vectors
+    smodels.clear();
+    scolors.clear();
+    gmodels.clear();
+    gcolors.clear();
+
     // clear states
     glBindVertexArray(0);
     glUseProgram(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 
@@ -291,6 +309,12 @@ void Graphics::addToStream(bool solid, std::vector<glm::mat4>& models, std::vect
 
 }
 
+void Graphics::setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors) {
+    dstreamSize = size;
+    this->dmodels = models;
+    this->dcolors = colors;
+}
+
 void Graphics::setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
     int len = models.size();
     if (len == 0 || len != colors.size()) {
@@ -313,9 +337,6 @@ void Graphics::setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<gl
     glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
     glBufferData(GL_ARRAY_BUFFER, len * sizeof(glm::vec3), &colors[0], GL_STREAM_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    models.clear();
-    colors.clear();
 }
 
 
