@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "mesh.h"
 #include "terrain.h"
+#include "pool.h"
 
 const GLuint BLUR_DOWNSAMPLE = 2;
 
@@ -61,10 +62,12 @@ private:
     FBO blurBuffers[2];
     GLuint quadVAO;
 
-    // this parts kind of dumb but i did it through trying to diagnose something else
+    // debug stream
     GLuint dstreamSize;
     std::vector<glm::mat4>* dmodels;
     std::vector<glm::vec3>* dcolors;
+
+    //Pool<Transform> boxTransforms;
 
     Mesh* floorMesh;
 

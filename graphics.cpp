@@ -11,16 +11,18 @@ extern std::vector<Vertex> regVerts;
 extern std::vector<Vertex> offsetVerts;
 extern std::vector<GLuint> elems;
 
-std::vector<glm::vec3> scolors;
-std::vector<glm::mat4> smodels;
-std::vector<glm::vec3> gcolors;
-std::vector<glm::mat4> gmodels;
-
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
 
-//Graphics::Graphics() {
-//}
+// will be replaced later by pools
+static std::vector<glm::mat4> smodels;
+static std::vector<glm::vec3> scolors;
+static std::vector<glm::mat4> gmodels;
+static std::vector<glm::vec3> gcolors;
+
+// if you dont have this then breakpoints dont work! lol
+Graphics::Graphics() {
+}
 
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
@@ -30,6 +32,23 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
+
+    // debug this next line now that breakpoints are working u moron
+    //Pool<Transform> boxTransforms(10);
+
+    //auto bt = boxTransforms.getObjects();
+    //for (size_t i = 0; i < bt.size(); i++) {
+    //    std::cout << bt[i].id;
+    //}
+
+    //int a = boxTransforms.get();
+    //int b = boxTransforms.get();
+    //int c = boxTransforms.get();
+
+    //bt = boxTransforms.getObjects();
+    //for (int i = 0; i < bt.size(); i++) {
+    //    std::cout << bt[i].id;
+    //}
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
