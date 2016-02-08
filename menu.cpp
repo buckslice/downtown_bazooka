@@ -41,16 +41,16 @@ Menu::Menu(Player* player) {
         " Q    : toggle flymode\n"
         " E    : shoot\n"
         "\n"
-        " F    : gen colorwheel\n"
-        " G    : gen normal\n"
-        " V    : randomize terrain\n"
-        " B    : toggle terrain colors\n"
-        "\n"
-        " R    : toggle mipmaps\n"
-        " T    : toggle blur\n"
-        " Y    : recompile shaders");
-    instructions.setScale(sf::Vector2f(1.5f, 1.5f));
+        " 1    : toggle blur\n"
+        " 2    : toggle mipmaps\n"
+        " 3    : toggle physics debug\n"
+        " 4    : toggle terrain debug\n"
+        " 5    : randomize world seed\n"
+        " 6    : gen colorwheel\n"
+        " 7    : gen normal\n"
+        " 0    : recompile shaders");
 
+    instructions.setScale(sf::Vector2f(1.5f, 1.5f));
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
     this->player = player;

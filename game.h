@@ -16,7 +16,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "cityGenerator.h"
-#include "terrainGenerator.h"
+#include "terrain.h"
 #include "glHelper.h"
 #include "physics.h"
 #include "menu.h"
@@ -26,42 +26,42 @@
 #include "enemy.h"
 #include "mathutil.h"
 #include "entityManager.h"
-class Game
-{
+
+class Game {
 public:
-	Game(int width, int height);
-	~Game();
+    Game(GLuint width, GLuint height);
+    ~Game();
 
-	void mainLoop();
+    void mainLoop();
 
-	bool isRunning();
+    bool isRunning();
 private:
-	sf::Vector2i center;
-	int width;
-	int height;
-	bool running;
-	sf::Music mainTrack;
-	sf::RenderWindow* window;
-	Graphics* graphics;
-	Physics* physics;
-	Input input;
-	CityGenerator* cg;
-    TerrainGenerator* tg;
-	Camera cam;
-	Player* player;
-	EntityManager* em;
-	Menu* menu;
+    GLuint WIDTH;
+    GLuint HEIGHT;
+    sf::Vector2i center;
+    sf::Music mainTrack;
+    sf::RenderWindow* window;
+    Graphics* graphics;
+    Physics* physics;
+    Input input;
+    CityGenerator* cg;
+    Terrain* tg;
+    Camera cam;
+    Player* player;
+    EntityManager* em;
+    Menu* menu;
 
-	// some utility clocks
-	sf::Clock frameTime;
-	sf::Clock animTime;
+    // some utility clocks
+    sf::Clock frameTime;
+    sf::Clock animTime;
 
     // state tracking flags
-	bool lastFocused;
-	bool gameFocused;
-	bool clickedInside;
-	bool mouseVisible;
-	bool lastMouseVisible;
+    bool running;
+    bool lastFocused;
+    bool gameFocused;
+    bool clickedInside;
+    bool mouseVisible;
+    bool lastMouseVisible;
     bool mipmapping;
     bool blurring;
     bool wireframe;

@@ -46,6 +46,7 @@ private:
 
 };
 
+// class in planning to replace PhysicsTransform
 class Collider {
 public:
     Transform parent;

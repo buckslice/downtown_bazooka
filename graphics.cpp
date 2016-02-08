@@ -7,9 +7,6 @@
 #include "mathutil.h"
 
 // so can declare at bottom of file
-//extern GLfloat vertices[];
-//extern GLuint elements[];
-
 extern std::vector<Vertex> regVerts;
 extern std::vector<Vertex> offsetVerts;
 extern std::vector<GLuint> elems;
@@ -19,23 +16,17 @@ std::vector<glm::mat4> smodels;
 std::vector<glm::vec3> gcolors;
 std::vector<glm::mat4> gmodels;
 
-GLuint WIDTH;
-GLuint HEIGHT;
-
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
 
-Graphics::Graphics() {
-}
+//Graphics::Graphics() {
+//}
 
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
     HEIGHT = window.getSize().y;
 
     initGL(window);
-
-    //solidBox = Graphics::registerMesh(Resources::get().solidTex);
-    //gridBox = Graphics::registerMesh(Resources::get().gridTex);
 
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
@@ -113,7 +104,7 @@ void Graphics::renderQuad() {
 }
 
 // RENDER SCENE TO FRAMEBUFFER
-void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer) {
+void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
     Resources& r = Resources::get();
     if (toFrameBuffer) {
         glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
@@ -128,10 +119,8 @@ void Graphics::renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer
 
     r.instanceShader.use();
     // set projection and view matrices
-    //glm::mat4 view = cam.getViewMatrixThird();
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
-
 
     // draw all instanced cube meshes
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));

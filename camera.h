@@ -24,22 +24,29 @@ public:
     glm::vec3 up;
     glm::vec3 right;
     glm::vec3 worldUp;
+    
+	Camera();
+    Camera(GLfloat yaw, GLfloat pitch, bool firstPerson = true);
 
+    glm::mat4 getViewMatrix();
+    glm::mat4 getProjMatrix(GLuint w, GLuint h);
+
+    void update(GLint mdx, GLint mdy, GLfloat delta);
+
+    void updateCameraDistance(GLfloat deltaScroll, GLfloat deltaTime);
+
+    void setAutoSpin(bool value);
+
+private:
     GLfloat yaw;
     GLfloat pitch;
 
     GLfloat mouseSensitivity;
-    
-	Camera();
-    Camera(GLfloat yaw, GLfloat pitch);
+    GLfloat camDist;
+    GLfloat camDistTarget = 0.0f;
 
-    glm::mat4 getViewMatrix();
-    glm::mat4 getViewMatrixThird();
-
-    glm::mat4 getProjMatrix(GLuint w, GLuint h);
+    bool autoSpin;
 
     void updateCameraVectors();
-    void update(GLint mdx, GLint mdy);
-
 };
 

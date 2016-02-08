@@ -54,12 +54,12 @@ private:
 
 };
 
-class TerrainGenerator {
+class Terrain {
 public:
 
-    TerrainGenerator();
+    Terrain();
 
-    ~TerrainGenerator();
+    ~Terrain();
 
     void update(glm::vec3 pl);
 
@@ -71,7 +71,7 @@ public:
 
     void setSeed(glm::vec2 seed);
 
-    void toggleDebugColors();
+    bool toggleDebugColors();
 
 
 private:

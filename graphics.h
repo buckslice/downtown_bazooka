@@ -5,7 +5,7 @@
 #include "glHelper.h"
 #include "camera.h"
 #include "mesh.h"
-#include "terrainGenerator.h"
+#include "terrain.h"
 
 const GLuint BLUR_DOWNSAMPLE = 2;
 
@@ -16,7 +16,7 @@ public:
 
     ~Graphics();
 
-    void renderScene(Camera& cam, TerrainGenerator& tg, bool toFrameBuffer);
+    void renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer);
 
     void resize(int width, int height);
     //void renderUI();
@@ -42,6 +42,8 @@ public:
     void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
 private:
+    GLuint WIDTH;
+    GLuint HEIGHT;
 
     static void genColorBuffer(Mesh* mesh);
     static void genModelBuffer(Mesh* mesh);

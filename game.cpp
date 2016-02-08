@@ -2,20 +2,20 @@
 
 int numBuildings = 7500;   // 7500
 
-Game::Game(int width, int height)
-    : width{ width }, height{ height },
+Game::Game(GLuint width, GLuint height)
+    : WIDTH{ width }, HEIGHT{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
     clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
     mipmapping{ true }, blurring{ true }, wireframe{ false } {
 
-    center.x = width / 2;
-    center.y = height / 2;
+    center.x = WIDTH / 2;
+    center.y = HEIGHT / 2;
     // build window
     sf::ContextSettings settings;
     settings.depthBits = 24;
     settings.stencilBits = 8;
     settings.antialiasingLevel = 2;
-    window = new sf::RenderWindow(sf::VideoMode(width, height), "DOWNTOWN BAZOOKA", sf::Style::Default, settings);
+    window = new sf::RenderWindow(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Default, settings);
     window->setFramerateLimit(60);
 
     // load music track	
@@ -28,7 +28,7 @@ Game::Game(int width, int height)
     Resources::get();   // load resources
     physics = new Physics();
     cg = new CityGenerator();
-    tg = new TerrainGenerator();
+    tg = new Terrain();
     physics->tg = tg;
 
     // init random seed and build city
@@ -71,8 +71,6 @@ Game::~Game() {
     delete menu;
 }
 
-
-
 void Game::mainLoop() {
     const GLuint MAX_DEBUG = 20000;
     std::vector<glm::mat4> dmodels(MAX_DEBUG);
@@ -84,11 +82,10 @@ void Game::mainLoop() {
     while (running) {
         GLfloat delta = frameTime.restart().asSeconds();
 
-        fr++;
-        avgfps += 1.0f / delta;
+        //fr++;
+        //avgfps += 1.0f / delta;
         //std::cout << avgfps / fr << std::endl;
 
-        // should check for window.resize event too and resize window?
         // check for events that will quit game
         sf::Event e;
         while (window->pollEvent(e)) {
@@ -97,7 +94,7 @@ void Game::mainLoop() {
                 running = false;
                 break;
             case sf::Event::Resized:
-            {   // need these brackets
+            {   // need these brackets cuz c++ switches are wacky
                 float w = static_cast<float>(e.size.width);
                 float h = static_cast<float>(e.size.height);
                 window->setView(sf::View(sf::FloatRect(0.0f, 0.0f, w, h)));
@@ -106,6 +103,11 @@ void Game::mainLoop() {
                 center.y = e.size.height / 2;
                 break;
             }
+            case sf::Event::MouseWheelScrolled:
+                if (e.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+                    cam.updateCameraDistance(-e.mouseWheelScroll.delta*2.0f, delta);
+                }
+                break;
             default:
                 break;
             }
@@ -141,49 +143,53 @@ void Game::mainLoop() {
             input.update();
         }
 
+        // toggle blur
+        if (Input::justPressed(sf::Keyboard::Num1)) {
+            blurring = !blurring;
+            std::cout << "BLUR " << (blurring ? "ON" : "OFF") << std::endl;
+        }
+        // toggle mipmaps
+        if (Input::justPressed(sf::Keyboard::Num2)) {
+            mipmapping = !mipmapping;
+            Resources::get().loadTextures(mipmapping);
+            std::cout << "MIPMAPS " << (mipmapping ? "ON" : "OFF") << std::endl;
+        }
+        // toggle collider wireframe view
+        if (Input::justPressed(sf::Keyboard::Num3)) {
+            wireframe = !wireframe;
+            blurring = !wireframe;
+            mipmapping = !wireframe;
+            Resources::get().loadTextures(mipmapping);
+            std::cout << "PHYSICS DEBUG " << (wireframe ? "ON" : "OFF") << std::endl;
+        }
+        // toggle terrain color debug
+        if (Input::justPressed(sf::Keyboard::Num4)) {
+            tg->deleteChunks();
+            std::cout << "TERRAIN DEBUG " << (tg->toggleDebugColors() ? "ON" : "OFF") << std::endl;
+        }
+        // randomize world seed
+        if (Input::justPressed(sf::Keyboard::Num5)) {
+            tg->deleteChunks();
+            tg->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
+            std::cout << "RANDOMIZED WORLD SEED" << std::endl;
+        }
         // rebuild color wheel city
-        if (Input::justPressed(sf::Keyboard::F)) {
+        if (Input::justPressed(sf::Keyboard::Num6)) {
             physics->clearStatics();
             cg->generate(false, true, numBuildings, *physics);
             std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
         }
         // rebuild regular city
-        if (Input::justPressed(sf::Keyboard::G)) {
+        if (Input::justPressed(sf::Keyboard::Num7)) {
             physics->clearStatics();
             cg->generate(false, false, numBuildings, *physics);
             std::cout << ("BUILT NORMAL CITY") << std::endl;
         }
-        // randomize terrain
-        if (Input::justPressed(sf::Keyboard::V)) {
-            tg->deleteChunks();
-            tg->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
-            std::cout << "RANDOMIZED TERRAIN" << std::endl;
-        }
-        // toggle terrain color
-        if (Input::justPressed(sf::Keyboard::B)) {
-            tg->deleteChunks();
-            tg->toggleDebugColors();
-            std::cout << "TOGGLED TERRAIN COLORS" << std::endl;
-        }
-        // toggle mipmaps
-        if (Input::justPressed(sf::Keyboard::R)) {
-            mipmapping = !mipmapping;
-            Resources::get().loadTextures(mipmapping);
-            std::cout << "MIPMAPS " << (mipmapping ? "ON" : "OFF") << std::endl;
-        }
-        // toggle blur
-        if (Input::justPressed(sf::Keyboard::T)) {
-            blurring = !blurring;
-            std::cout << "BLUR " << (blurring ? "ON" : "OFF") << std::endl;
-        }
         // recompile shaders if prompted
-        if (Input::justPressed(sf::Keyboard::Y)) {
+        if (Input::justPressed(sf::Keyboard::Num0)) {
             Resources::get().buildShaders();
         }
-        if (Input::justPressed(sf::Keyboard::H)) {
-            wireframe = !wireframe;
-            blurring = !wireframe;
-        }
+
 
         //update menu
         menu->update(running);
@@ -200,19 +206,16 @@ void Game::mainLoop() {
         // update camera
         if (!menu->getVisible()) {   // if game running
             em->update(delta);
-
-            if (gameFocused) {
-                cam.update(mouseMove.x, mouseMove.y);
-            }
+            cam.setAutoSpin(false);
         } else {
             // reset player to floating above city
             player->setPosition(glm::vec3(0.0f, 200.0f, 0.0f));
             player->getTransform()->vel = glm::vec3(0.0f);
-            // auto scroll camera
-            cam.pitch = 0.0f;
-            cam.yaw += 5.0f * delta;
-            cam.updateCameraVectors();
+            cam.setAutoSpin(true);
         }
+
+        // update camera
+        cam.update(mouseMove.x, mouseMove.y, delta);
 
         glm::vec3 pp = player->getTransform()->getPos();
         //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
@@ -235,7 +238,7 @@ void Game::mainLoop() {
             graphics->setDebugStream(curDebugLen, &dmodels, &dcolors);
         } else {
             graphics->setDebugStream(0, &dmodels, &dcolors);
-        }        
+        }
 
         // render graphics
         Graphics::setMeshVisible(em->dudeMesh, false);

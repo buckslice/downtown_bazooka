@@ -1,4 +1,4 @@
-#include "terrainGenerator.h"
+#include "terrain.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -8,11 +8,12 @@
 glm::vec2 seed;
 bool debugColors = false;
 
-void TerrainGenerator::setSeed(glm::vec2 sd) {
+void Terrain::setSeed(glm::vec2 sd) {
     seed = sd;
 }
-void TerrainGenerator::toggleDebugColors() {
+bool Terrain::toggleDebugColors() {
     debugColors = !debugColors;
+    return debugColors;
 }
 
 float minh, maxh;
@@ -23,15 +24,11 @@ CVertex Chunk::genPoint(float x, float y) {
     Noise::worley(x, y, 0.0f, max, f, id, Noise::MANHATTAN, 0.005f);
 
     float h = static_cast<float>(f[1] - f[0]);
-    int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.2f;
 
-    //float h = Noise::fractal_2D(xo + seed.x, yo + seed.y, 4, 0.002f) * scale;
-    //float h = Noise::ridged_2D(xo + seed.x, yo + seed.y, 6, 0.001f) * scale;
     //minh = std::min(minh, h);
     //maxh = std::max(maxh, h);
 
-    h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 2, 0.005f);
+    h = Noise::fractal_worley_3D(x + seed.x, y + seed.y, 0.0f, Noise::MANHATTAN, 2, 0.005f);
 
     h -= .025f;
     h = Mth::clamp(h, 0.0f, 1.0f);
@@ -57,6 +54,8 @@ CVertex Chunk::genPoint(float x, float y) {
 
     glm::vec3 color;
     if (!debugColors) {
+        int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
+        glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.2f;
         if (h < 0.01f) {
             color = glm::vec3(Noise::ridged_2D(x + seed.x, y + seed.y, 2, 0.05f));
             color += glm::vec3(0.02f, 0.02f, 0.25f);
@@ -83,7 +82,7 @@ CVertex Chunk::genTest(float x, float y) {
     uint32_t id[max];
     Noise::worley(x, y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.0075f);
 
-    float h = static_cast<float>(f[1]-f[0]);
+    float h = static_cast<float>(f[1] - f[0]);
     //float h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 3, 0.0075f);
 
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
@@ -104,14 +103,11 @@ void Chunk::generate() {
     // used for texture coordinates
     bool bot = true;
 
-    glm::vec3 color;
     //minh = 1000.0f;
     //maxh = -1000.0f;
 
-    // random hue adjustment for whole chunk
-    glm::vec3 rand = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB() * Mth::randUnit() * 0.1f;
     // debug color
-    color = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
+    glm::vec3 debugColor = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
 
     // TODO: get generation code to work from YAML files or something
     // so dont have to recompile to see changes!!!
@@ -122,11 +118,14 @@ void Chunk::generate() {
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
             CVertex cv = genPoint(xo, yo);
+            if (debugColors) {
+                cv.color = debugColor;
+            }
 
             // texcoords are mirrored to work with XTREME!!! vertex sharing,
             // limitation is that textures have to be symmetric
             cv.texcoord = glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f);
-            
+
             verts.push_back(cv);
             left = !left;
         }
@@ -189,7 +188,7 @@ float Chunk::getHeight(float x, float z) {
     return (((verts[a].position - c)*i + (verts[b].position - c)*j) / TILE_SIZE + c).y;
 }
 
-float TerrainGenerator::queryHeight(float x, float z) {
+float Terrain::queryHeight(float x, float z) {
     point p = worldToChunk(x, z);
     if (!coordsByIndices.count(p)) {
         return -10000.0f;   // basically -infinity right? lol
@@ -198,7 +197,7 @@ float TerrainGenerator::queryHeight(float x, float z) {
     return chunks[coordsByIndices[p]]->getHeight(x, z);
 }
 
-point TerrainGenerator::worldToChunk(float x, float z) {
+point Terrain::worldToChunk(float x, float z) {
     int px = (int)((x - CHUNK_SIZE / 2.0f * (x > 0.0f ? -1.0f : 1.0f)) / CHUNK_SIZE);
     int pz = (int)((z - CHUNK_SIZE / 2.0f * (z > 0.0f ? -1.0f : 1.0f)) / CHUNK_SIZE);
 
@@ -206,7 +205,7 @@ point TerrainGenerator::worldToChunk(float x, float z) {
 }
 
 int frames = 0;
-void TerrainGenerator::update(glm::vec3 pl) {
+void Terrain::update(glm::vec3 pl) {
     // get players chunk coordinates
     point pcc = worldToChunk(pl.x, pl.z);
     //std::cout << pcc.first << " " << pcc.second << " " << pl.x << " " << pl.z << std::endl;
@@ -270,7 +269,7 @@ outer:  // jump here if built max this frame
 
 }
 
-void TerrainGenerator::render() {
+void Terrain::render() {
     // render all terrain chunks
     Resources& r = Resources::get();
 
@@ -281,7 +280,7 @@ void TerrainGenerator::render() {
 
 }
 
-void TerrainGenerator::deleteChunks() {
+void Terrain::deleteChunks() {
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->destroy();
         delete chunks[i];
@@ -290,11 +289,11 @@ void TerrainGenerator::deleteChunks() {
     coordsByIndices.clear();
 }
 
-TerrainGenerator::TerrainGenerator() {
+Terrain::Terrain() {
     setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
 }
 
 
-TerrainGenerator::~TerrainGenerator() {
+Terrain::~Terrain() {
     deleteChunks();
 }
