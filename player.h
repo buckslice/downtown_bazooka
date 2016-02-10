@@ -20,6 +20,7 @@ public:
 
     Player(Camera* cam) : speed(SPEED) {
         this->cam = cam;
+        timeSinceJump = 10.0f;
     }
 
     int getHealth();

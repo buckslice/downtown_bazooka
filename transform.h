@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "aabb.h"
+#include <iostream>
 
 class Transform {
 public:
@@ -15,6 +16,59 @@ public:
 
 private:
 
+
+};
+
+// will soon replace transform (except the color part should be in a subclass of this new transform)
+class BTransform {
+public:
+    glm::vec3 pos; // local variables
+    glm::vec3 scale;
+    glm::vec3 rot;
+
+    void setPos(float x, float y, float z);
+    void setScale(float x, float y, float z);
+    void setRot(float x, float y, float z);
+
+    glm::vec3 color;
+
+    BTransform* parent;
+
+    glm::vec3 getPos(); // world pos
+    glm::vec3 getScale();
+    glm::vec3 getRot();
+
+    // trying to figure out variadic templates!!! wtffffffffff
+    //void parentAll() {
+    //}
+    //template<typename BTransform*>
+    //void parentAll(const BTransform* child) {
+    //    child->parent = this;
+    //}
+    //template<typename BTransform*, typename... Rest>
+    //void parentAll(BTransform* first, const Rest&... rest) {
+    //    first->parent = this;
+    //    parentAll(rest...);
+    //}
+
+    //// this example one i found works...
+    //void print() {
+    //    std::cout << std::endl;
+    //}
+    //template <typename T> void print(const T& t) {
+    //    std::cout << t << std::endl;
+    //}
+    //template <typename First, typename... Rest> void print(const First& first, const Rest&... rest) {
+    //    std::cout << first << ", ";
+    //    print(rest...); // recursive call using pack expansion syntax
+    //}
+
+    void getWorld(glm::vec3& pos, glm::vec3& rot, glm::vec3& scale);
+
+    BTransform* reset();
+
+
+private:
 
 };
 
@@ -37,7 +91,7 @@ public:
     AABB getAABB();
     AABB getSwept(float delta);    // uses vel
 
-	inline bool getAffectedByGravity(){return gravityMultiplier != 0.0f;}
+    inline bool getAffectedByGravity() { return gravityMultiplier != 0.0f; }
 
 private:
     // aabb extents

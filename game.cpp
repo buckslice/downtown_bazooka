@@ -36,7 +36,7 @@ Game::Game(GLuint width, GLuint height)
     //srand(1); //my testing seed for physics bugs lol
 
     // generate a random city
-    cg->generate(false, true, numBuildings, *physics);
+    //cg->generate(false, true, numBuildings, *physics);
 
     // init camera
     player = new Player(&cam);
@@ -209,7 +209,7 @@ void Game::mainLoop() {
             cam.setAutoSpin(false);
         } else {
             // reset player to floating above city
-            player->setPosition(glm::vec3(0.0f, 200.0f, 0.0f));
+            player->setPosition(glm::vec3(0.0f, 150.0f, 0.0f));
             player->getTransform()->vel = glm::vec3(0.0f);
             cam.setAutoSpin(true);
         }

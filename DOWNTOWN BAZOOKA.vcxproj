@@ -172,6 +172,7 @@
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mathutil.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="noise.cpp" />
     <ClCompile Include="particle.cpp" />

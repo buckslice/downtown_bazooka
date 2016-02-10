@@ -10,6 +10,12 @@ struct obj {
     int id; // index in the obj table (-1 if not being used)
 };
 
+
+
+// can also declare it like this
+// template <class T, int N>
+// to hardcode the size in during compile time
+// seems pretty neat
 template <class T>
 class Pool {
 public:
@@ -18,6 +24,8 @@ public:
 
     // get new obj
     int get();
+
+    T* getP();  // returns pointer to obj (safe since our vector will never resize)
 
     // get ptr to obj in pool
     obj<T>* get(int id);
@@ -39,9 +47,9 @@ Pool<T>::Pool() {
 
 template <class T>
 Pool<T>::Pool(int max_size) {
-    //objs.resize(max_size);
-    for (size_t i = max_size - 1; i >= 0; i--) {
-        free_list.push_back(i);
+    objs.resize(max_size);
+    for (size_t i = max_size; i > 0; i--) { // careful, size_t is unsigned
+        free_list.push_back(i - 1);
     }
 }
 
@@ -54,6 +62,17 @@ int Pool<T>::get() {
     free_list.pop_back();
     objs[free].id = free;
     return free;
+}
+
+template<class T>
+T* Pool<T>::getP() {
+    if (free_list.empty()) {
+        return nullptr;
+    }
+    size_t free = free_list.back();
+    free_list.pop_back();
+    objs[free].id = free;
+    return &(objs[free].data);
 }
 
 template<class T>
@@ -72,3 +91,25 @@ template <class T>
 std::vector<obj<T>>& Pool<T>::getObjects() {
     return objs;
 }
+
+// ill do the iterator.... later...
+// heres some nice examples to job my barn
+//http://www.cs.northwestern.edu/~riesbeck/programming/c++/stl-iterator-define.html#TOC8
+
+//// iterator
+//template <class T>
+//class PoolIterator {
+//private:
+//    Pool<T>& pool;
+//    int size;
+//    int* p;
+//public:
+//    PoolIterator(Pool& pool, int size)
+//        : pool{ pool }, size{ size } {
+//    }
+//
+//    T& operator*() {
+//        return pool.objs[p];
+//    }
+//
+//};

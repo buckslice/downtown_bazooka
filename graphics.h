@@ -37,7 +37,6 @@ public:
     static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
     static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
-
     static void setMeshVisible(GLuint id, bool value);
 
     void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
@@ -50,6 +49,8 @@ private:
     static void genModelBuffer(Mesh* mesh);
 
     void setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+
+    void uploadBoxes();
 
     static bool isValidMeshID(GLuint id);
 
@@ -66,6 +67,8 @@ private:
     GLuint dstreamSize;
     std::vector<glm::mat4>* dmodels;
     std::vector<glm::vec3>* dcolors;
+
+    Pool<BTransform>* boxes;
 
     //Pool<Transform> boxTransforms;
 

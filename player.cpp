@@ -77,7 +77,8 @@ void Player::update(GLfloat delta) {
         pt.vel.y = 0.0f;
         pt.vel += (cam->right * input.x + xzforward * input.z) * accel;
 
-        if (glm::dot(pt.vel, pt.vel) > speed * speed) {//For the future: This will give us problems if we want rocket-jumping
+        // max vel limit
+        if (glm::dot(pt.vel, pt.vel) > speed * speed) {
             pt.vel = glm::normalize(pt.vel) * speed;
         }
 
