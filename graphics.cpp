@@ -26,6 +26,8 @@ static std::vector<glm::vec3> gcolors;
 Graphics::Graphics() {
 }
 
+BTransform* origin;
+
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
     HEIGHT = window.getSize().y;
@@ -40,127 +42,106 @@ Graphics::Graphics(sf::RenderWindow& window) {
     // lol who needs 3D modeling programs ... (:
     boxes = new Pool<BTransform>(100);
 
-    BTransform* xbox = boxes->getP()->reset();  //hue
-    BTransform* xboxl = boxes->getP()->reset();
-    BTransform* xboxr = boxes->getP()->reset();
-    BTransform* xx1 = boxes->getP()->reset();
-    BTransform* xx2 = boxes->getP()->reset();
+    //BTransform* xbox = boxes->getP()->reset();  //hue
+    //BTransform* xboxl = boxes->getP()->reset();
+    //BTransform* xboxr = boxes->getP()->reset();
+    //BTransform* xx1 = boxes->getP()->reset();
+    //BTransform* xx2 = boxes->getP()->reset();
 
-    BTransform* zbox = boxes->getP()->reset();
-    BTransform* zboxl = boxes->getP()->reset();
-    BTransform* zboxr = boxes->getP()->reset();
-    BTransform* zz1 = boxes->getP()->reset();
-    BTransform* zz2 = boxes->getP()->reset();
-    BTransform* zz3 = boxes->getP()->reset();
+    //BTransform* zbox = boxes->getP()->reset();
+    //BTransform* zboxl = boxes->getP()->reset();
+    //BTransform* zboxr = boxes->getP()->reset();
+    //BTransform* zz1 = boxes->getP()->reset();
+    //BTransform* zz2 = boxes->getP()->reset();
+    //BTransform* zz3 = boxes->getP()->reset();
 
-    glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
-    xbox->pos = glm::vec3(10.0f, 0.0f, 0.0f);
-    xbox->scale = glm::vec3(20.0f, 1.0f, 1.0f);
-    xbox->color = blue;
+    //glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
+    //xbox->pos = glm::vec3(10.0f, 0.0f, 0.0f);
+    //xbox->scale = glm::vec3(20.0f, 1.0f, 1.0f);
+    //xbox->color = blue;
 
-    xboxl->pos = glm::vec3(18.0f, 0.0f, 2.0f);
-    xboxl->rot = glm::vec3(0.0f, 45.0f, 0.0f);
-    xboxl->scale = glm::vec3(6.0f, 1.0f, 1.0f);
-    xboxl->color = blue;
+    //xboxl->pos = glm::vec3(18.0f, 0.0f, 2.0f);
+    //xboxl->rot = glm::vec3(0.0f, 45.0f, 0.0f);
+    //xboxl->scale = glm::vec3(6.0f, 1.0f, 1.0f);
+    //xboxl->color = blue;
 
-    xboxr->pos = glm::vec3(18.0f, 0.0f, -2.0f);
-    xboxr->rot = glm::vec3(0.0f, -45.0f, 0.0f);
-    xboxr->scale = glm::vec3(6.0f, 1.0f, 1.0f);
-    xboxr->color = blue;
+    //xboxr->pos = glm::vec3(18.0f, 0.0f, -2.0f);
+    //xboxr->rot = glm::vec3(0.0f, -45.0f, 0.0f);
+    //xboxr->scale = glm::vec3(6.0f, 1.0f, 1.0f);
+    //xboxr->color = blue;
 
-    xx1->setPos(30.0f, 0.0f, 0.0f);
-    xx2->setPos(30.0f, 0.0f, 0.0f);
-    xx1->setRot(0.0f, 45.0f, 0.0f);
-    xx2->setRot(0.0f, -45.0f, 0.0f);
-    xx1->setScale(12.0f, 1.0f, 1.0f);
-    xx2->setScale(12.0f, 1.0f, 1.0f);
-    xx1->color = blue;
-    xx2->color = blue;
+    //xx1->setPos(30.0f, 0.0f, 0.0f);
+    //xx2->setPos(30.0f, 0.0f, 0.0f);
+    //xx1->setRot(0.0f, 45.0f, 0.0f);
+    //xx2->setRot(0.0f, -45.0f, 0.0f);
+    //xx1->setScale(12.0f, 1.0f, 1.0f);
+    //xx2->setScale(12.0f, 1.0f, 1.0f);
+    //xx1->color = blue;
+    //xx2->color = blue;
 
-    glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-    zbox->pos = glm::vec3(0.0f, 0.0f, 10.0f);
-    zbox->scale = glm::vec3(1.0f, 1.0f, 20.0f);
-    zbox->color = red;
+    //glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+    //zbox->pos = glm::vec3(0.0f, 0.0f, 10.0f);
+    //zbox->scale = glm::vec3(1.0f, 1.0f, 20.0f);
+    //zbox->color = red;
 
-    zboxl->pos = glm::vec3(2.0f, 0.0f, 18.0f);
-    zboxl->rot = glm::vec3(0.0f, -45.0f, 0.0f);
-    zboxl->scale = glm::vec3(1.0f, 1.0f, 6.0f);
-    zboxl->color = red;
+    //zboxl->pos = glm::vec3(2.0f, 0.0f, 18.0f);
+    //zboxl->rot = glm::vec3(0.0f, -45.0f, 0.0f);
+    //zboxl->scale = glm::vec3(1.0f, 1.0f, 6.0f);
+    //zboxl->color = red;
 
-    zboxr->pos = glm::vec3(-2.0f, 0.0f, 18.0f);
-    zboxr->rot = glm::vec3(0.0f, 45.0f, 0.0f);
-    zboxr->scale = glm::vec3(1.0f, 1.0f, 6.0f);
-    zboxr->color = red;
+    //zboxr->pos = glm::vec3(-2.0f, 0.0f, 18.0f);
+    //zboxr->rot = glm::vec3(0.0f, 45.0f, 0.0f);
+    //zboxr->scale = glm::vec3(1.0f, 1.0f, 6.0f);
+    //zboxr->color = red;
 
-    zz1->setPos(0.0f, 0.0f, 26.0f);
-    zz2->setPos(0.0f, 0.0f, 30.0f);
-    zz3->setPos(0.0f, 0.0f, 34.0f);
-    zz1->setScale(8.0f, 1.0f, 1.0f);
-    zz2->setScale(1.0f, 1.0f, 11.0f);
-    zz3->setScale(8.0f, 1.0f, 1.0f);
-    zz2->setRot(0.0f, 45.0f, 0.0f);
-    zz1->color = red;
-    zz2->color = red;
-    zz3->color = red;
+    //zz1->setPos(0.0f, 0.0f, 26.0f);
+    //zz2->setPos(0.0f, 0.0f, 30.0f);
+    //zz3->setPos(0.0f, 0.0f, 34.0f);
+    //zz1->setScale(8.0f, 1.0f, 1.0f);
+    //zz2->setScale(1.0f, 1.0f, 11.0f);
+    //zz3->setScale(8.0f, 1.0f, 1.0f);
+    //zz2->setRot(0.0f, 45.0f, 0.0f);
+    //zz1->color = red;
+    //zz2->color = red;
+    //zz3->color = red;
 
-    BTransform* origin = boxes->getP()->reset();
-    origin->setPos(0.0f, 200.0f, 0.0f);
-    // TODO scale based on local translation to parent ..!!
-    //origin->setScale(0.1f, 0.1f, 0.1f);
-    origin->color = glm::vec3(0.0f, 0.0f, 0.0f);
-    xbox->parent = origin;
-    xboxl->parent = origin;
-    xboxr->parent = origin;
-    zbox->parent = origin;
-    zboxl->parent = origin;
-    zboxr->parent = origin;
-    xx1->parent = origin;
-    xx2->parent = origin;
-    zz1->parent = origin;
-    zz2->parent = origin;
-    zz3->parent = origin;
-
-
-    //origin->parentAll(xbox, xboxl, xboxr);
-    //origin->print("hi", "hello", "f u");
-
-    //BTransform* bx1 = boxes->getP()->reset();
-    //BTransform* bx2 = boxes->getP()->reset();
-    //bx1->pos = glm::vec3(0.0f, 10.0f, 0.0f);
-    //bx1->scale = glm::vec3(3.0f, 1.0f, 1.0f);
-    //bx1->rot = glm::vec3(0.0f, 45.0f, 0.0f);
-    //bx2->pos = glm::vec3(5.0f, 5.0f, 0.0f);
-    //bx2->scale = glm::vec3(1.0f, 0.5f, 1.0f);
-    //bx2->rot = glm::vec3(0.0f, 45.0f, 0.0f);
+    //origin = boxes->getP()->reset();
+    //origin->setPos(0.0f, 200.0f, 0.0f);
+    //// TODO scale based on local translation to parent ..!!
+    ////origin->setScale(0.1f, 0.1f, 0.1f);
+    //origin->color = glm::vec3(0.0f, 0.0f, 0.0f);
+    //origin->parentAll(xbox, xboxl, xboxr, zbox, zboxl, zboxr, xx1, xx2, zz1, zz2, zz3);
 
 }
 
 void Graphics::uploadBoxes() {
-    auto bx = boxes->getObjects();  // should make Pool class iterator
-    std::vector<glm::mat4> models;
-    std::vector<glm::vec3> colors;
-    for (size_t i = 0, len = bx.size(); i < len; ++i) {
-        if (bx[i].id < 0) { // iterator could do this check in ++ operator
-            continue;
-        }
-        BTransform& t = bx[i].data;
+    //origin->rot.y += 0.02f;
 
-        // build model
-        glm::vec3 pos;
-        glm::vec3 scale = glm::vec3(1.0f);
-        glm::vec3 rot;
-        t.getWorld(pos, rot, scale);
-        rot *= DEGREESTORADS;   // glm uses radians
-        glm::mat4 model;
-        model = glm::translate(model, pos);
-        model *= glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
-        model = glm::scale(model, scale);
+    //auto bx = boxes->getObjects();  // should make Pool class iterator
+    //std::vector<glm::mat4> models;
+    //std::vector<glm::vec3> colors;
+    //for (size_t i = 0, len = bx.size(); i < len; ++i) {
+    //    if (bx[i].id < 0) { // iterator could do this check in ++ operator
+    //        continue;
+    //    }
+    //    BTransform& t = bx[i].data;
 
-        models.push_back(model);
-        colors.push_back(t.color);
-    }
+    //    // build model
+    //    glm::vec3 pos;
+    //    glm::vec3 scale = glm::vec3(1.0f);
+    //    glm::vec3 rot;
+    //    t.getWorld(pos, rot, scale);
+    //    rot *= DEGREESTORADS;   // glm uses radians
+    //    glm::mat4 model;
+    //    model = glm::translate(model, pos);
+    //    model *= glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
+    //    model = glm::scale(model, scale);
 
-    Graphics::addToStream(false, models, colors);
+    //    models.push_back(model);
+    //    colors.push_back(t.color);
+    //}
+
+    //Graphics::addToStream(false, models, colors);
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
