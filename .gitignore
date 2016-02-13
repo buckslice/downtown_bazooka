@@ -4,9 +4,12 @@
 !*.hpp
 !*.h
 !*.sln
+!*.dll
 !*.vcxproj
 !*.vcxproj.filters
 !assets/
 !assets/**
 !libs/
 !libs/**
+!Release
+!Debug
