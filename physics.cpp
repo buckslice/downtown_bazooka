@@ -6,9 +6,12 @@
 #include "cityGenerator.h"
 
 // has to be in implementation file because reasons (#staticlife?)
-static std::vector<PhysicsTransform> dynamicObjects;
+//static std::vector<PhysicsTransform> dynamicObjects;
+
+static Pool<PhysicsTransform>* dynamicObjects;
 
 Physics::Physics() {
+    dynamicObjects = new Pool<PhysicsTransform>(6000);
 
     int splits = 6;
 
@@ -69,22 +72,23 @@ void Physics::update(float delta) {
 
     bool printedErrorThisFrame = false;
     // find list of leaf(s) each dynamic object is in
-    dynamicLeafLists.resize(dynamicObjects.size());
+    dynamicLeafLists.resize(dynamicObjects->size());
+    auto& dobjs = dynamicObjects->getObjects();
     for (size_t i = 0, len = dynamicLeafLists.size(); i < len; ++i) {
         dynamicLeafLists[i].clear();
-        if (!dynamicObjects[i].alive) {
+        if (dobjs[i].id < 0) {
             continue;
         }
-        getLeafs(dynamicLeafLists[i], dynamicObjects[i].getSwept(delta));
+        getLeafs(dynamicLeafLists[i], dobjs[i].data.getSwept(delta));
     }
 
     // for each dynamic object
-    for (size_t dndx = 0, dlen = dynamicObjects.size(); dndx < dlen; ++dndx) {
-        PhysicsTransform& pt = dynamicObjects[dndx];
-
-        if (!pt.alive) {
+    for (size_t dndx = 0, dlen = dobjs.size(); dndx < dlen; ++dndx) {
+        auto& pobj = dobjs[dndx];
+        if (pobj.id < 0) {
             continue;
         }
+        PhysicsTransform& pt = pobj.data;
 
         resolvedSet.clear();
 
@@ -161,20 +165,21 @@ void Physics::update(float delta) {
             resolvedSet.insert(closestStaticIndex);
 
             // update dynamic position
-            pt.lpos += rvel * delta * time;
+            pt.setPos(pt.getPos() + rvel * delta * time);
 
             // check height of terrain
-            float h = tg->queryHeight(pt.lpos.x, pt.lpos.z);
+            glm::vec3 pos = pt.getPos();
+            float h = tg->queryHeight(pos.x, pos.z);
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
-            if (pt.lpos.y < h || norm.y != 0.0f) {
+            if (pos.y < h || norm.y != 0.0f) {
                 pt.grounded = true;
                 pt.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
 
             // dont let dynamic go below terrain height
-            pt.lpos.y = fmax(pt.lpos.y, h);
+            pt.setPos(pos.x, fmax(pos.y, h), pos.z);
 
             // if there was a collision then update remaining velocity for subsequent collision tests
             if (time < 1.0f) {
@@ -255,11 +260,11 @@ void Physics::clearStatics() {
 }
 
 // pretty filth temp method for now until i figure out wth im doing (more on this below lol)
-void Physics::clearDynamics() {
-    PhysicsTransform player = dynamicObjects[0];
-    dynamicObjects.clear();
-    dynamicObjects.push_back(player);
-}
+//void Physics::clearDynamics() {
+//    PhysicsTransform player = dynamicObjects[0];
+//    dynamicObjects.clear();
+//    dynamicObjects.push_back(player);
+//}
 
 void Physics::printStaticMatrix() {
     for (size_t i = 0, ilen = treeMatrix.size(); i < ilen; ++i) {
@@ -273,22 +278,17 @@ void Physics::printStaticMatrix() {
     }
 }
 
-// need to make this return an int pointer or something
-// so it can be reassigned when a dynamic is destroyed or something
-// alternatively just store everything in entity and quit caring about cache cuz
-// probably doesnt even matter! ya since entity wont even have that many components in it
-// just not sure how to handle pointers to different objects basically
-// indices into vector works but then need to be updated when vector deletes (just move end guy into deleted spot)
-// or with pointers but whenever a vector resizes any pointers to any of its objects get invalidated
-int Physics::registerDynamic(glm::vec3 scale) {
-    dynamicObjects.push_back(PhysicsTransform(scale));
-    return dynamicObjects.size() - 1;
+
+int Physics::registerDynamic() {
+    return dynamicObjects->get();
 }
 
-//void releaseDynamic
+void Physics::returnDynamic(int id) {
+    dynamicObjects->ret(id);
+}
 
 PhysicsTransform* Physics::getTransform(int index) {
-    return &dynamicObjects[index];
+    return dynamicObjects->getData(index);
 }
 
 int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
@@ -307,13 +307,19 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
         }
     }
 
-    for (size_t i = 0, len = dynamicObjects.size(); i < len; ++i) {
-        if (!dynamicObjects[i].alive) {
+    auto& dobjs = dynamicObjects->getObjects();
+    for (size_t i = 0, len = dynamicObjects->size(); i < len; ++i) {
+        auto& pobj = dobjs[i];
+        //if (pobj.id < 0) {
+        //    continue;
+        //}
+
+        if (pobj.id < 0) {
             colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }
-        AABB b = dynamicObjects[i].getAABB();
+        AABB b = pobj.data.getAABB();
         glm::vec3 pos = b.getCenter();
         glm::vec3 scale = b.getSize();
         glm::mat4 model;

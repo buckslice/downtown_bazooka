@@ -41,6 +41,10 @@ public:
 
     void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
+
+    static int registerTransform();
+    static BTransform* getTransform(int id);
+
 private:
     GLuint WIDTH;
     GLuint HEIGHT;
@@ -67,8 +71,6 @@ private:
     GLuint dstreamSize;
     std::vector<glm::mat4>* dmodels;
     std::vector<glm::vec3>* dcolors;
-
-    Pool<BTransform>* boxes;
 
     //Pool<Transform> boxTransforms;
 

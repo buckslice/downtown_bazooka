@@ -25,15 +25,22 @@ public:
     // get new obj
     int get();
 
-    T* getP();  // returns pointer to obj (safe since our vector will never resize)
+    //T* getP();  // returns pointer to obj (safe since our vector will never resize)
 
     // get ptr to obj in pool
-    obj<T>* get(int id);
+    obj<T>* getObj(int id);
+
+    // get ptr to data in pool
+    T* getData(int id);
 
     // returns obj back to pool
     void ret(int id);
 
     std::vector<obj<T>>& getObjects();
+
+    size_t size() {
+        return objs.size();
+    }
 
 private:
     std::vector<obj<T>> objs;
@@ -56,6 +63,7 @@ Pool<T>::Pool(int max_size) {
 template <class T>
 int Pool<T>::get() {
     if (free_list.empty()) {
+        std::cout << "POOL EMPTY!!!" << std::endl;
         return -1;
     }
     size_t free = free_list.back();
@@ -64,22 +72,33 @@ int Pool<T>::get() {
     return free;
 }
 
+// pretty unsafe, just make sure to never return
+// without updating everyone who references it
+//template<class T>
+//T* Pool<T>::getP() {
+//    if (free_list.empty()) {
+//        std::cout << "POOL EMPTY!!!" << std::endl;
+//        return nullptr;
+//    }
+//    size_t free = free_list.back();
+//    free_list.pop_back();
+//    objs[free].id = free;
+//    return &(objs[free].data);
+//}
+
+// get pointer to object in pool
 template<class T>
-T* Pool<T>::getP() {
-    if (free_list.empty()) {
-        return nullptr;
-    }
-    size_t free = free_list.back();
-    free_list.pop_back();
-    objs[free].id = free;
-    return &(objs[free].data);
+obj<T>* Pool<T>::getObj(int id) {
+    return objs[id].id == -1 ? nullptr : &objs[id];
 }
 
+// get pointer to data in pool
 template<class T>
-obj<T>* Pool<T>::get(int id) {
-    return objs[id].id == -1 ? nullptr : &objs[i];
+T* Pool<T>::getData(int id) {
+    return objs[id].id == -1 ? nullptr : &objs[id].data;
 }
 
+// frees object at index
 template <class T>
 void Pool<T>::ret(int id) {
     objs[id].id = -1;
@@ -93,7 +112,7 @@ std::vector<obj<T>>& Pool<T>::getObjects() {
 }
 
 // ill do the iterator.... later...
-// heres some nice examples to job my barn
+// heres some nice examples to jog my barn
 //http://www.cs.northwestern.edu/~riesbeck/programming/c++/stl-iterator-define.html#TOC8
 
 //// iterator

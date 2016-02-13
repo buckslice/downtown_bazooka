@@ -15,6 +15,7 @@ extern std::vector<GLuint> elems;
 
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
+static Pool<BTransform>* boxes;
 
 // will be replaced later by pools
 static std::vector<glm::mat4> smodels;
@@ -26,6 +27,16 @@ static std::vector<glm::vec3> gcolors;
 Graphics::Graphics() {
 }
 
+
+int Graphics::registerTransform() {
+    return boxes->get();
+}
+
+BTransform* Graphics::getTransform(int id) {
+    return boxes->getData(id);
+}
+
+// testing
 BTransform* origin;
 
 Graphics::Graphics(sf::RenderWindow& window) {
@@ -37,12 +48,9 @@ Graphics::Graphics(sf::RenderWindow& window) {
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    // testing new transform code
-    // still need to test parent/child inheriting but prob works
-    // lol who needs 3D modeling programs ... (:
-    boxes = new Pool<BTransform>(100);
+    //boxes = new Pool<BTransform>(1000);
 
-    //BTransform* xbox = boxes->getP()->reset();  //hue
+    //BTransform* xbox = boxes->getP()->reset();
     //BTransform* xboxl = boxes->getP()->reset();
     //BTransform* xboxr = boxes->getP()->reset();
     //BTransform* xx1 = boxes->getP()->reset();
@@ -56,18 +64,18 @@ Graphics::Graphics(sf::RenderWindow& window) {
     //BTransform* zz3 = boxes->getP()->reset();
 
     //glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
-    //xbox->pos = glm::vec3(10.0f, 0.0f, 0.0f);
-    //xbox->scale = glm::vec3(20.0f, 1.0f, 1.0f);
+    //xbox->setPos(10.0f, 0.0f, 0.0f);
+    //xbox->setScale(20.0f, 1.0f, 1.0f);
     //xbox->color = blue;
 
-    //xboxl->pos = glm::vec3(18.0f, 0.0f, 2.0f);
-    //xboxl->rot = glm::vec3(0.0f, 45.0f, 0.0f);
-    //xboxl->scale = glm::vec3(6.0f, 1.0f, 1.0f);
+    //xboxl->setPos(18.0f, 0.0f, 2.0f);
+    //xboxl->setRot(0.0f, 45.0f, 0.0f);
+    //xboxl->setScale(6.0f, 1.0f, 1.0f);
     //xboxl->color = blue;
 
-    //xboxr->pos = glm::vec3(18.0f, 0.0f, -2.0f);
-    //xboxr->rot = glm::vec3(0.0f, -45.0f, 0.0f);
-    //xboxr->scale = glm::vec3(6.0f, 1.0f, 1.0f);
+    //xboxr->setPos(18.0f, 0.0f, -2.0f);
+    //xboxr->setRot(0.0f, -45.0f, 0.0f);
+    //xboxr->setScale(6.0f, 1.0f, 1.0f);
     //xboxr->color = blue;
 
     //xx1->setPos(30.0f, 0.0f, 0.0f);
@@ -80,18 +88,18 @@ Graphics::Graphics(sf::RenderWindow& window) {
     //xx2->color = blue;
 
     //glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-    //zbox->pos = glm::vec3(0.0f, 0.0f, 10.0f);
-    //zbox->scale = glm::vec3(1.0f, 1.0f, 20.0f);
+    //zbox->setPos(0.0f, 0.0f, 10.0f);
+    //zbox->setScale(1.0f, 1.0f, 20.0f);
     //zbox->color = red;
 
-    //zboxl->pos = glm::vec3(2.0f, 0.0f, 18.0f);
-    //zboxl->rot = glm::vec3(0.0f, -45.0f, 0.0f);
-    //zboxl->scale = glm::vec3(1.0f, 1.0f, 6.0f);
+    //zboxl->setPos(2.0f, 0.0f, 18.0f);
+    //zboxl->setRot(0.0f, -45.0f, 0.0f);
+    //zboxl->setScale(1.0f, 1.0f, 6.0f);
     //zboxl->color = red;
 
-    //zboxr->pos = glm::vec3(-2.0f, 0.0f, 18.0f);
-    //zboxr->rot = glm::vec3(0.0f, 45.0f, 0.0f);
-    //zboxr->scale = glm::vec3(1.0f, 1.0f, 6.0f);
+    //zboxr->setPos(-2.0f, 0.0f, 18.0f);
+    //zboxr->setRot(0.0f, 45.0f, 0.0f);
+    //zboxr->setScale(1.0f, 1.0f, 6.0f);
     //zboxr->color = red;
 
     //zz1->setPos(0.0f, 0.0f, 26.0f);
@@ -115,8 +123,8 @@ Graphics::Graphics(sf::RenderWindow& window) {
 }
 
 void Graphics::uploadBoxes() {
-    //origin->rot.y += 0.02f;
-
+    //origin->rotate(0.02f, glm::vec3(0.0f, 1.0f, 0.0f));
+    //
     //auto bx = boxes->getObjects();  // should make Pool class iterator
     //std::vector<glm::mat4> models;
     //std::vector<glm::vec3> colors;
@@ -125,19 +133,7 @@ void Graphics::uploadBoxes() {
     //        continue;
     //    }
     //    BTransform& t = bx[i].data;
-
-    //    // build model
-    //    glm::vec3 pos;
-    //    glm::vec3 scale = glm::vec3(1.0f);
-    //    glm::vec3 rot;
-    //    t.getWorld(pos, rot, scale);
-    //    rot *= DEGREESTORADS;   // glm uses radians
-    //    glm::mat4 model;
-    //    model = glm::translate(model, pos);
-    //    model *= glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
-    //    model = glm::scale(model, scale);
-
-    //    models.push_back(model);
+    //    models.push_back(t.getModelMatrix());
     //    colors.push_back(t.color);
     //}
 

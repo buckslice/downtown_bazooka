@@ -20,9 +20,10 @@ public:
     void addStatics(const std::vector<AABB>& objs);
     bool checkStatic(AABB obj);
     void clearStatics();
-    void clearDynamics();
+    //void clearDynamics();
     static PhysicsTransform* getTransform(int index);
-    static int registerDynamic(glm::vec3 scale);
+    static int registerDynamic();
+    static void returnDynamic(int id);
 
     void printStaticMatrix();
 

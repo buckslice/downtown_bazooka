@@ -40,8 +40,9 @@ Game::Game(GLuint width, GLuint height)
 
     // init camera
     player = new Player(&cam);
-    cam.transform.parent = player->transform;
-    cam.transform.lpos = glm::vec3(0.0f, 1.8f, 0.0f);
+    auto pt = player->getTransform();
+    pt->parentAll(cam.transform);
+    cam.transform->setPos(glm::vec3(0.0f, 1.8f, 0.0f));
 
     em = new EntityManager(player);
 
@@ -200,7 +201,7 @@ void Game::mainLoop() {
         }
         if (menu->justOpened) {
             em->deleteEntities();
-            physics->clearDynamics();
+            //physics->clearDynamics();
         }
 
         // update camera
@@ -217,7 +218,7 @@ void Game::mainLoop() {
         // update camera
         cam.update(mouseMove.x, mouseMove.y, delta);
 
-        glm::vec3 pp = player->getTransform()->getPos();
+        glm::vec3 pp = player->getTransform()->getWorldPos();
         //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
         tg->update(pp);
 
@@ -225,13 +226,13 @@ void Game::mainLoop() {
         physics->update(delta);
 
         // update dudes model
-        glm::mat4 model;
-        glm::vec3 pos = player->getTransform()->lpos;
-        glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-        pos.y += 1.0f;
-        model = glm::translate(model, pos);
-        model = glm::scale(model, scale);
-        Graphics::addToStream(false, model, glm::vec3(1.0f, 1.0f, 0.0f));
+        //glm::mat4 model;
+        //glm::vec3 pos = player->getTransform()->lpos;
+        //glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+        //pos.y += 1.0f;
+        //model = glm::translate(model, pos);
+        //model = glm::scale(model, scale);
+        //Graphics::addToStream(false, model, glm::vec3(1.0f, 1.0f, 0.0f));
 
         if (wireframe) {    // maybe make it later only add in coliders near player
             int curDebugLen = physics->getColliderModels(dmodels, dcolors);

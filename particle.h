@@ -17,7 +17,8 @@ public:
     int effect;
     //DO NOT CREATE A NEW PARTICLE outside of EntityManager
     Particle() : Entity() {
-        getTransform()->alive = false;
+        //getTransform()->alive = false;
+        Physics::returnDynamic(transform);
         curlife = 0;
     }
 

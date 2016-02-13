@@ -14,7 +14,7 @@ void Enemy::update(GLfloat delta) {
 		pt.grounded = false;
 	}
 
-	glm::vec3 dirToPlayer = Physics::getTransform(player)->lpos - pt.lpos;
+	glm::vec3 dirToPlayer = Physics::getTransform(player)->getPos() - pt.getPos();
 	dirToPlayer.y = 0.0f;
 	if (dirToPlayer != glm::vec3(0.0f)) {
 		dirToPlayer = glm::normalize(dirToPlayer) * speed;

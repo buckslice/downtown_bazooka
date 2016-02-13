@@ -37,7 +37,7 @@ void Player::update(GLfloat delta) {
 	int size = projectiles.size();
 	for (int i = 0; i < size; i++) {
 		projectiles[i].update(delta);
-		if (!projectiles[i].getTransform()->alive) {
+		if (projectiles[i].getTransform() == nullptr) {
 			projectiles[i] = projectiles[size - 1];
 			projectiles.pop_back();
 			size--;
@@ -103,7 +103,7 @@ void Player::jump() {
 
 void Player::shoot() {
 	PhysicsTransform& pt = *getTransform();
-    glm::vec3 shootPos = pt.getPos();
+    glm::vec3 shootPos = pt.getWorldPos();
     shootPos.y += 1.8f;
 	Projectile projectile(shootPos, pt.vel + cam->forward*100.0f);
 	projectiles.push_back(projectile);

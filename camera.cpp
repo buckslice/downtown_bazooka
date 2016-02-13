@@ -26,7 +26,7 @@ Camera::Camera(GLfloat yaw, GLfloat pitch, bool firstPerson)
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    glm::vec3 p = transform.getPos();
+    glm::vec3 p = transform->getWorldPos();
     p = p - forward * camDist;
     return glm::lookAt(p, p + forward, up);
 }

@@ -65,14 +65,14 @@ void EntityManager::update(float delta) {
     for (size_t i = 0, len = entities.size(); i < len; ++i) {
         entities[i]->update(delta);
 
-        // update dudes model
-        glm::mat4 model;
-        glm::vec3 pos = entities[i]->getTransform()->lpos;
-        glm::vec3 scale = entities[i]->getTransform()->scale;
-        pos.y += scale.y / 2.0f;
-        model = glm::translate(model, pos);
-        model = glm::scale(model, scale);
-        models.push_back(model);
+        //// update dudes model
+        //glm::mat4 model;
+        //glm::vec3 pos = entities[i]->getTransform()->lpos;
+        //glm::vec3 scale = entities[i]->getTransform()->scale;
+        //pos.y += scale.y / 2.0f;
+        //model = glm::translate(model, pos);
+        //model = glm::scale(model, scale);
+        models.push_back(entities[i]->getTransform()->getModelMatrix());
     }
     Graphics::setModels(dudeMesh, models);
     models.clear();
@@ -82,12 +82,12 @@ void EntityManager::update(float delta) {
     for (size_t i = 0, len = projectiles.size(); i < len; ++i) {
         PhysicsTransform* pt = projectiles[i].getTransform();
 
-        glm::mat4 model;
-        glm::vec3 pos = pt->getPos();
-        glm::vec3 scale = pt->scale;
-        model = glm::translate(model, pos);
-        model = glm::scale(model, scale);
-        models.push_back(model);
+        //glm::mat4 model;
+        //glm::vec3 pos = pt->getWorldPos();
+        //glm::vec3 scale = pt->scale;
+        //model = glm::translate(model, pos);
+        //model = glm::scale(model, scale);
+        models.push_back(pt->getModelMatrix());
     }
 
     Graphics::setModels(projectileMesh, models);
@@ -101,16 +101,16 @@ void EntityManager::update(float delta) {
 
         p->update(delta);
 
-        if (p->getTransform()->alive) {
+        if (p->getTransform() != nullptr) {
 
-            glm::mat4 model;
-            PhysicsTransform* pt = p->getTransform();
-            glm::vec3 pos = pt->lpos;
-            glm::vec3 scale = pt->scale;
-            pos.y += scale.y / 2.0f;
-            model = glm::translate(model, pos);
-            model = glm::scale(model, scale);
-            models.push_back(model);
+            //glm::mat4 model;
+            //PhysicsTransform* pt = p->getTransform();
+            //glm::vec3 pos = pt->getPos();
+            //glm::vec3 scale = pt->scale;
+            //pos.y += scale.y / 2.0f;
+            //model = glm::translate(model, pos);
+            //model = glm::scale(model, scale);
+            models.push_back(p->getTransform()->getModelMatrix());
 
             colors.push_back(p->getColor());
         }
@@ -139,10 +139,9 @@ void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm:
     Particle* p = getNextParticle();
     p->effect = effect;
     PhysicsTransform* pt = p->getTransform();
-    pt->lpos = pos;
-    pt->scale = glm::vec3(.25f);
+    pt->setPos(pos);
+    pt->setScale(glm::vec3(.25f));
 
-    //TODO: clean up and have a better randomizer (to be spherical instead of cubic...al)
     pt->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
     //pt->vel = vel + Mth::randInsideUnitCube() * randvel;
     p->activate();

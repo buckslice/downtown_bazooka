@@ -18,7 +18,7 @@ const GLfloat FAR_PLANE = 2000.0f;
 class Camera {
 
 public:
-    Transform transform;
+    BTransform* transform;
 
     glm::vec3 forward;
     glm::vec3 up;
