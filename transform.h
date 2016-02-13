@@ -199,18 +199,27 @@ private:
 
 };
 
-//// class in planning to replace PhysicsTransform
-//class Collider {
-//public:
-//    Transform parent;
-//
-//    // when register collider just specify whether static or dynamic
-//    // and it gets put in seperate lists
-//    //bool isStatic;
-//
-//
-//private:
-//    glm::vec3 min;
-//    glm::vec3 max;
-//
-//};
+// class in planning to replace PhysicsTransform
+class Collider {
+public:
+    BTransform* transform; 
+
+    glm::vec3 vel;
+    bool grounded = false;
+
+    float gravityMultiplier = 1.0f;
+
+    Collider() {
+
+    }
+
+    // when register collider just specify whether static or dynamic
+    // and it gets put in seperate lists
+    //bool isStatic;
+
+
+private:
+    glm::vec3 min;
+    glm::vec3 max;
+
+};

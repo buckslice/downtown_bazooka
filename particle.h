@@ -14,11 +14,12 @@ public:
     static const int FIRE = 2;
 
     float lifetime, curlife;
+    //bool alive;
     int effect;
-    //DO NOT CREATE A NEW PARTICLE outside of EntityManager
+
     Particle() : Entity() {
-        //getTransform()->alive = false;
         Physics::returnDynamic(transform);
+        transform = -1;
         curlife = 0;
     }
 

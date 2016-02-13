@@ -21,6 +21,7 @@ public:
     bool checkStatic(AABB obj);
     void clearStatics();
     //void clearDynamics();
+    
     static PhysicsTransform* getTransform(int index);
     static int registerDynamic();
     static void returnDynamic(int id);

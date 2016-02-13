@@ -12,7 +12,7 @@ public:
 
     EntityManager(Player* player);
 
-    const int MAX_PROJECTILES = 1000;
+    const int MAX_PROJECTILES = 200;
     const int MAX_PARTICLES = 5000;
 
     // should add in support for adding single entities dynamically next

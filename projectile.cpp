@@ -13,12 +13,15 @@ void Projectile::update(GLfloat delta) {
     // if the projectile collides with something, delete it
     timer -= delta;
     if (timer <= 0.0f) {
-        Physics::returnDynamic(transform);
+        //Physics::returnDynamic(transform);
+        return;
     }
 
     // 2 and 3
     for (int i = 0; i < 2; i++) {
-        EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::FIRE, 3);
+        PhysicsTransform* pt = getTransform();
+        glm::vec3 word = pt->getWorldPos();
+        EntityManagerInstance->SpawnParticle(word, Particle::FIRE, 3);
     }
     for (int i = 0; i < 3; i++) {
         EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::SPARK, 50);

@@ -1,8 +1,10 @@
 #include "Particle.h"
 
 void Particle::activate() {
-    transform = Physics::registerDynamic();
-
+    //alive = true;
+    if (transform < 0) {
+        transform = Physics::registerDynamic();
+    }
     float gravmult;
     switch (effect) {
     case SPARK:
@@ -23,12 +25,14 @@ void Particle::activate() {
 }
 
 void Particle::update(GLfloat dt) {
-    PhysicsTransform* pt = getTransform();
-
-    if (pt != nullptr && (curlife -= dt) <= 0) {
+    if (transform < 0) {
+        return;
+    } else if ((curlife -= dt) <= 0) {
         Physics::returnDynamic(transform);
+        transform = -1;
         return;
     }
+    PhysicsTransform* pt = getTransform();
 
     float scalemult;
     switch (effect) {
@@ -45,7 +49,6 @@ void Particle::update(GLfloat dt) {
         scalemult = .95f;
         break;
     }
-    //pt->scale *= scalemult;
     pt->setScale(curlife / lifetime * glm::vec3(1.0f));
 }
 

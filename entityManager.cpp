@@ -2,8 +2,8 @@
 EntityManager *EntityManagerInstance;//An extern from entityManager.h
 
 EntityManager::EntityManager(Player* player) : player(player) {
-    dudeMesh = Graphics::registerMesh();
-    projectileMesh = Graphics::registerMesh(Resources::get().solidTex);
+    //dudeMesh = Graphics::registerMesh();
+    //projectileMesh = Graphics::registerMesh(Resources::get().solidTex);
 }
 
 // should add in support for adding single entities dynamically next
@@ -14,40 +14,40 @@ void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
     deleteEntities();
 
-    std::vector<glm::vec3> colors;
-    for (int i = 0; i < numberOfDudes; i++) {
-        glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-        bool elite = rand() % 50 == 0;
+    //std::vector<glm::vec3> colors;
+    //for (int i = 0; i < numberOfDudes; i++) {
+    //    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    //    bool elite = rand() % 50 == 0;
 
-        glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-        glm::vec3 variance = Mth::randInsideUnitCube();
-        variance.x = variance.z = abs(variance.x);
-        scale += variance * .25f;
-        if (elite) {
-            scale *= Mth::rand01() + 2.0f;
-        }
-        Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale);
+    //    glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+    //    glm::vec3 variance = Mth::randInsideUnitCube();
+    //    variance.x = variance.z = abs(variance.x);
+    //    scale += variance * .25f;
+    //    if (elite) {
+    //        scale *= Mth::rand01() + 2.0f;
+    //    }
+    //    Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale);
 
-        if (elite) { // gold elites 
-            e->speed = Mth::rand01() * 5.0f + 10.0f;
-            e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-            colors.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
-        } else {    // red grunts
-            colors.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
-        }
+    //    if (elite) { // gold elites 
+    //        e->speed = Mth::rand01() * 5.0f + 10.0f;
+    //        e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
+    //        colors.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
+    //    } else {    // red grunts
+    //        colors.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
+    //    }
 
-        entities.push_back(e);
-        //cols.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
-    }
-    Graphics::setColors(dudeMesh, colors);
+    //    entities.push_back(e);
+    //    //cols.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
+    //}
+    //Graphics::setColors(dudeMesh, colors);
 
-    colors.clear();
+    //colors.clear();
 
-    for (int i = 0; i < MAX_PROJECTILES; i++) {
-        colors.push_back(glm::vec3(1.0f, 0.2f, 0.0f));
-    }
+    //for (int i = 0; i < MAX_PROJECTILES; i++) {
+    //    colors.push_back(glm::vec3(1.0f, 0.2f, 0.0f));
+    //}
 
-    Graphics::setColors(projectileMesh, colors);
+    //Graphics::setColors(projectileMesh, colors);
 
     // init particles
     particles.clear();
@@ -62,46 +62,47 @@ void EntityManager::update(float delta) {
     player->update(delta);
 
     std::vector<glm::mat4> models;
-    for (size_t i = 0, len = entities.size(); i < len; ++i) {
-        entities[i]->update(delta);
+    //for (size_t i = 0, len = entities.size(); i < len; ++i) {
+    //    entities[i]->update(delta);
 
-        //// update dudes model
-        //glm::mat4 model;
-        //glm::vec3 pos = entities[i]->getTransform()->lpos;
-        //glm::vec3 scale = entities[i]->getTransform()->scale;
-        //pos.y += scale.y / 2.0f;
-        //model = glm::translate(model, pos);
-        //model = glm::scale(model, scale);
-        models.push_back(entities[i]->getTransform()->getModelMatrix());
-    }
-    Graphics::setModels(dudeMesh, models);
-    models.clear();
+    //    //// update dudes model
+    //    //glm::mat4 model;
+    //    //glm::vec3 pos = entities[i]->getTransform()->lpos;
+    //    //glm::vec3 scale = entities[i]->getTransform()->scale;
+    //    //pos.y += scale.y / 2.0f;
+    //    //model = glm::translate(model, pos);
+    //    //model = glm::scale(model, scale);
+    //    models.push_back(entities[i]->getTransform()->getModelMatrix());
+    //}
+    //Graphics::setModels(dudeMesh, models);
+    //models.clear();
 
-    // add projectiles
-    std::vector<Projectile>& projectiles = player->getProjectiles();
-    for (size_t i = 0, len = projectiles.size(); i < len; ++i) {
-        PhysicsTransform* pt = projectiles[i].getTransform();
+    // add projectiles models
+    //std::vector<Projectile>& projectiles = player->getProjectiles();
+    //for (size_t i = 0, len = projectiles.size(); i < len; ++i) {
+    //    PhysicsTransform* pt = projectiles[i].getTransform();
 
-        //glm::mat4 model;
-        //glm::vec3 pos = pt->getWorldPos();
-        //glm::vec3 scale = pt->scale;
-        //model = glm::translate(model, pos);
-        //model = glm::scale(model, scale);
-        models.push_back(pt->getModelMatrix());
-    }
+    //    //glm::mat4 model;
+    //    //glm::vec3 pos = pt->getWorldPos();
+    //    //glm::vec3 scale = pt->scale;
+    //    //model = glm::translate(model, pos);
+    //    //model = glm::scale(model, scale);
+    //    models.push_back(pt->getModelMatrix());
+    //}
 
-    Graphics::setModels(projectileMesh, models);
-    models.clear();
+    //Graphics::setModels(projectileMesh, models);
+    //models.clear();
 
-    // update and build particles
-    // should probably remove this into seperate class..
+    //// update and build particles
+    //// should probably remove this into seperate class..
+
     std::vector<glm::vec3> colors;
     for (size_t i = 0, len = particles.size(); i < len; ++i) {
-        Particle* p = &particles[i];
+        Particle& p = particles[i];
 
-        p->update(delta);
+        p.update(delta);
 
-        if (p->getTransform() != nullptr) {
+        if (p.transform >= 0) {
 
             //glm::mat4 model;
             //PhysicsTransform* pt = p->getTransform();
@@ -110,9 +111,9 @@ void EntityManager::update(float delta) {
             //pos.y += scale.y / 2.0f;
             //model = glm::translate(model, pos);
             //model = glm::scale(model, scale);
-            models.push_back(p->getTransform()->getModelMatrix());
+            models.push_back(p.getTransform()->getModelMatrix());
 
-            colors.push_back(p->getColor());
+            colors.push_back(p.getColor());
         }
     }
 
@@ -138,11 +139,10 @@ Particle* EntityManager::getNextParticle() {
 void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm::vec3 vel) {
     Particle* p = getNextParticle();
     p->effect = effect;
+    p->activate();
     PhysicsTransform* pt = p->getTransform();
     pt->setPos(pos);
     pt->setScale(glm::vec3(.25f));
-
     pt->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
     //pt->vel = vel + Mth::randInsideUnitCube() * randvel;
-    p->activate();
 }

@@ -11,7 +11,7 @@
 static Pool<PhysicsTransform>* dynamicObjects;
 
 Physics::Physics() {
-    dynamicObjects = new Pool<PhysicsTransform>(6000);
+    dynamicObjects = new Pool<PhysicsTransform>(10000);
 
     int splits = 6;
 
@@ -55,14 +55,7 @@ Physics::Physics() {
 int totalAABBChecks = 0;
 
 void Physics::update(float delta) {
-    //for (int i = 0; i < dynamicObjects.size(); i++) {
-    //    PhysicsTransform& pt = dynamicObjects[i];
-    //    if (!pt.alive) {
-    //        continue;
-    //    }
-    //    pt.lpos += pt.vel * delta;
-    //}
-    //return;
+    int freeCount = 0;
 
     totalAABBChecks = 0;
     // if in corner between two statics this will be 3 which seems weird, but its because
@@ -72,15 +65,18 @@ void Physics::update(float delta) {
 
     bool printedErrorThisFrame = false;
     // find list of leaf(s) each dynamic object is in
-    dynamicLeafLists.resize(dynamicObjects->size());
+    size_t len = dynamicObjects->size();
+    dynamicLeafLists.resize(len);
     auto& dobjs = dynamicObjects->getObjects();
-    for (size_t i = 0, len = dynamicLeafLists.size(); i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         dynamicLeafLists[i].clear();
         if (dobjs[i].id < 0) {
+            freeCount++;
             continue;
         }
         getLeafs(dynamicLeafLists[i], dobjs[i].data.getSwept(delta));
     }
+    std::cout << freeCount << std::endl;
 
     // for each dynamic object
     for (size_t dndx = 0, dlen = dobjs.size(); dndx < dlen; ++dndx) {
@@ -310,12 +306,10 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
     auto& dobjs = dynamicObjects->getObjects();
     for (size_t i = 0, len = dynamicObjects->size(); i < len; ++i) {
         auto& pobj = dobjs[i];
-        //if (pobj.id < 0) {
-        //    continue;
-        //}
 
         if (pobj.id < 0) {
-            colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
+            continue;
+            //colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }

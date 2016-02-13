@@ -28,13 +28,13 @@ Graphics::Graphics() {
 }
 
 
-int Graphics::registerTransform() {
-    return boxes->get();
-}
-
-BTransform* Graphics::getTransform(int id) {
-    return boxes->getData(id);
-}
+//int Graphics::registerTransform() {
+//    return boxes->get();
+//}
+//
+//BTransform* Graphics::getTransform(int id) {
+//    return boxes->getData(id);
+//}
 
 // testing
 BTransform* origin;
@@ -48,7 +48,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    //boxes = new Pool<BTransform>(1000);
+    //boxes = new Pool<BTransform>(10000);
 
     //BTransform* xbox = boxes->getP()->reset();
     //BTransform* xboxl = boxes->getP()->reset();

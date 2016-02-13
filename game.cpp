@@ -41,6 +41,8 @@ Game::Game(GLuint width, GLuint height)
     // init camera
     player = new Player(&cam);
     auto pt = player->getTransform();
+    //cam.transform = Graphics::getTransform(Graphics::registerTransform());
+    cam.transform = new BTransform();
     pt->parentAll(cam.transform);
     cam.transform->setPos(glm::vec3(0.0f, 1.8f, 0.0f));
 
@@ -210,8 +212,9 @@ void Game::mainLoop() {
             cam.setAutoSpin(false);
         } else {
             // reset player to floating above city
-            player->setPosition(glm::vec3(0.0f, 150.0f, 0.0f));
-            player->getTransform()->vel = glm::vec3(0.0f);
+            PhysicsTransform* pt = player->getTransform();
+            pt->setPos(glm::vec3(0.0f, 150.0f, 0.0f));
+            pt->vel = glm::vec3(0.0f);
             cam.setAutoSpin(true);
         }
 

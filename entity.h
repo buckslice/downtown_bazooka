@@ -21,9 +21,7 @@ public:
 
     PhysicsTransform* getTransform();
 
-    void setPosition(glm::vec3 pos);
-
-	void virtual onCollision(){}    // todo!
+	void virtual onCollision(){}    // TODO
 
     int transform;
 

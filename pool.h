@@ -63,7 +63,7 @@ Pool<T>::Pool(int max_size) {
 template <class T>
 int Pool<T>::get() {
     if (free_list.empty()) {
-        std::cout << "POOL EMPTY!!!" << std::endl;
+        std::cout << "POOL EMPTY!!!";
         return -1;
     }
     size_t free = free_list.back();

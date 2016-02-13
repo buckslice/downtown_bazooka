@@ -9,16 +9,13 @@ Entity::Entity(glm::vec3 pos, glm::vec3 scale, glm::vec3 vel){
     pt->setExtents(scale);
     pt->vel = vel;
 
-    int index = Graphics::registerTransform();
-    BTransform* bt = Graphics::getTransform(index);
-    bt->setScale(scale);
-    pt->parentAll(bt);
+    // planned move here
+    //int index = Graphics::registerTransform();
+    //BTransform* bt = Graphics::getTransform(index);
+    //bt->setScale(scale);
+    //pt->parentAll(bt);
 }
 
 PhysicsTransform* Entity::getTransform() {
     return Physics::getTransform(transform);
-}
-
-void Entity::setPosition(glm::vec3 pos) {
-    getTransform()->setPos(pos);
 }
