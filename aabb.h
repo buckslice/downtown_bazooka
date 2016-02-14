@@ -2,7 +2,6 @@
 
 #include <glm/glm.hpp>
 #include "glm/gtx/component_wise.hpp"
-#include "intersectData.h"
 
 class AABB {
 public:
@@ -15,8 +14,6 @@ public:
         min(min),
         max(max) {
     }
-
-    //IntersectData getIntersect(const AABB& other) const;
 
     glm::vec3 getCenter();
     glm::vec3 getSize();

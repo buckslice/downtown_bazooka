@@ -41,9 +41,8 @@ public:
 
     void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
-
-    static int registerTransform();
-    static BTransform* getTransform(int id);
+    static int registerTransform(bool solid = true);
+    static Transform* getTransform(int id);
 
 private:
     GLuint WIDTH;

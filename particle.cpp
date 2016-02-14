@@ -1,10 +1,13 @@
-#include "Particle.h"
+#include "particle.h"
 
 void Particle::activate() {
-    //alive = true;
-    if (transform < 0) {
-        transform = Physics::registerDynamic();
-    }
+    Transform* t = getTransform();
+    t->visible = true;
+    t->solid = true;
+
+    Collider* c = getCollider();
+    c->awake = true;
+
     float gravmult;
     switch (effect) {
     case SPARK:
@@ -20,19 +23,19 @@ void Particle::activate() {
         lifetime = 2.0f;
         break;
     }
-    this->getTransform()->gravityMultiplier = gravmult;
+    c->gravityMultiplier = gravmult;
     curlife = lifetime;
 }
 
 void Particle::update(GLfloat dt) {
-    if (transform < 0) {
+    Collider* c = getCollider();
+    if (!c->awake) {
         return;
     } else if ((curlife -= dt) <= 0) {
-        Physics::returnDynamic(transform);
-        transform = -1;
+        c->awake = false;
+        getTransform()->visible = false;
         return;
     }
-    PhysicsTransform* pt = getTransform();
 
     float scalemult;
     switch (effect) {
@@ -49,7 +52,10 @@ void Particle::update(GLfloat dt) {
         scalemult = .95f;
         break;
     }
-    pt->setScale(curlife / lifetime * glm::vec3(1.0f));
+
+    Transform* t = getTransform();
+    t->color = getColor();
+    t->setScale(curlife / lifetime * glm::vec3(1.0f));
 }
 
 glm::vec3 Particle::getColor() {

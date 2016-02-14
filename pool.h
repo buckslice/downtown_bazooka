@@ -1,31 +1,30 @@
 #pragma once
 #include <vector>
+#include <cassert>
 
 template <class T>
 struct obj {
-    obj() : id(-1) {}   // should init all objs to -1 im hoping
+    obj() : id(-1) {}   // should init all objs to -1
     obj(int id) : id(id) {}
 
     T data;
     int id; // index in the obj table (-1 if not being used)
 };
 
-
-
 // can also declare it like this
 // template <class T, int N>
 // to hardcode the size in during compile time
 // seems pretty neat
+
+// class that pools things
 template <class T>
 class Pool {
 public:
     Pool();
     Pool(int max_size);
 
-    // get new obj
+    // get new obj, return int index to save and look up later
     int get();
-
-    //T* getP();  // returns pointer to obj (safe since our vector will never resize)
 
     // get ptr to obj in pool
     obj<T>* getObj(int id);
@@ -36,7 +35,9 @@ public:
     // returns obj back to pool
     void ret(int id);
 
+    // get internal object list from pool (make sure you declare as reference)
     std::vector<obj<T>>& getObjects();
+    std::vector<unsigned>& getFreeList();
 
     size_t size() {
         return objs.size();
@@ -44,7 +45,7 @@ public:
 
 private:
     std::vector<obj<T>> objs;
-    std::vector<size_t> free_list;
+    std::vector<unsigned> free_list;
 
 };
 
@@ -55,7 +56,7 @@ Pool<T>::Pool() {
 template <class T>
 Pool<T>::Pool(int max_size) {
     objs.resize(max_size);
-    for (size_t i = max_size; i > 0; i--) { // careful, size_t is unsigned
+    for (unsigned i = max_size; i > 0; i--) { // careful, size_t is unsigned
         free_list.push_back(i - 1);
     }
 }
@@ -63,28 +64,14 @@ Pool<T>::Pool(int max_size) {
 template <class T>
 int Pool<T>::get() {
     if (free_list.empty()) {
-        std::cout << "POOL EMPTY!!!";
+        std::cout << "POOL EMPTY!!! WEEEEEEEEEEE";
         return -1;
     }
-    size_t free = free_list.back();
+    unsigned free = free_list.back();
     free_list.pop_back();
     objs[free].id = free;
     return free;
 }
-
-// pretty unsafe, just make sure to never return
-// without updating everyone who references it
-//template<class T>
-//T* Pool<T>::getP() {
-//    if (free_list.empty()) {
-//        std::cout << "POOL EMPTY!!!" << std::endl;
-//        return nullptr;
-//    }
-//    size_t free = free_list.back();
-//    free_list.pop_back();
-//    objs[free].id = free;
-//    return &(objs[free].data);
-//}
 
 // get pointer to object in pool
 template<class T>
@@ -101,6 +88,9 @@ T* Pool<T>::getData(int id) {
 // frees object at index
 template <class T>
 void Pool<T>::ret(int id) {
+    // assert crashes the program if the boolean statement evaluates false
+    // only works in debug mode and you can #define NDEBUG to skip it in that file (or maybe whole project, not sure)
+    assert(id >= 0 && id < objs.size());
     objs[id].id = -1;
     free_list.push_back(id);
 }
@@ -110,6 +100,12 @@ template <class T>
 std::vector<obj<T>>& Pool<T>::getObjects() {
     return objs;
 }
+
+template <class T>
+std::vector<unsigned>& Pool<T>::getFreeList() {
+    return free_list;
+}
+
 
 // ill do the iterator.... later...
 // heres some nice examples to jog my barn

@@ -12,26 +12,14 @@ public:
 
     EntityManager(Player* player);
 
-    const int MAX_PROJECTILES = 200;
+    const int MAX_PROJECTILES = 100;
     const int MAX_PARTICLES = 5000;
 
-    // should add in support for adding single entities dynamically next
-    // main problem is need to redo the graphics to just create buffer with fixed MAX_ENTITIES size
-    // then update it each time a new entity is spawned using glBufferSubData()
-    // or maybe glMapBuffer() or glMapBufferRange()
     void init(int numberOfDudes);
 
     void update(float delta);
 
     void deleteEntities();
-    //void deleteEntities(int startIndex) {
-    //    if (startIndex < entities.size()) {
-    //        for (int i = startIndex; i < entities.size(); i++) {
-    //            delete entities[i];
-    //        }
-    //        entities.erase(entities.begin() + startIndex, entities.end());
-    //    }
-    //}
 
 
     int curParticle = 0;
@@ -39,16 +27,22 @@ public:
 
     void SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float randvel = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
 
+    void SpawnProjectile(glm::vec3 pos, glm::vec3 vel);
+    void ReturnProjectile(int id);
+
+
     ~EntityManager() {
         deleteEntities();
     }
 
-    GLuint dudeMesh;
 private:
-    GLuint projectileMesh;
 
     std::vector<Entity*> entities;
+
+    // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;
+    Pool<Projectile>* projectiles;
+
     Player* player;
 };
 

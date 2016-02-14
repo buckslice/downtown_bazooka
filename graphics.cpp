@@ -15,7 +15,7 @@ extern std::vector<GLuint> elems;
 
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
-static Pool<BTransform>* boxes;
+static Pool<Transform>* boxes;
 
 // will be replaced later by pools
 static std::vector<glm::mat4> smodels;
@@ -28,16 +28,20 @@ Graphics::Graphics() {
 }
 
 
-//int Graphics::registerTransform() {
-//    return boxes->get();
-//}
-//
-//BTransform* Graphics::getTransform(int id) {
-//    return boxes->getData(id);
-//}
+int Graphics::registerTransform(bool solid) {
+    int i = boxes->get();
+    getTransform(i)->reset()->solid = solid;
+    return i;
+}
+
+Transform* Graphics::getTransform(int id) {
+    return boxes->getData(id);
+}
 
 // testing
-BTransform* origin;
+Transform* sun;
+Transform* planet;
+Transform* moon;
 
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
@@ -45,99 +49,125 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     initGL(window);
 
-    solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);
+    solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);    // TODO change to not use diff shader without texture
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    //boxes = new Pool<BTransform>(10000);
+    boxes = new Pool<Transform>(10000);
 
-    //BTransform* xbox = boxes->getP()->reset();
-    //BTransform* xboxl = boxes->getP()->reset();
-    //BTransform* xboxr = boxes->getP()->reset();
-    //BTransform* xx1 = boxes->getP()->reset();
-    //BTransform* xx2 = boxes->getP()->reset();
+    // testing out new transforms by setting up some arrows for the axes
+    Transform* xbox = getTransform(registerTransform(false));
+    Transform* xboxl = getTransform(registerTransform(false));
+    Transform* xboxr = getTransform(registerTransform(false));
+    Transform* xx1 = getTransform(registerTransform(false));
+    Transform* xx2 = getTransform(registerTransform(false));
 
-    //BTransform* zbox = boxes->getP()->reset();
-    //BTransform* zboxl = boxes->getP()->reset();
-    //BTransform* zboxr = boxes->getP()->reset();
-    //BTransform* zz1 = boxes->getP()->reset();
-    //BTransform* zz2 = boxes->getP()->reset();
-    //BTransform* zz3 = boxes->getP()->reset();
+    Transform* zbox = getTransform(registerTransform(false));
+    Transform* zboxl = getTransform(registerTransform(false));
+    Transform* zboxr = getTransform(registerTransform(false));
+    Transform* zz1 = getTransform(registerTransform(false));
+    Transform* zz2 = getTransform(registerTransform(false));
+    Transform* zz3 = getTransform(registerTransform(false));
 
-    //glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
-    //xbox->setPos(10.0f, 0.0f, 0.0f);
-    //xbox->setScale(20.0f, 1.0f, 1.0f);
-    //xbox->color = blue;
+    glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
+    xbox->setPos(10.0f, 0.0f, 0.0f);
+    xbox->setScale(20.0f, 1.0f, 1.0f);
+    xbox->color = blue;
 
-    //xboxl->setPos(18.0f, 0.0f, 2.0f);
-    //xboxl->setRot(0.0f, 45.0f, 0.0f);
-    //xboxl->setScale(6.0f, 1.0f, 1.0f);
-    //xboxl->color = blue;
+    xboxl->setPos(18.0f, 0.0f, 2.0f);
+    xboxl->setRot(0.0f, 45.0f, 0.0f);
+    xboxl->setScale(6.0f, 1.0f, 1.0f);
+    xboxl->color = blue;
 
-    //xboxr->setPos(18.0f, 0.0f, -2.0f);
-    //xboxr->setRot(0.0f, -45.0f, 0.0f);
-    //xboxr->setScale(6.0f, 1.0f, 1.0f);
-    //xboxr->color = blue;
+    xboxr->setPos(18.0f, 0.0f, -2.0f);
+    xboxr->setRot(0.0f, -45.0f, 0.0f);
+    xboxr->setScale(6.0f, 1.0f, 1.0f);
+    xboxr->color = blue;
 
-    //xx1->setPos(30.0f, 0.0f, 0.0f);
-    //xx2->setPos(30.0f, 0.0f, 0.0f);
-    //xx1->setRot(0.0f, 45.0f, 0.0f);
-    //xx2->setRot(0.0f, -45.0f, 0.0f);
-    //xx1->setScale(12.0f, 1.0f, 1.0f);
-    //xx2->setScale(12.0f, 1.0f, 1.0f);
-    //xx1->color = blue;
-    //xx2->color = blue;
+    xx1->setPos(30.0f, 0.0f, 0.0f);
+    xx2->setPos(30.0f, 0.0f, 0.0f);
+    xx1->setRot(0.0f, 45.0f, 0.0f);
+    xx2->setRot(0.0f, -45.0f, 0.0f);
+    xx1->setScale(12.0f, 1.0f, 1.0f);
+    xx2->setScale(12.0f, 1.0f, 1.0f);
+    xx1->color = blue;
+    xx2->color = blue;
 
-    //glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-    //zbox->setPos(0.0f, 0.0f, 10.0f);
-    //zbox->setScale(1.0f, 1.0f, 20.0f);
-    //zbox->color = red;
+    glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+    zbox->setPos(0.0f, 0.0f, 10.0f);
+    zbox->setScale(1.0f, 1.0f, 20.0f);
+    zbox->color = red;
 
-    //zboxl->setPos(2.0f, 0.0f, 18.0f);
-    //zboxl->setRot(0.0f, -45.0f, 0.0f);
-    //zboxl->setScale(1.0f, 1.0f, 6.0f);
-    //zboxl->color = red;
+    zboxl->setPos(2.0f, 0.0f, 18.0f);
+    zboxl->setRot(0.0f, -45.0f, 0.0f);
+    zboxl->setScale(1.0f, 1.0f, 6.0f);
+    zboxl->color = red;
 
-    //zboxr->setPos(-2.0f, 0.0f, 18.0f);
-    //zboxr->setRot(0.0f, 45.0f, 0.0f);
-    //zboxr->setScale(1.0f, 1.0f, 6.0f);
-    //zboxr->color = red;
+    zboxr->setPos(-2.0f, 0.0f, 18.0f);
+    zboxr->setRot(0.0f, 45.0f, 0.0f);
+    zboxr->setScale(1.0f, 1.0f, 6.0f);
+    zboxr->color = red;
 
-    //zz1->setPos(0.0f, 0.0f, 26.0f);
-    //zz2->setPos(0.0f, 0.0f, 30.0f);
-    //zz3->setPos(0.0f, 0.0f, 34.0f);
-    //zz1->setScale(8.0f, 1.0f, 1.0f);
-    //zz2->setScale(1.0f, 1.0f, 11.0f);
-    //zz3->setScale(8.0f, 1.0f, 1.0f);
-    //zz2->setRot(0.0f, 45.0f, 0.0f);
-    //zz1->color = red;
-    //zz2->color = red;
-    //zz3->color = red;
+    zz1->setPos(0.0f, 0.0f, 26.0f);
+    zz2->setPos(0.0f, 0.0f, 30.0f);
+    zz3->setPos(0.0f, 0.0f, 34.0f);
+    zz1->setScale(8.0f, 1.0f, 1.0f);
+    zz2->setScale(1.0f, 1.0f, 11.0f);
+    zz3->setScale(8.0f, 1.0f, 1.0f);
+    zz2->setRot(0.0f, 45.0f, 0.0f);
+    zz1->color = red;
+    zz2->color = red;
+    zz3->color = red;
 
-    //origin = boxes->getP()->reset();
-    //origin->setPos(0.0f, 200.0f, 0.0f);
-    //// TODO scale based on local translation to parent ..!!
-    ////origin->setScale(0.1f, 0.1f, 0.1f);
-    //origin->color = glm::vec3(0.0f, 0.0f, 0.0f);
-    //origin->parentAll(xbox, xboxl, xboxr, zbox, zboxl, zboxr, xx1, xx2, zz1, zz2, zz3);
+    Transform* center = getTransform(registerTransform(false));
+    center->setPos(0.0f, 400.0f, 0.0f);
 
+    // TODO figure out zclipping issues with this system
+    // maybe just randomize the scale of each box used? based on hash?
+    center->color = glm::vec3(0.0f, 0.0f, 0.0f);
+    center->parentAll(xbox, xboxl, xboxr, zbox, zboxl, zboxr, xx1, xx2, zz1, zz2, zz3);
+    center->setScale(glm::vec3(3.0f));
+
+
+    // now gonna make a cool "planet" demo lol
+    sun = getTransform(registerTransform(false));
+    sun->setScale(20.0f, 20.0f, 20.0f);
+    sun->color = glm::vec3(1.0f, 1.0f, 0.3f);
+    sun->setPos(100.0f, 150.0f, 100.0f);
+
+    planet = getTransform(registerTransform(false));
+    planet->setScale(glm::vec3(8.0f));
+    planet->setPos(50.0f, 0.0f, 0.0f);
+    planet->color = glm::vec3(0.0f, 0.6f, 0.4f);
+
+    moon = getTransform(registerTransform(false));
+    moon->setScale(glm::vec3(4.0f));
+    moon->setPos(0.0f, 15.0f, 0.0f);
+    moon->color = glm::vec3(0.4f);
+
+    // have to parent in reverse order until setWorld functions are implemented
+    planet->parentAll(moon);
+    sun->parentAll(planet);
 }
 
 void Graphics::uploadBoxes() {
-    //origin->rotate(0.02f, glm::vec3(0.0f, 1.0f, 0.0f));
-    //
-    //auto bx = boxes->getObjects();  // should make Pool class iterator
-    //std::vector<glm::mat4> models;
-    //std::vector<glm::vec3> colors;
-    //for (size_t i = 0, len = bx.size(); i < len; ++i) {
-    //    if (bx[i].id < 0) { // iterator could do this check in ++ operator
-    //        continue;
-    //    }
-    //    BTransform& t = bx[i].data;
-    //    models.push_back(t.getModelMatrix());
-    //    colors.push_back(t.color);
-    //}
+    // the direction from child to parent has to be perpendicular to the 
+    // axis of rotation of parent to have normal looking orbit
+    // also without seperate transforms each child is basically tidally locked to parent but whatever lol
+    sun->rotate(0.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    planet->rotate(2.0f, glm::vec3(1.0f, 0.0f, 1.0f));
+    moon->rotate(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-    //Graphics::addToStream(false, models, colors);
+    auto bx = boxes->getObjects();  // should make Pool class iterator
+    for (size_t i = 0, len = bx.size(); i < len; ++i) {
+        if (bx[i].id < 0 || !bx[i].data.visible) { // iterator could do this check in ++ operator
+            continue;
+        }
+        Transform& t = bx[i].data;
+        // if debug rendering then set color to pink (to represent colliderless box)
+        glm::vec3 color = dstreamSize > 0 ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
+        Graphics::addToStream(t.solid, t.getModelMatrix(), color);
+    }
+
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {
@@ -254,11 +284,6 @@ void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
 
         solidBox->draw();
 
-        uploadBoxes();
-        // should just make solidbox a different model without textures
-        Graphics::setStream(gridBox, gmodels, gcolors);
-        gridBox->draw();
-
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         for (size_t i = 0, len = meshes.size(); i < len; ++i) {
@@ -266,18 +291,18 @@ void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
                 meshes[i]->draw();
             }
         }
+    }
 
-        uploadBoxes();
+    uploadBoxes();
 
-        // should just make solidbox a different model without textures
-        Graphics::setStream(solidBox, smodels, scolors);
-        Graphics::setStream(gridBox, gmodels, gcolors);
-        if (solidBox->visible) {
-            solidBox->draw();
-        }
-        if (gridBox->visible) {
-            gridBox->draw();
-        }
+    // should just make solidbox a different model without textures
+    Graphics::setStream(solidBox, smodels, scolors);
+    Graphics::setStream(gridBox, gmodels, gcolors);
+    if (solidBox->visible) {
+        solidBox->draw();
+    }
+    if (gridBox->visible) {
+        gridBox->draw();
     }
 
     // draw terrain

@@ -164,6 +164,7 @@
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
+    <ClCompile Include="collider.cpp" />
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entityManager.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="aabb.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="cityGenerator.h" />
+    <ClInclude Include="collider.h" />
     <ClInclude Include="enemy.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="entityManager.h" />
@@ -197,7 +199,6 @@
     <ClInclude Include="graphics.h" />
     <ClInclude Include="hsbColor.h" />
     <ClInclude Include="input.h" />
-    <ClInclude Include="intersectData.h" />
     <ClInclude Include="mathutil.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="mesh.h" />

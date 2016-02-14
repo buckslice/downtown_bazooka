@@ -18,7 +18,7 @@ const GLfloat FAR_PLANE = 2000.0f;
 class Camera {
 
 public:
-    BTransform* transform;
+    Transform* transform;
 
     glm::vec3 forward;
     glm::vec3 up;
@@ -33,7 +33,7 @@ public:
 
     void update(GLint mdx, GLint mdy, GLfloat delta);
 
-    void updateCameraDistance(GLfloat deltaScroll, GLfloat deltaTime);
+    void updateCameraDistance(GLfloat deltaScroll);
 
     void setAutoSpin(bool value);
 

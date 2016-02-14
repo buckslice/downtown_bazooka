@@ -1,20 +1,26 @@
 #include "entityManager.h"
+
+// TODO maybe make everything like this, singletons instead of static function calls?
 EntityManager *EntityManagerInstance;//An extern from entityManager.h
 
 EntityManager::EntityManager(Player* player) : player(player) {
-    //dudeMesh = Graphics::registerMesh();
-    //projectileMesh = Graphics::registerMesh(Resources::get().solidTex);
+
+    // init particles
+    particles.clear();
+    for (int i = 0; i < MAX_PARTICLES; i++) {
+        Particle p;
+        particles.push_back(p);
+    }
+
+    projectiles = new Pool<Projectile>(MAX_PROJECTILES);
 }
 
-// should add in support for adding single entities dynamically next
-// main problem is need to redo the graphics to just create buffer with fixed MAX_ENTITIES size
-// then update it each time a new entity is spawned using glBufferSubData()
-// or maybe glMapBuffer() or glMapBufferRange()
 void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
-    deleteEntities();
 
-    //std::vector<glm::vec3> colors;
+    // TODO ADD DUDES BACK IN (some code will prob go in their constructors now tho)
+    //deleteEntities();
+
     //for (int i = 0; i < numberOfDudes; i++) {
     //    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
     //    bool elite = rand() % 50 == 0;
@@ -36,89 +42,25 @@ void EntityManager::init(int numberOfDudes) {
     //        colors.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
     //    }
 
-    //    entities.push_back(e);
-    //    //cols.push_back(glm::vec3(Mth::rand01(), Mth::rand01(), Mth::rand01()));
-    //}
-    //Graphics::setColors(dudeMesh, colors);
-
-    //colors.clear();
-
-    //for (int i = 0; i < MAX_PROJECTILES; i++) {
-    //    colors.push_back(glm::vec3(1.0f, 0.2f, 0.0f));
-    //}
-
-    //Graphics::setColors(projectileMesh, colors);
-
-    // init particles
-    particles.clear();
-    for (int i = 0; i < MAX_PARTICLES; i++) {
-        Particle p;
-        particles.push_back(p);
-    }
-
 }
 
 void EntityManager::update(float delta) {
     player->update(delta);
 
-    std::vector<glm::mat4> models;
-    //for (size_t i = 0, len = entities.size(); i < len; ++i) {
-    //    entities[i]->update(delta);
-
-    //    //// update dudes model
-    //    //glm::mat4 model;
-    //    //glm::vec3 pos = entities[i]->getTransform()->lpos;
-    //    //glm::vec3 scale = entities[i]->getTransform()->scale;
-    //    //pos.y += scale.y / 2.0f;
-    //    //model = glm::translate(model, pos);
-    //    //model = glm::scale(model, scale);
-    //    models.push_back(entities[i]->getTransform()->getModelMatrix());
-    //}
-    //Graphics::setModels(dudeMesh, models);
-    //models.clear();
-
-    // add projectiles models
-    //std::vector<Projectile>& projectiles = player->getProjectiles();
-    //for (size_t i = 0, len = projectiles.size(); i < len; ++i) {
-    //    PhysicsTransform* pt = projectiles[i].getTransform();
-
-    //    //glm::mat4 model;
-    //    //glm::vec3 pos = pt->getWorldPos();
-    //    //glm::vec3 scale = pt->scale;
-    //    //model = glm::translate(model, pos);
-    //    //model = glm::scale(model, scale);
-    //    models.push_back(pt->getModelMatrix());
-    //}
-
-    //Graphics::setModels(projectileMesh, models);
-    //models.clear();
-
-    //// update and build particles
-    //// should probably remove this into seperate class..
-
-    std::vector<glm::vec3> colors;
-    for (size_t i = 0, len = particles.size(); i < len; ++i) {
-        Particle& p = particles[i];
-
-        p.update(delta);
-
-        if (p.transform >= 0) {
-
-            //glm::mat4 model;
-            //PhysicsTransform* pt = p->getTransform();
-            //glm::vec3 pos = pt->getPos();
-            //glm::vec3 scale = pt->scale;
-            //pos.y += scale.y / 2.0f;
-            //model = glm::translate(model, pos);
-            //model = glm::scale(model, scale);
-            models.push_back(p.getTransform()->getModelMatrix());
-
-            colors.push_back(p.getColor());
+    // update projectiles
+    auto& pobjs = projectiles->getObjects();
+    for (size_t i = 0, len = pobjs.size(); i < len; ++i) {
+        if (pobjs[i].id < 0) {
+            continue;
         }
+        pobjs[i].data.update(delta);
     }
 
-    // add particles to solid box stream
-    Graphics::addToStream(true, models, colors);
+    // update particles
+    for (size_t i = 0, len = particles.size(); i < len; ++i) {
+        Particle& p = particles[i];
+        p.update(delta);
+    }
 
 }
 
@@ -140,9 +82,27 @@ void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm:
     Particle* p = getNextParticle();
     p->effect = effect;
     p->activate();
-    PhysicsTransform* pt = p->getTransform();
-    pt->setPos(pos);
-    pt->setScale(glm::vec3(.25f));
-    pt->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
-    //pt->vel = vel + Mth::randInsideUnitCube() * randvel;
+    p->getCollider()->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
+    Transform* t = p->getTransform();
+    t->setPos(pos);
+    t->setScale(glm::vec3(.25f));
+}
+
+void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
+    int pin = projectiles->get();
+    if (pin < 0) {  // happens if pool is empty
+        return;
+    }
+
+    Projectile* p = projectiles->getData(pin);
+    p->init(pin);
+    p->getTransform()->setPos(pos);
+    p->getCollider()->vel = vel;
+}
+
+void EntityManager::ReturnProjectile(int id) {
+    Projectile* p = projectiles->getData(id);
+    p->getCollider()->awake = false;
+    p->getTransform()->visible = false;
+    projectiles->ret(id);
 }

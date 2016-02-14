@@ -2,28 +2,36 @@
 #include "graphics.h"
 #include "entityManager.h"
 
-Projectile::Projectile(glm::vec3 pos, glm::vec3 vel) : Entity(pos, glm::vec3(1.0f), vel) {
+Projectile::Projectile() :Entity() {
+    getCollider()->awake = false;
+    getTransform()->visible = false;
+    getTransform()->color = glm::vec3(1.0f, 0.2f, 0.0f);
 }
 
 Projectile::~Projectile() {
+}
 
+void Projectile::init(int id) {
+    getCollider()->awake = true;
+    getTransform()->visible = true;
+    this->id = id;
+    timer = 5.0f;
 }
 
 void Projectile::update(GLfloat delta) {
-    // if the projectile collides with something, delete it
     timer -= delta;
-    if (timer <= 0.0f) {
-        //Physics::returnDynamic(transform);
+    if (timer <= 0.0f && id >= 0) {
+        EntityManagerInstance->ReturnProjectile(id);
+        id = -1;
         return;
     }
 
-    // 2 and 3
+    glm::vec3 pos = getTransform()->getWorldPos();
+
     for (int i = 0; i < 2; i++) {
-        PhysicsTransform* pt = getTransform();
-        glm::vec3 word = pt->getWorldPos();
-        EntityManagerInstance->SpawnParticle(word, Particle::FIRE, 3);
+        EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3);
     }
     for (int i = 0; i < 3; i++) {
-        EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::SPARK, 50);
+        EntityManagerInstance->SpawnParticle(pos, Particle::SPARK, 50);
     }
 }

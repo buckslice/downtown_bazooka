@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "transform.h"
+#include "collider.h"
 #include "terrain.h"
 
 
@@ -22,9 +23,9 @@ public:
     void clearStatics();
     //void clearDynamics();
     
-    static PhysicsTransform* getTransform(int index);
-    static int registerDynamic();
-    static void returnDynamic(int id);
+    static Collider* getCollider(int index);
+    static int registerDynamic(int transform);
+    //static void returnDynamic(int id);
 
     void printStaticMatrix();
 

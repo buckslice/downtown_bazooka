@@ -8,10 +8,10 @@
 // has to be in implementation file because reasons (#staticlife?)
 //static std::vector<PhysicsTransform> dynamicObjects;
 
-static Pool<PhysicsTransform>* dynamicObjects;
+static Pool<Collider>* dynamicObjects;
 
 Physics::Physics() {
-    dynamicObjects = new Pool<PhysicsTransform>(10000);
+    dynamicObjects = new Pool<Collider>(10000);
 
     int splits = 6;
 
@@ -70,28 +70,28 @@ void Physics::update(float delta) {
     auto& dobjs = dynamicObjects->getObjects();
     for (size_t i = 0; i < len; ++i) {
         dynamicLeafLists[i].clear();
-        if (dobjs[i].id < 0) {
+        if (dobjs[i].id < 0 || !dobjs[i].data.awake) {
             freeCount++;
             continue;
         }
         getLeafs(dynamicLeafLists[i], dobjs[i].data.getSwept(delta));
     }
-    std::cout << freeCount << std::endl;
+    //std::cout << freeCount << std::endl;
 
     // for each dynamic object
     for (size_t dndx = 0, dlen = dobjs.size(); dndx < dlen; ++dndx) {
         auto& pobj = dobjs[dndx];
-        if (pobj.id < 0) {
+        Collider& pt = pobj.data;
+        if (!pt.awake || pobj.id < 0) {
             continue;
         }
-        PhysicsTransform& pt = pobj.data;
+        pt.pos = Graphics::getTransform(pt.transform)->getPos();
 
         resolvedSet.clear();
 
         // set remaining velocity to initial velocity of dynamic
-        if (pt.getAffectedByGravity()) {
-            pt.vel.y += GRAVITY * pt.gravityMultiplier * delta;
-        }
+        pt.vel.y += GRAVITY * pt.gravityMultiplier * delta;
+
         glm::vec3 rvel = pt.vel;
 
         // try to resolve up to 10 collisions for this object this frame
@@ -161,21 +161,20 @@ void Physics::update(float delta) {
             resolvedSet.insert(closestStaticIndex);
 
             // update dynamic position
-            pt.setPos(pt.getPos() + rvel * delta * time);
+            pt.pos += rvel * delta * time;
 
             // check height of terrain
-            glm::vec3 pos = pt.getPos();
-            float h = tg->queryHeight(pos.x, pos.z);
+            float h = tg->queryHeight(pt.pos.x, pt.pos.z);
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
-            if (pos.y < h || norm.y != 0.0f) {
+            if (pt.pos.y < h || norm.y != 0.0f) {
                 pt.grounded = true;
                 pt.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
 
             // dont let dynamic go below terrain height
-            pt.setPos(pos.x, fmax(pos.y, h), pos.z);
+            pt.pos.y = fmax(pt.pos.y, h);
 
             // if there was a collision then update remaining velocity for subsequent collision tests
             if (time < 1.0f) {
@@ -208,6 +207,9 @@ void Physics::update(float delta) {
             }
 
         }
+
+        // updates graphics position after fully resolved
+        Graphics::getTransform(pt.transform)->setPos(pt.pos);
     }
 
     //std::cout << "AABB checks: " << totalAABBChecks << " Sweep tests: " << totalSweepTests << std::endl;
@@ -275,15 +277,17 @@ void Physics::printStaticMatrix() {
 }
 
 
-int Physics::registerDynamic() {
-    return dynamicObjects->get();
+int Physics::registerDynamic(int transform) {
+    int index = dynamicObjects->get();
+    getCollider(index)->transform = transform;
+    return index;
 }
 
-void Physics::returnDynamic(int id) {
-    dynamicObjects->ret(id);
-}
+//void Physics::returnDynamic(int id) {
+//    dynamicObjects->ret(id);
+//}
 
-PhysicsTransform* Physics::getTransform(int index) {
+Collider* Physics::getCollider(int index) {
     return dynamicObjects->getData(index);
 }
 
@@ -309,7 +313,8 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
 
         if (pobj.id < 0) {
             continue;
-            //colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
+        } else if (!pobj.data.awake) {
+            colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }

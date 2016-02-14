@@ -3,7 +3,6 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "transform.h"
 #include "physics.h"
 #include "entity.h"
 
@@ -18,8 +17,6 @@ public:
     int effect;
 
     Particle() : Entity() {
-        Physics::returnDynamic(transform);
-        transform = -1;
         curlife = 0;
     }
 

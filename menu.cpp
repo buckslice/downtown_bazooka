@@ -34,13 +34,14 @@ Menu::Menu(Player* player) {
 
     instructions.setFont(font);
     instructions.setColor(DEFAULT_COLOR);
-    instructions.setString(
+    instructions.setString( // instead of adding a space to front should just move pos over lol XD
         " WASD : move\n"
         " Space: jump, select\n"
         " ESC  : menu, quit\n"
         " Q    : toggle flymode\n"
         " E    : shoot\n"
         "\n"
+        " TAB  : pause\n"
         " 1    : toggle blur\n"
         " 2    : toggle mipmaps\n"
         " 3    : toggle physics debug\n"
@@ -89,7 +90,7 @@ void Menu::draw(sf::RenderWindow& window) {
         float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
         float y = static_cast<float>(HEALTH_BAR_HEIGHT);
         healthBar.setSize(sf::Vector2f(x, y));
-        //window.draw(healthBar);
+        //window.draw(healthBar);   // commenting for now until we get actual damage events
     }
 }
 

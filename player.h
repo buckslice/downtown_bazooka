@@ -18,10 +18,7 @@ class Player : public Entity {
 public:
     bool flying = false;
 
-    Player(Camera* cam) : speed(SPEED) {
-        this->cam = cam;
-        timeSinceJump = 10.0f;
-    }
+    Player(Camera* cam);
 
     int getHealth();
 
@@ -29,16 +26,13 @@ public:
 
     void jump();
 
-	void shoot();
+    void shoot();
 
     void addHealth(int amount);
-
-	std::vector<Projectile> getProjectiles() const;
 
 private:
     Camera* cam;
     int health;
-	std::vector<Projectile> projectiles;
     float speed;
     float timeSinceJump = -1.0f;
 

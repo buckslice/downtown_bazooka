@@ -9,7 +9,7 @@ Camera::Camera()
     worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     camDist = 0.0f;
     autoSpin = false;
-
+    transform = new Transform();
     updateCameraVectors();
 }
 
@@ -21,7 +21,7 @@ Camera::Camera(GLfloat yaw, GLfloat pitch, bool firstPerson)
     worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     camDist = 0.0f;
     autoSpin = false;
-
+    transform = new Transform();
     updateCameraVectors();
 }
 
@@ -45,7 +45,7 @@ void Camera::updateCameraVectors() {
     up = glm::normalize(glm::cross(right, forward));
 
     //std::cout << forward.x << " " << forward.y << " " << forward.z << std::endl;
-    //glm::vec3 cp = transform.getPos();
+    //glm::vec3 cp = transform->getWorldPos();
     //std::cout << cp.x << " " << cp.y << " " << cp.z << std::endl;
 }
 
@@ -76,7 +76,8 @@ void Camera::setAutoSpin(bool value) {
     autoSpin = value;
 }
 
-void Camera::updateCameraDistance(GLfloat deltaScroll, GLfloat deltaTime) {
-    camDistTarget += deltaScroll;
-    camDistTarget = std::max(std::min(camDistTarget, 50.0f), 0.0f);
+GLfloat scrollSpeed = 2.0f;
+void Camera::updateCameraDistance(GLfloat deltaScroll) {
+    camDistTarget += deltaScroll * scrollSpeed;
+    camDistTarget = std::max(std::min(camDistTarget, 100.0f), 0.0f);
 }

@@ -32,9 +32,19 @@ public:
     Game(GLuint width, GLuint height);
     ~Game();
 
-    void mainLoop();
+    void start();
 
-    bool isRunning();
+    void pollEvents();
+
+    void getInput();
+
+    void toggleOptions();
+
+    void update(GLfloat delta);
+
+    void render();
+
+
 private:
     GLuint WIDTH;
     GLuint HEIGHT;
@@ -51,9 +61,16 @@ private:
     EntityManager* em;
     Menu* menu;
 
+    // debug rendering stuff
+    std::vector<glm::mat4>* dmodels;
+    std::vector<glm::vec3>* dcolors;
+
     // some utility clocks
     sf::Clock frameTime;
     sf::Clock animTime;
+
+    sf::Vector2i mouseMove;
+    GLfloat mouseScroll;
 
     // state tracking flags
     bool running;
@@ -65,5 +82,6 @@ private:
     bool mipmapping;
     bool blurring;
     bool wireframe;
+    bool paused;
 };
 

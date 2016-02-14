@@ -1,27 +1,28 @@
 #include "enemy.h"
+#include "graphics.h"
 
 void Enemy::update(GLfloat delta) {
-	PhysicsTransform& pt = *getTransform();
+    Collider& col = *getCollider();
 
-	jumpTimer -= delta;
-	if (pt.grounded && jumpTimer < 0.0f) {
-		pt.vel.y = jumpVel;
-		pt.grounded = false;
-		jumpTimer += Mth::rand01() * 10.0f + 2.0f;
-	}
+    jumpTimer -= delta;
+    if (col.grounded && jumpTimer < 0.0f) {
+        col.vel.y = jumpVel;
+        col.grounded = false;
+        jumpTimer += Mth::rand01() * 10.0f + 2.0f;
+    }
 
-	if (pt.vel.y != 0.0f) {
-		pt.grounded = false;
-	}
+    if (col.vel.y != 0.0f) {
+        col.grounded = false;
+    }
 
-	glm::vec3 dirToPlayer = Physics::getTransform(player)->getPos() - pt.getPos();
-	dirToPlayer.y = 0.0f;
-	if (dirToPlayer != glm::vec3(0.0f)) {
-		dirToPlayer = glm::normalize(dirToPlayer) * speed;
-	}
+    glm::vec3 dirToPlayer = Graphics::getTransform(player)->getWorldPos() - getTransform()->getWorldPos();
+    dirToPlayer.y = 0.0f;
+    if (dirToPlayer != glm::vec3(0.0f)) {
+        dirToPlayer = glm::normalize(dirToPlayer) * speed;
+    }
 
-	pt.vel.x = dirToPlayer.x;
-	pt.vel.z = dirToPlayer.z;
+    col.vel.x = dirToPlayer.x;
+    col.vel.z = dirToPlayer.z;
 
-	//pt.vel.y += GRAVITY * delta;
+    //pt.vel.y += GRAVITY * delta;
 }

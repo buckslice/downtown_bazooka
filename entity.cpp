@@ -2,20 +2,20 @@
 #include "graphics.h"
 
 
-Entity::Entity(glm::vec3 pos, glm::vec3 scale, glm::vec3 vel){
-    transform = Physics::registerDynamic();
-    PhysicsTransform* pt = getTransform();
-    pt->setPos(pos);
-    pt->setExtents(scale);
-    pt->vel = vel;
+Entity::Entity(glm::vec3 pos, glm::vec3 extents, glm::vec3 vel) {
+    transform = Graphics::registerTransform();
+    collider = Physics::registerDynamic(transform);
 
-    // planned move here
-    //int index = Graphics::registerTransform();
-    //BTransform* bt = Graphics::getTransform(index);
-    //bt->setScale(scale);
-    //pt->parentAll(bt);
+    getTransform()->setPos(pos);
+    Collider* c = getCollider();
+    c->setExtents(extents);
+    c->vel = glm::vec3(vel);
 }
 
-PhysicsTransform* Entity::getTransform() {
-    return Physics::getTransform(transform);
+Transform* Entity::getTransform() {
+    return Graphics::getTransform(transform);
+}
+
+Collider* Entity::getCollider() {
+    return Physics::getCollider(collider);
 }
