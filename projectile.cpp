@@ -15,7 +15,7 @@ void Projectile::init(int id) {
     getCollider()->awake = true;
     getTransform()->visible = true;
     this->id = id;
-    timer = 5.0f;
+    timer = 2.0f;
 }
 
 void Projectile::update(GLfloat delta) {
@@ -25,13 +25,12 @@ void Projectile::update(GLfloat delta) {
         id = -1;
         return;
     }
+	if(timer <= .1f)
+		EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos());
 
     glm::vec3 pos = getTransform()->getWorldPos();
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 1; i++) {
         EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3);
-    }
-    for (int i = 0; i < 3; i++) {
-        EntityManagerInstance->SpawnParticle(pos, Particle::SPARK, 50);
     }
 }

@@ -25,10 +25,12 @@ public:
     int curParticle = 0;
     Particle *getNextParticle();
 
-    void SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float randvel = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
+    Particle* SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float randvel = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
 
     void SpawnProjectile(glm::vec3 pos, glm::vec3 vel);
     void ReturnProjectile(int id);
+
+	void MakeExplosion(glm::vec3 pos,float radius = 10,glm::vec3 vel = glm::vec3(0,0,0));
 
 
     ~EntityManager() {

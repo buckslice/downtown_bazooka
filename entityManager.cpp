@@ -78,7 +78,7 @@ Particle* EntityManager::getNextParticle() {
     return p;
 }
 
-void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm::vec3 vel) {
+Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm::vec3 vel) {
     Particle* p = getNextParticle();
     p->effect = effect;
     p->activate();
@@ -86,6 +86,7 @@ void EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm:
     Transform* t = p->getTransform();
     t->setPos(pos);
     t->setScale(glm::vec3(.25f));
+	return p;
 }
 
 void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
@@ -105,4 +106,16 @@ void EntityManager::ReturnProjectile(int id) {
     p->getCollider()->awake = false;
     p->getTransform()->visible = false;
     projectiles->ret(id);
+}
+
+void EntityManager::MakeExplosion(glm::vec3 pos,float radius,glm::vec3 vel) {
+	for (int i = 0; i < radius*3; i++) {
+		SpawnParticle(pos, Particle::SPARK, radius*35+5, vel);
+	}
+	for (int i = 0; i < radius*3; i++) {
+		Particle *p = SpawnParticle(pos, Particle::FIRE, radius*3, vel);
+	}
+	/*for (int i = 0; i < radius*3; i++) {
+		Particle *p = SpawnParticle(pos, Particle::CLOUD, radius*3, vel);
+	}*/
 }

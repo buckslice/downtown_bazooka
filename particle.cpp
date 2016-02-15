@@ -19,7 +19,7 @@ void Particle::activate() {
         lifetime = .5f;
         break;
     case FIRE:
-        gravmult = -.5f;
+        gravmult = Mth::rand0X(.15f)-.5f;
         lifetime = 2.0f;
         break;
     }
