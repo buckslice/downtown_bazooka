@@ -12,6 +12,10 @@ public:
 
     EntityManager(Player* player);
 
+    ~EntityManager() {
+        deleteEntities();
+    }
+
     const int MAX_PROJECTILES = 100;
     const int MAX_PARTICLES = 5000;
 
@@ -25,17 +29,18 @@ public:
     int curParticle = 0;
     Particle *getNextParticle();
 
-    Particle* SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float randvel = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
+    // spawn a particle at world position pos
+    // effect dictates appearance, lifetime, and velocity over time
+    // mag is magnitude of randomized velocity
+    // vel is initial velocity
+    Particle* SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float mag = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
+
+    // make explosion out of particles at position pos
+    // num dictates how many particles in explosion
+    void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0, 0, 0));
 
     void SpawnProjectile(glm::vec3 pos, glm::vec3 vel);
     void ReturnProjectile(int id);
-
-	void MakeExplosion(glm::vec3 pos,float radius = 10,glm::vec3 vel = glm::vec3(0,0,0));
-
-
-    ~EntityManager() {
-        deleteEntities();
-    }
 
 private:
 

@@ -20,17 +20,16 @@ void Projectile::init(int id) {
 
 void Projectile::update(GLfloat delta) {
     timer -= delta;
+    glm::vec3 pos = getTransform()->getWorldPos();
     if (timer <= 0.0f && id >= 0) {
+        EntityManagerInstance->MakeExplosion(pos);
+
         EntityManagerInstance->ReturnProjectile(id);
         id = -1;
         return;
     }
-	if(timer <= .1f)
-		EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos());
-
-    glm::vec3 pos = getTransform()->getWorldPos();
 
     for (int i = 0; i < 1; i++) {
-        EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3);
+        EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3.0f);
     }
 }

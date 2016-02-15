@@ -19,7 +19,7 @@ void Particle::activate() {
         lifetime = .5f;
         break;
     case FIRE:
-        gravmult = Mth::rand0X(.15f)-.5f;
+        gravmult = Mth::rand0X(.15f) - .5f;
         lifetime = 2.0f;
         break;
     }
@@ -41,6 +41,8 @@ void Particle::update(GLfloat dt) {
     switch (effect) {
     case SPARK:
         scalemult = .97f;
+        getCollider()->vel *= curlife + (1.0f - curlife) * 0.75f;
+        //getCollider()->vel *= .95f;
         break;
     case CLOUD:
         if (curlife > lifetime*.25f)

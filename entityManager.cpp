@@ -72,22 +72,36 @@ void EntityManager::deleteEntities() {
     entities.erase(entities.begin(), entities.end());
 }
 
+
+// particles
+
 Particle* EntityManager::getNextParticle() {
     Particle *p = &particles[curParticle];
     curParticle = (++curParticle) % (MAX_PARTICLES - 1);
     return p;
 }
 
-Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float randvel, glm::vec3 vel) {
+Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float mag, glm::vec3 vel) {
     Particle* p = getNextParticle();
     p->effect = effect;
     p->activate();
-    p->getCollider()->vel = vel + Mth::randInsideSphere(1.0f) * randvel;
+    p->getCollider()->vel = vel + Mth::randInsideSphere(1.0f) * mag;
     Transform* t = p->getTransform();
     t->setPos(pos);
     t->setScale(glm::vec3(.25f));
-	return p;
+    return p;
 }
+
+void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
+    for (int i = 0; i < num; ++i) {
+        SpawnParticle(pos, Particle::SPARK, mag * 5.0f, vel);
+        SpawnParticle(pos, Particle::FIRE, mag, vel);
+    }
+}
+
+
+
+// projectiles
 
 void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
     int pin = projectiles->get();
@@ -106,16 +120,4 @@ void EntityManager::ReturnProjectile(int id) {
     p->getCollider()->awake = false;
     p->getTransform()->visible = false;
     projectiles->ret(id);
-}
-
-void EntityManager::MakeExplosion(glm::vec3 pos,float radius,glm::vec3 vel) {
-	for (int i = 0; i < radius*3; i++) {
-		SpawnParticle(pos, Particle::SPARK, radius*35+5, vel);
-	}
-	for (int i = 0; i < radius*3; i++) {
-		Particle *p = SpawnParticle(pos, Particle::FIRE, radius*3, vel);
-	}
-	/*for (int i = 0; i < radius*3; i++) {
-		Particle *p = SpawnParticle(pos, Particle::CLOUD, radius*3, vel);
-	}*/
 }
