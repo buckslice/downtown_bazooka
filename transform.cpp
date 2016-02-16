@@ -1,7 +1,6 @@
 
 #include "transform.h"
 
-
 // prob add something here
 Transform::Transform() {
     reset();
@@ -31,6 +30,10 @@ void Transform::setRot(glm::vec3 euler) {
 }
 void Transform::setRot(float x, float y, float z) {
     rot = glm::quat(glm::vec3(x, y, z)*DEGREESTORADS);
+    needUpdate = true;
+}
+void Transform::setRot(glm::quat q) {
+    rot = q;
     needUpdate = true;
 }
 // if you dont normalize things rotating fast will starting stretching so weird haha

@@ -67,8 +67,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
     }
     // lerp camDist towards target
     GLfloat t = std::max(std::min(delta*10.0f, 1.0f), 0.0f);
-    camDist = (1.0f - t) * camDist + t * camDistTarget;
-
+    camDist = (1.0f - t) * camDist + t * camDistTarget; // manual lerp what is this
     updateCameraVectors();
 }
 
@@ -80,4 +79,8 @@ GLfloat scrollSpeed = 2.0f;
 void Camera::updateCameraDistance(GLfloat deltaScroll) {
     camDistTarget += deltaScroll * scrollSpeed;
     camDistTarget = std::max(std::min(camDistTarget, 100.0f), 0.0f);
+}
+
+GLfloat Camera::getCamDist() {
+    return camDist;
 }

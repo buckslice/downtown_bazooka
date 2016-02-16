@@ -212,16 +212,7 @@ void Game::update(GLfloat delta) {
     }
 
     // update camera
-    if (!menu->getVisible()) {   // if game running
-        cam.setAutoSpin(false);
-    } else {
-        // reset player to floating above city
-        player->getTransform()->setPos(glm::vec3(0.0f, 150.0f, 0.0f));
-        player->getCollider()->vel = glm::vec3(0.0f);
-        cam.setAutoSpin(true);
-    }
-
-    // update camera
+    cam.setAutoSpin(menu->getVisible());
     cam.updateCameraDistance(mouseScroll);
     cam.update(mouseMove.x, mouseMove.y, delta);
 
@@ -230,6 +221,11 @@ void Game::update(GLfloat delta) {
     }
 
     em->update(delta);
+    if (menu->getVisible()) {
+        // reset player to floating above city
+        player->getTransform()->setPos(glm::vec3(0.0f, 150.0f, 0.0f));
+        player->getCollider()->vel = glm::vec3(0.0f);
+    }
 
     glm::vec3 pp = player->getTransform()->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
@@ -240,7 +236,7 @@ void Game::update(GLfloat delta) {
 }
 
 void Game::render() {
-    if (wireframe) {    // maybe later make it only add in coliders near player
+    if (wireframe) {    // maybe later make it only add in colliders near player
         int curDebugLen = physics->getColliderModels(*dmodels, *dcolors);
         graphics->setDebugStream(curDebugLen, dmodels, dcolors);
     } else {
@@ -248,8 +244,6 @@ void Game::render() {
     }
 
     // render graphics
-    //Graphics::setMeshVisible(em->dudeMesh, false);
-    //Graphics::setMeshVisible(em->dudeMesh, !menu->getVisible());
     graphics->renderScene(cam, *tg, blurring);
 
     // draw UI

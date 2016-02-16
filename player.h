@@ -36,5 +36,10 @@ private:
     float speed;
     float timeSinceJump = -1.0f;
 
+    std::vector<Transform*> modelChildren;
+    
+    glm::quat currRot;
+    glm::quat targRot;
+
     glm::vec3 getMovementDir();
 };

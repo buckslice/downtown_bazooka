@@ -139,14 +139,14 @@ Graphics::Graphics(sf::RenderWindow& window) {
     planet->setPos(50.0f, 0.0f, 0.0f);
     planet->color = glm::vec3(0.0f, 0.6f, 0.4f);
 
+    sun->parentAll(planet);
+
     moon = getTransform(registerTransform(false));
     moon->setScale(glm::vec3(4.0f));
     moon->setPos(0.0f, 15.0f, 0.0f);
     moon->color = glm::vec3(0.4f);
 
-    // have to parent in reverse order until setWorld functions are implemented
     planet->parentAll(moon);
-    sun->parentAll(planet);
 }
 
 void Graphics::uploadBoxes() {

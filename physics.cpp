@@ -15,6 +15,12 @@ Physics::Physics() {
 
     int splits = 6;
 
+    // should construct aabb each frame centered on player
+    // make it an octree
+    // and only split when it contains x number of ppl?
+    // maybe combine it somehow with adding each dynamic to tree part?
+    // dynamics that test outside of main box get frozen
+
     // aabb encapsulate whole city
     // should make aabb encapsulate method and change to actually check against all static
     // would then need to rebuild whole tree sometimes tho i think..?

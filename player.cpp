@@ -4,16 +4,43 @@
 Player::Player(Camera* cam) : speed(SPEED) {
     this->cam = cam;
     timeSinceJump = 10.0f;
-    //getTransform()->solid = false;
     getTransform()->visible = false;
-    int model = Graphics::registerTransform(false);
-    Transform* t = Graphics::getTransform(model);
-    getTransform()->parentAll(t);
 
-    t->setPos(0.0f, 1.0f, 0.0f);
-    t->setScale(1.0f, 2.0f, 1.0f);
-    t->color = glm::vec3(0.2f, 1.0f, 0.7f);
-    
+    Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
+    model->setPos(0.0f, 1.5f, 0.0f);
+    model->setScale(1.0f, 1.2f, 1.0f);
+
+    Transform* face = Graphics::getTransform(Graphics::registerTransform(false));
+    face->setPos(0.0f, 1.8f, 0.4f);
+    face->setScale(0.8f, 0.4f, 0.9f);
+
+    Transform* lleg = Graphics::getTransform(Graphics::registerTransform(false));
+    lleg->setPos(0.35f, 0.5f, 0.0f);
+    lleg->setScale(0.25f, 1.0f, 0.25f);
+
+    Transform* rleg = Graphics::getTransform(Graphics::registerTransform(false));
+    rleg->setPos(-0.35f, 0.5f, 0.0f);
+    rleg->setScale(0.25f, 1.0f, 0.25f);
+
+    Transform* larm = Graphics::getTransform(Graphics::registerTransform(false));
+    larm->setPos(0.5f, 1.5f, 0.0f);
+    larm->setScale(1.0f, 0.25f, 0.25f);
+
+    Transform* rarm = Graphics::getTransform(Graphics::registerTransform(false));
+    rarm->setPos(-0.5f, 1.5f, 0.0f);
+    rarm->setScale(1.0f, 0.25f, 0.25f);
+
+    getTransform()->color = glm::vec3(0.2f, 1.0f, 0.7f);
+    getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm);
+
+    modelChildren.push_back(model);
+    modelChildren.push_back(face);
+    modelChildren.push_back(lleg);
+    modelChildren.push_back(rleg);
+    modelChildren.push_back(larm);
+    modelChildren.push_back(rarm);
+
+    currRot = targRot = glm::quat();
 }
 
 int Player::getHealth() {
@@ -21,12 +48,15 @@ int Player::getHealth() {
 }
 
 void Player::update(GLfloat delta) {
+    bool childrenVisible = cam->getCamDist() > 1.0f;
+    for (size_t i = 0; i < modelChildren.size(); ++i) {
+        modelChildren[i]->visible = childrenVisible;
+    }
+
     // get movement
     glm::vec3 input = getMovementDir();
 
-    // movement controls
-    glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
-    if (input != glm::vec3(0.0f, 0.0f, 0.0f)) {
+    if (input != glm::vec3(0.0f)) {
         input = glm::normalize(input);
     }
     if (Input::pressed(sf::Keyboard::Right)) {
@@ -57,6 +87,21 @@ void Player::update(GLfloat delta) {
     }
     timeSinceJump += delta;
 
+    // cam forward in xz plane
+    glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
+
+    // movement vector in xz plane
+    glm::vec3 xzmove = cam->right * input.x + xzforward * input.z;
+    xzmove.y = 0.0f;
+    if (xzmove != glm::vec3(0.0f)) {
+        xzmove = glm::normalize(xzmove);
+        targRot = glm::rotation(glm::vec3(0.0f, 0.0f, 1.0f), xzmove);
+    }
+
+    // slerp keeps the quaternion normalized throughout (lerp looks like shit lol)
+    currRot = glm::slerp(currRot, targRot, delta * 8.0f);
+    getTransform()->setRot(currRot);
+
     Collider& pt = *getCollider();
     if (flying) {
         pt.gravityMultiplier = 0.0f;
@@ -64,7 +109,7 @@ void Player::update(GLfloat delta) {
         if (Input::pressed(sf::Keyboard::LControl)) {
             flyspeed *= 3.0f;
         }
-        pt.vel = (cam->right * input.x + xzforward * input.z + cam->worldUp * input.y) * flyspeed;
+        pt.vel = (xzmove + cam->worldUp * input.y) * flyspeed;
     } else {
         input.y = 0.0f; // ignore this part of input when not flying
         if (pt.vel.y != 0.0f) {
@@ -81,7 +126,7 @@ void Player::update(GLfloat delta) {
         GLfloat accel = pt.grounded ? 10.0f : 2.0f;
         accel *= speed * delta;
         pt.vel.y = 0.0f;
-        pt.vel += (cam->right * input.x + xzforward * input.z) * accel;
+        pt.vel += xzmove * accel;
 
         // max vel limit
         if (glm::dot(pt.vel, pt.vel) > speed * speed) {
@@ -110,7 +155,7 @@ void Player::jump() {
 void Player::shoot() {
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*80.0f);
+    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f);
 }
 
 void Player::addHealth(int amount) {

@@ -24,9 +24,11 @@ public:
     void setRot(glm::vec3 euler);
     // set local rotation of transform
     void setRot(float x, float y, float z);
+    
+    void setRot(glm::quat q);
     // local rotation around axis by angle in degrees
     void rotate(float angle, glm::vec3 axis);
-    
+
     // returns world pos of transform (transformed by parent matrices)
     glm::vec3 getWorldPos();
 
@@ -42,20 +44,34 @@ public:
     glm::mat4 getModelMatrix();
 
     // variadic template mass parenting function
-    // couldn't get it working in implementation
+    // kind of annoying that you need two functions, maybe theres better way
     // modifies local position/scale based on scale of parent
+    // so you can define everything in world space
     template<typename T>
     void parentAll(T* first) {  // base case
         first->parent = this;
-        first->pos /= scale;
-        first->scale /= scale;
+        first->pos /= getWorldScale();
+        first->scale /= getWorldScale();
     }
     template<typename T, typename... R>
     void parentAll(T* first, const R&... rest) { // recursive
         first->parent = this;
-        first->pos /= scale;
-        first->scale /= scale;
+        first->pos /= getWorldScale();
+        first->scale /= getWorldScale();
         parentAll(rest...);
+    }
+
+    // another parenting function that also assigns color to children
+    template<typename T>
+    void parentAllWithColor(T* first) {  // base case
+        parentAll(first);
+        first->color = color;
+    }
+    template<typename T, typename... R>
+    void parentAllWithColor(T* first, const R&... rest) { // recursive
+        parentAll(first);
+        first->color = color;
+        parentAllWithColor(rest...);
     }
 
     // way to reset it since they will be stored in pools

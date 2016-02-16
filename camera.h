@@ -35,6 +35,8 @@ public:
 
     void updateCameraDistance(GLfloat deltaScroll);
 
+    GLfloat getCamDist();
+
     void setAutoSpin(bool value);
 
 private:
