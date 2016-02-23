@@ -18,7 +18,7 @@ struct obj {
 
 // class that pools things
 // if you use the return function of this class make sure things are being referenced
-// by the int lookups (and check if > 0 before using) rather than pointers
+// by the int lookups (and check if >= 0 before using) rather than pointers
 template <class T>
 class Pool {
 public:

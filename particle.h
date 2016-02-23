@@ -13,12 +13,9 @@ public:
     static const int FIRE = 2;
 
     float lifetime, curlife;
-    //bool alive;
     int effect;
 
-    Particle() : Entity() {
-        curlife = 0;
-    }
+    Particle();
 
 	void activate();
 

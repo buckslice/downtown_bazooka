@@ -6,70 +6,22 @@
 #include "cityGenerator.h"
 
 // has to be in implementation file because reasons (#staticlife?)
-//static std::vector<PhysicsTransform> dynamicObjects;
-
+// should probably research alternatives to this cuz its gross lol
 static Pool<Collider>* dynamicObjects;
 
 Physics::Physics() {
     dynamicObjects = new Pool<Collider>(10000);
-
-    int splits = 6;
-
-    // should construct aabb each frame centered on player
-    // make it an octree
-    // and only split when it contains x number of ppl?
-    // maybe combine it somehow with adding each dynamic to tree part?
-    // dynamics that test outside of main box get frozen
-
-    // aabb encapsulate whole city
-    // should make aabb encapsulate method and change to actually check against all static
-    // would then need to rebuild whole tree sometimes tho i think..?
-    float hs = CITY_SIZE / 2.0f;
-    float wgl = 100.0f;
-    AABB wholeCity(glm::vec3(-hs - wgl, 0.0, -hs - wgl), glm::vec3(hs + wgl, 10000.0f, hs + wgl));
-    aabbTree.push_back(wholeCity);
-    int startIndex = 0;
-    for (int s = 0; s < splits; s++) {
-        int len = aabbTree.size();
-        for (int i = startIndex; i < len; i++) {
-            AABB cur = aabbTree[i];
-
-            float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
-            float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
-
-            // bl tl tr br
-            aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
-            aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
-            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, hz), cur.max));
-            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, cur.min.z), glm::vec3(cur.max.x, cur.max.y, hz)));
-
-        }
-
-        // increment next start index based on how much we added this split
-        startIndex += (int)pow(4, s);
-    }
-
-    // stores lists of static objects
-    // its same size as aabbTree even though it should only just be leaves but whatever
-    treeMatrix.resize(aabbTree.size());
-
-    //float citysize = wholeCity.max.x - wholeCity.min.x;
-    //std::cout << "leaf size: " << citysize / pow(2, splits) << std::endl;
-
+    
+    generateCollisionMatrix(glm::vec3(0.0f));
 }
 
 int totalAABBChecks = 0;
 
 void Physics::update(float delta) {
-    int freeCount = 0;
-
     totalAABBChecks = 0;
-    // if in corner between two statics this will be 3 which seems weird, but its because
-    // it does 2 initial sweeps, chooses closer collision and resolves it, then it does
-    // another sweep from new location against second for a total of 3 sweeps
     int totalSweepTests = 0;
-
     bool printedErrorThisFrame = false;
+
     // find list of leaf(s) each dynamic object is in
     size_t len = dynamicObjects->size();
     dynamicLeafLists.resize(len);
@@ -77,12 +29,10 @@ void Physics::update(float delta) {
     for (size_t i = 0; i < len; ++i) {
         dynamicLeafLists[i].clear();
         if (dobjs[i].id < 0 || !dobjs[i].data.awake) {
-            freeCount++;
             continue;
         }
         getLeafs(dynamicLeafLists[i], dobjs[i].data.getSwept(delta));
     }
-    //std::cout << freeCount << std::endl;
 
     // for each dynamic object
     for (size_t dndx = 0, dlen = dobjs.size(); dndx < dlen; ++dndx) {
@@ -191,6 +141,7 @@ void Physics::update(float delta) {
                 rvel = pvel * (1.0f - time);
 
                 // should add different collision type for reflect bounce too
+                // initial tests arent working yet though lol...
                 //rvel *= time;
                 //float eps = 0.0001f;
                 //if (abs(norm.x) > eps) {
@@ -220,6 +171,52 @@ void Physics::update(float delta) {
 
     //std::cout << "AABB checks: " << totalAABBChecks << " Sweep tests: " << totalSweepTests << std::endl;
     //std::cout << dynamicObjects.size() << std::endl;
+
+}
+
+// should only calculate this if player moves far away enough from it
+// like 100.0 units away then recalculate centered on player!!!
+// for now just do every 2 seconds or something
+void Physics::generateCollisionMatrix(glm::vec3 center) {
+    center.y = 0.0f;
+    float size = MATRIX_SIZE;
+    AABB collisionArea(glm::vec3(-size, 0.0, -size) + center, glm::vec3(size, 10000.0f, size) + center);
+    aabbTree.clear();
+    aabbTree.push_back(collisionArea);  // start with full collision area
+    int startIndex = 0;
+    for (int s = 0; s < SPLIT_COUNT; s++) {
+        int len = aabbTree.size();
+        for (int i = startIndex; i < len; i++) {
+            AABB cur = aabbTree[i];
+
+            float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
+            float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
+
+            // bl tl tr br
+            aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
+            aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
+            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, hz), cur.max));
+            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, cur.min.z), glm::vec3(cur.max.x, cur.max.y, hz)));
+
+        }
+
+        // increment next start index based on how much we added this split
+        startIndex += (int)pow(4, s);
+    }
+
+    // stores lists of static objects
+    // its same size as aabbTree even though it should only just be leaves but whatever
+    // doesn't save that much space and complicates the indexing
+    treeMatrix.resize(aabbTree.size());
+
+    // prints the length of a leafs x/z edge in the tree
+    //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
+}
+
+void Physics::sortCollidersIntoMatrix() {
+    //std::vector<int> indices;
+    //for (size_t i = 0; i < )
+
 
 }
 
@@ -301,12 +298,7 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
     int count = 0;
     int max = models.size();
     for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
-        glm::vec3 pos = staticObjects[i].getCenter();
-        glm::vec3 scale = staticObjects[i].getSize();
-        glm::mat4 model;
-        model = glm::translate(model, pos);
-        model = glm::scale(model, scale);
-        models[count] = model;
+        models[count] = staticObjects[i].getModelMatrix();
         colors[count] = glm::vec3(1.0f, 1.0f, 0.0f);
         if (++count >= max) {
             return count - 1;
@@ -324,13 +316,7 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }
-        AABB b = pobj.data.getAABB();
-        glm::vec3 pos = b.getCenter();
-        glm::vec3 scale = b.getSize();
-        glm::mat4 model;
-        model = glm::translate(model, pos);
-        model = glm::scale(model, scale);
-        models[count] = model;
+        models[count] = pobj.data.getAABB().getModelMatrix();
         if (++count >= max) {
             return count - 1;
         }

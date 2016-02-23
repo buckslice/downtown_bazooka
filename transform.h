@@ -7,7 +7,6 @@
 #include "mathutil.h"
 #include "pool.h"
 
-// will soon replace transform (except the color part should be in a subclass of this new transform)
 class Transform {
 public:
     Transform();

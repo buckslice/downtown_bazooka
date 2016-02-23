@@ -8,7 +8,12 @@ Entity::Entity(glm::vec3 pos, glm::vec3 extents, glm::vec3 vel) {
 
     getTransform()->setPos(pos);
     Collider* c = getCollider();
-    c->setExtents(extents);
+
+    // defaults to 1x1x1 box scaled by extents with origin at bottom center
+    glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*extents;
+    glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*extents;
+    c->setExtents(min, max);
+
     c->vel = glm::vec3(vel);
 }
 

@@ -1,5 +1,10 @@
 #include "particle.h"
 
+Particle::Particle() : Entity() {
+    curlife = 0;
+    getCollider()->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
+}
+
 void Particle::activate() {
     Transform* t = getTransform();
     t->visible = true;

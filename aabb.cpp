@@ -1,4 +1,5 @@
 #include "aabb.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 AABB::AABB() {}
 
@@ -12,6 +13,13 @@ glm::vec3 AABB::getCenter() {
 
 glm::vec3 AABB::getSize() {
     return max - min;
+}
+
+glm::mat4 AABB::getModelMatrix() {
+    glm::mat4 model;
+    model = glm::translate(model, getCenter());
+    model = glm::scale(model, getSize());
+    return model;
 }
 
 AABB AABB::getSwept(const AABB& b, const glm::vec3& vel) {

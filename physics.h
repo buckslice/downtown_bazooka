@@ -29,12 +29,18 @@ public:
 
     void printStaticMatrix();
 
+    // builds collision tree centered around a point
+    void generateCollisionMatrix(glm::vec3 center);
+    void sortCollidersIntoMatrix();
+
     // fills vectors with model matrices and colors representing all physics colliders
     int getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
     Terrain* tg;   // ref to terrain for collision detection
 
 private:
+    const int SPLIT_COUNT = 6;
+    const float MATRIX_SIZE = 1000.0f;
 
     void getLeafs(std::vector<int>& locs, AABB swept);
 
