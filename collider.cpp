@@ -1,7 +1,7 @@
 #include "collider.h"
 
 Collider::Collider() {
-    type = DEFAULT;
+    type = BASIC;
     setExtents(glm::vec3(-0.5f, 0.0f, -0.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 }
 

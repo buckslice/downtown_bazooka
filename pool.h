@@ -41,7 +41,8 @@ public:
     std::vector<obj<T>>& getObjects();
     std::vector<unsigned>& getFreeList();
 
-    size_t size() {
+    // returns max size
+    size_t getSize() {
         return objs.size();
     }
 

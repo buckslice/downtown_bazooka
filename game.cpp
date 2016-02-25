@@ -178,13 +178,13 @@ void Game::toggleOptions() {
     }
     // rebuild color wheel city
     if (Input::justPressed(sf::Keyboard::Num6)) {
-        physics->clearStatics();
+        //physics->clearStatics();
         cg->generate(false, true, numBuildings, *physics);
         std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
     }
     // rebuild regular city
     if (Input::justPressed(sf::Keyboard::Num7)) {
-        physics->clearStatics();
+        //physics->clearStatics();
         cg->generate(false, false, numBuildings, *physics);
         std::cout << ("BUILT NORMAL CITY") << std::endl;
     }

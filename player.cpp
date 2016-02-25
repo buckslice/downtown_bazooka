@@ -42,7 +42,7 @@ Player::Player(Camera* cam) : speed(SPEED) {
 
     currRot = targRot = glm::quat();
 
-    getCollider()->type = ColliderType::PLAYER;
+    getCollider()->tag = ColliderTag::PLAYER;
 }
 
 int Player::getHealth() {

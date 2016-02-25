@@ -2,13 +2,21 @@
 #include <glm/glm.hpp>
 #include "aabb.h"
 
-// to be used in collision callbacks
 enum ColliderType {
+    BASIC,          // collides with statics, invisible to other types
+    TRIGGER,        // collides with statics, checks TRIGGERs and FULLs without colliding
+    FULL            // collides with statics, checks TRIGGERs and FULLs, collides against FULLs
+};
+
+// to be used in collision callbacks
+// maybe just make collision callback except a simplified collider struct
+// with a enum tag and position and stuff maybe
+enum ColliderTag {
     PLAYER,
     PLAYER_PROJECTILE,
     ENEMY_PROJECTILE,
     ENEMY,
-    TERRAIN,
+    TERRAIN, 
     DEFAULT
 };
 
@@ -17,12 +25,12 @@ class Collider {
 public:
     int transform;  // id of transform this collider is changing position of
 
+    ColliderTag tag;
     ColliderType type;
 
     glm::vec3 vel;
     bool grounded = false;
     bool awake = true;
-
 
     float gravityMultiplier = 1.0f;
 

@@ -25,7 +25,6 @@ public:
 
     void deleteEntities();
 
-
     int curParticle = 0;
     Particle *getNextParticle();
 
