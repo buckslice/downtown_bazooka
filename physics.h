@@ -9,7 +9,7 @@
 #include "terrain.h"
 
 struct leafObject {
-    size_t index;      // index points to object in a list
+    int index;      // index points to object in a list
     bool dynamic;   // determines which list index is for
 };
 
@@ -44,7 +44,7 @@ private:
     const int SPLIT_COUNT = 6;
     const float MATRIX_SIZE = 1000.0f;
 
-    void getLeafs(std::vector<size_t>& locs, AABB swept);
+    void getLeafs(std::vector<int>& locs, AABB swept);
 
 
     // list of static objects (dynamic list is in implementation)
@@ -52,7 +52,7 @@ private:
     // aabb quadtree that is used to determine what leaf(s) an obj is in
     std::vector<AABB> aabbTree;
     // list for each dynamic object that tells them which leaf(s) they are in
-    std::vector<std::vector<size_t>> dynamicLeafLists;
+    std::vector<std::vector<int>> dynamicLeafLists;
 
     // a list for each leaf in the aabbTree containing a list of each object in that leaf
     // better name would probably be objectsInLeaves or something lol
@@ -60,11 +60,11 @@ private:
     std::vector<std::vector<leafObject>> superMatrix;
 
     // used to prevent unnecessary additional checks
-    std::unordered_set<size_t> staticResolvedSet;
-    std::unordered_set<size_t> dynamicResolvedSet;
+    std::unordered_set<int> staticResolvedSet;
+    std::unordered_set<int> dynamicResolvedSet;
 
     // used to prevent multiple checks on leaf borders
-    std::unordered_set<size_t> staticCheckSet;
-    std::unordered_set<size_t> dynamicCheckSet;
+    std::unordered_set<int> staticCheckSet;
+    std::unordered_set<int> dynamicCheckSet;
 
 };

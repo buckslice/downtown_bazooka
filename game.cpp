@@ -204,10 +204,10 @@ void Game::update(GLfloat delta) {
 
     if (menu->justClosed) {
         player->flying = false;
-        em->init(0);
+        em->init(1000);
     }
     if (menu->justOpened) {
-        em->deleteEntities();
+        //em->deleteEntities();
         //physics->clearDynamics();
     }
 

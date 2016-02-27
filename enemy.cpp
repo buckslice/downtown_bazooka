@@ -1,6 +1,21 @@
 #include "enemy.h"
 #include "graphics.h"
 
+Enemy::Enemy(int player, glm::vec3 start, glm::vec3 scale) : Entity(start, scale) {
+    this->player = player;  // player transform
+    speed = Mth::rand01() * 5.0f + 5.0f;
+    jumpVel = Mth::rand01() * 10.0f + 20.0f;
+    
+    Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
+    model->setPos(0.0f, 1.0f, 0.0f);
+    model->setScale(1.0f, 2.0f, 1.0f);
+
+    getTransform()->visible = false;
+    getTransform()->parentAllWithColor(model);
+
+    //getCollider()->type = ColliderType::FULL;
+}
+
 void Enemy::update(GLfloat delta) {
     Collider& col = *getCollider();
 
@@ -24,5 +39,4 @@ void Enemy::update(GLfloat delta) {
     col.vel.x = dirToPlayer.x;
     col.vel.z = dirToPlayer.z;
 
-    //pt.vel.y += GRAVITY * delta;
 }

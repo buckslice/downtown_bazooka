@@ -33,7 +33,7 @@ void Physics::update(float delta) {
     }
 
     // build leaf list for each valid dynamic and add it to superMatrix
-    for (size_t dndx = 0; dndx < sizeOfDynamicObjects; ++dndx) {
+    for (int dndx = 0, len = static_cast<int>(sizeOfDynamicObjects); dndx < len; ++dndx) {
         auto& dobj = dobjs[dndx];
         auto& dynamicLeafList = dynamicLeafLists[dndx];
         dynamicLeafList.clear();
@@ -41,7 +41,7 @@ void Physics::update(float delta) {
         if (dobj.id < 0 || !dobj.data.awake) {
             continue;
         }
-
+        
         // gets list of leafs this object could possibly be in (using swept AABB)
         getLeafs(dynamicLeafList, dobj.data.getSwept(delta));
 
@@ -58,17 +58,17 @@ void Physics::update(float delta) {
     }
 
     // add each static object into superMatrix
-    std::vector<size_t> leafsThisObjectIsIn;
-    for (size_t objIndex = 0; objIndex < staticObjects.size(); ++objIndex) {
+    std::vector<int> leafsThisObjectIsIn;
+    for (int ondx = 0, len = static_cast<int>(staticObjects.size()); ondx < len; ++ondx) {
         leafsThisObjectIsIn.clear();
 
         // gets list of leafs this object is in 
-        getLeafs(leafsThisObjectIsIn, staticObjects[objIndex]);
+        getLeafs(leafsThisObjectIsIn, staticObjects[ondx]);
 
         // add your static object list index into the super lookup matrix 
         // at every leaf youre at
         for (size_t i = 0, len = leafsThisObjectIsIn.size(); i < len; ++i) {
-            superMatrix[leafsThisObjectIsIn[i]].push_back(leafObject{ objIndex, false });
+            superMatrix[leafsThisObjectIsIn[i]].push_back(leafObject{ ondx, false });
         }
     }
 
@@ -77,9 +77,9 @@ void Physics::update(float delta) {
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
     for (size_t dndx = 0; dndx < sizeOfDynamicObjects; ++dndx) {
-        auto& pobj = dobjs[dndx];
-        Collider& col = pobj.data;
-        if (pobj.id < 0 || !col.awake) {
+        auto& dobj = dobjs[dndx];
+        Collider& col = dobj.data;
+        if (dobj.id < 0 || !col.awake) {
             continue;
         }
         col.pos = Graphics::getTransform(col.transform)->getPos();
@@ -118,7 +118,7 @@ void Physics::update(float delta) {
             // returns closest collision found
             bool fullTest = false;
             // for each leaf this dynamic is in
-            std::vector<size_t>& leafList = dynamicLeafLists[dndx];
+            std::vector<int>& leafList = dynamicLeafLists[dndx];
             for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
                 int leaf = leafList[lndx];
                 // for each object in this leaf
@@ -127,7 +127,8 @@ void Physics::update(float delta) {
                     leafObject& obj = leafObjects[ondx];    // single other static or dynamic object
                     AABB otherAABB;
                     if (obj.dynamic) {
-                        if (dynamicResolvedSet.count(obj.index) || dynamicCheckSet.count(obj.index)) {
+                        if (col.type == ColliderType::BASIC ||
+                            dynamicResolvedSet.count(obj.index) || dynamicCheckSet.count(obj.index)) {
                             continue;
                         }
 
@@ -167,21 +168,43 @@ void Physics::update(float delta) {
                     // but still possible for no collision at this point
                     glm::vec3 n;
                     float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
-                    if (t < time) {
+                    if (t < time) { // a collision occured
                         time = t;
                         norm = n;
                         closestIndex = obj.index;
                         closestIsDynamic = obj.dynamic;
                     }
-                    fullTest = true;
+                    fullTest = true;    // this could maybe be in if above?
                 }
             }
 
-            // dont let this dynamic collide with this other object again (this frame)
-            if (closestIsDynamic) {
-                dynamicResolvedSet.insert(closestIndex);
-            } else {
-                staticResolvedSet.insert(closestIndex);
+            if (closestIndex >= 0) {    // collided with another object
+                if (closestIsDynamic) {
+                    // dont let this dynamic collide with this other object again (this frame)
+                    dynamicResolvedSet.insert(closestIndex);
+
+                    Collider& other = dobjs[closestIndex].data;
+
+                    // call collision callbacks for each object if set
+                    // should probably pass custom struct with tag and other basic info
+                    // that way can have callback if hit static too
+                    if (col.onCollisionCallback != nullptr) {
+                        col.onCollisionCallback(&other);
+                    }
+                    if (other.onCollisionCallback != nullptr) {
+                        other.onCollisionCallback(&col);
+                    }
+
+                    // if your type is TRIGGER or their type is TRIGGER
+                    // then reset collision variables to ignore the collision basically
+                    if (col.type == ColliderType::TRIGGER ||
+                        other.type == ColliderType::TRIGGER) {
+                        time = 1.0f;
+                        norm = glm::vec3(0.0f);
+                    }
+                } else {    // should add callbacks in later
+                    staticResolvedSet.insert(closestIndex);
+                }
             }
 
             // update dynamic position
@@ -227,6 +250,7 @@ void Physics::update(float delta) {
             }
 
             // if there was no full collision test then this object is resolved
+            // aka no broadphase checks passed so no chance in another collision this frame
             if (!fullTest) {
                 break;
             }
@@ -281,19 +305,21 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
     //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
 }
 
-
+// add static to statics list and then 
+// insert it into supermatrix
 void Physics::addStatic(AABB obj) {
     // push new object onto statics list and get index
     staticObjects.push_back(obj);
-    int objIndex = staticObjects.size() - 1;
+    int ondx = staticObjects.size() - 1;
 
-    //// get list of leaves this object collides with
-    //std::vector<int> indices;
-    //getLeafs(indices, obj);
-    //// then add this objects index to each collision list
-    //for (size_t i = 0, len = indices.size(); i < len; ++i) {
-    //    treeMatrix[indices[i]].push_back(objIndex);
-    //}
+    std::vector<int> leafsThisObjectIsIn;
+    getLeafs(leafsThisObjectIsIn, obj);
+
+    // add your static object list index into the super lookup matrix 
+    // at every leaf youre at
+    for (size_t i = 0, len = leafsThisObjectIsIn.size(); i < len; ++i) {
+        superMatrix[leafsThisObjectIsIn[i]].push_back(leafObject{ ondx, false });
+    }
 }
 
 void Physics::addStatics(const std::vector<AABB>& objs) {
@@ -303,7 +329,7 @@ void Physics::addStatics(const std::vector<AABB>& objs) {
 }
 
 bool Physics::checkStatic(AABB obj) {
-    std::vector<size_t> indices;
+    std::vector<int> indices;
     getLeafs(indices, obj);
 
     for (size_t i = 0, ilen = indices.size(); i < ilen; ++i) {
@@ -378,11 +404,11 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
 // so things cant see it, except the one function that calls it below #prostrats 
 // should probably just make another class lol
 // also took all the variables out of function call for #maxperfomance
-size_t htreesize = 0;
+int htreesize = 0;
 std::vector<AABB> *htree;
-std::vector<size_t>* hnodes;
+std::vector<int>* hnodes;
 AABB hswept;
-void checkLeaves(size_t node) {
+void checkLeaves(int node) {
     if (AABB::check((*htree)[node], hswept)) {
         // check if you are leaf node
         if (node * 4 + 1 >= htreesize) {
@@ -398,8 +424,8 @@ void checkLeaves(size_t node) {
 }
 
 // searches tree and returns a list of leaf indices AABB collides with
-void Physics::getLeafs(std::vector<size_t>& locs, AABB swept) {
-    htreesize = aabbTree.size();
+void Physics::getLeafs(std::vector<int>& locs, AABB swept) {
+    htreesize = static_cast<int>(aabbTree.size());
     htree = &aabbTree;
     hnodes = &locs;
     hswept = swept;

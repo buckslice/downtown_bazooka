@@ -17,6 +17,10 @@ Entity::Entity(glm::vec3 pos, glm::vec3 extents, glm::vec3 vel) {
     c->vel = glm::vec3(vel);
 }
 
+Entity::~Entity() {
+
+}
+
 Transform* Entity::getTransform() {
     return Graphics::getTransform(transform);
 }

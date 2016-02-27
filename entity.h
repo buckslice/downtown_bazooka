@@ -11,8 +11,7 @@ public:
 
     Entity(glm::vec3 pos = glm::vec3(0.0f), glm::vec3 extents = glm::vec3(1.0f), glm::vec3 vel = glm::vec3(0.0f));
 
-    ~Entity() {    
-    }
+    ~Entity();
 
     // derived classes have to override this
     void virtual update(GLfloat delta) = 0;

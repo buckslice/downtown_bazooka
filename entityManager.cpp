@@ -1,6 +1,7 @@
 #include "entityManager.h"
 
 // TODO maybe make everything like this, singletons instead of static function calls?
+// except this is kind of a shitty singleton
 EntityManager *EntityManagerInstance;//An extern from entityManager.h
 
 EntityManager::EntityManager(Player* player) : player(player) {
@@ -12,7 +13,9 @@ EntityManager::EntityManager(Player* player) : player(player) {
         particles.push_back(p);
     }
 
-    projectiles = new Pool<Projectile>(MAX_PROJECTILES);
+    // should switch this from pool ?
+    projectiles = new Pool<Projectile>(MAX_PROJECTILES);    
+
 }
 
 void EntityManager::init(int numberOfDudes) {
@@ -21,31 +24,36 @@ void EntityManager::init(int numberOfDudes) {
     // TODO ADD DUDES BACK IN (some code will prob go in their constructors now tho)
     //deleteEntities();
 
-    //for (int i = 0; i < numberOfDudes; i++) {
-    //    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    //    bool elite = rand() % 50 == 0;
+    for (int i = 0; i < numberOfDudes; i++) {
+        glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+        bool elite = rand() % 50 == 0;
 
-    //    glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-    //    glm::vec3 variance = Mth::randInsideUnitCube();
-    //    variance.x = variance.z = abs(variance.x);
-    //    scale += variance * .25f;
-    //    if (elite) {
-    //        scale *= Mth::rand01() + 2.0f;
-    //    }
-    //    Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale);
+        glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+        glm::vec3 variance = Mth::randInsideUnitCube();
+        variance.x = variance.z = abs(variance.x);
+        scale += variance * .25f;
+        if (elite) {
+            scale *= Mth::rand01() + 2.0f;
+        }
+        Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale);
 
-    //    if (elite) { // gold elites 
-    //        e->speed = Mth::rand01() * 5.0f + 10.0f;
-    //        e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-    //        colors.push_back(glm::vec3(0.8f, 1.0f, 0.6f));
-    //    } else {    // red grunts
-    //        colors.push_back(glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f));
-    //    }
+        if (elite) { // gold elites 
+            e->speed = Mth::rand01() * 5.0f + 10.0f;
+            e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
+            e->getTransform()->color = glm::vec3(0.8f, 1.0f, 0.6f);
+        } else {    // red grunts
+            e->getTransform()->color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
+        }
+    }
 
 }
 
 void EntityManager::update(float delta) {
     player->update(delta);
+
+    for (size_t i = 0, len = entities.size(); i < len; ++i) {
+        entities[i]->update(delta);
+    }
 
     // update projectiles
     auto& pobjs = projectiles->getObjects();
@@ -58,8 +66,7 @@ void EntityManager::update(float delta) {
 
     // update particles
     for (size_t i = 0, len = particles.size(); i < len; ++i) {
-        Particle& p = particles[i];
-        p.update(delta);
+        particles[i].update(delta);
     }
 
 }

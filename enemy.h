@@ -6,11 +6,7 @@
 
 class Enemy : public Entity {
 public:
-    Enemy(int player, glm::vec3 start, glm::vec3 scale) :Entity(start, scale) {
-        this->player = player;  // player transform
-        speed = Mth::rand01() * 5.0f + 5.0f;
-        jumpVel = Mth::rand01() * 10.0f + 20.0f;
-    }
+    Enemy(int player, glm::vec3 start, glm::vec3 scale);
 
     void update(GLfloat delta) override;
 
