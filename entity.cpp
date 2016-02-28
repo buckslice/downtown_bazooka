@@ -18,7 +18,6 @@ Entity::Entity(glm::vec3 pos, glm::vec3 extents, glm::vec3 vel) {
 }
 
 Entity::~Entity() {
-
 }
 
 Transform* Entity::getTransform() {

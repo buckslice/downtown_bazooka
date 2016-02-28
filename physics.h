@@ -8,12 +8,6 @@
 #include "collider.h"
 #include "terrain.h"
 
-struct leafObject {
-    int index;      // index points to object in a list
-    bool dynamic;   // determines which list index is for
-};
-
-
 class Physics {
 public:
     const float GRAVITY = -30.0f;
@@ -57,8 +51,8 @@ private:
     // a list for each leaf in the aabbTree containing a list of each object in that leaf
     // better name would probably be objectsInLeaves or something lol
     // but superMatrix sounds BADASS
-    std::vector<std::vector<leafObject>> superMatrix;
-    //std::vector<std::vector<int>> staticMatrix;
+    std::vector<std::vector<int>> superMatrix;
+    std::vector<std::vector<int>> staticMatrix;
 
     // used to prevent unnecessary additional checks
     std::unordered_set<int> staticResolvedSet;

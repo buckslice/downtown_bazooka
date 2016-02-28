@@ -26,4 +26,8 @@ public:
 
     static float sweepTest(const AABB& b1, const AABB& b2, glm::vec3 vel, glm::vec3& norm);
 
+    static float sweepTest2(const AABB& b1, const AABB& b2, glm::vec3 vel, glm::vec3& norm);
+
+    static float sweepTest3(const AABB& b1, const AABB& b2, glm::vec3 vel, glm::vec3& norm);
+
 };

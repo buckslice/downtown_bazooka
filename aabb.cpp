@@ -69,19 +69,6 @@ float AABB::sweepTest(const AABB& b1, const AABB& b2, glm::vec3 vel, glm::vec3& 
         invExit.z = b2.min.z - b1.max.z;
     }
 
-    // below is my wierd "fix" to correct floating point precision error during earlier subtractions
-    // maybe i should do it invExit too?
-    float e = .0001f;
-    if (invEntr.y < e && invEntr.y > -e) {
-        invEntr.y = 0.0f;
-    }
-    if (invEntr.x < e && invEntr.x > -e) {
-        invEntr.x = 0.0f;
-    }
-    if (invEntr.z < e && invEntr.z > -e) {
-        invEntr.z = 0.0f;
-    }
-
     // find time of collision
     glm::vec3 entr;
     glm::vec3 exit;
@@ -119,14 +106,149 @@ float AABB::sweepTest(const AABB& b1, const AABB& b2, glm::vec3 vel, glm::vec3& 
         return 1.0f;
     }
 
-    // calculate normal of collided surface
-    if (entrTime == entr.x) {
-        norm = glm::vec3(invEntr.x < 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
-    } else if (entrTime == entr.y) {
-        norm = glm::vec3(0.0f, invEntr.y < 0.0f ? 1.0f : -1.0f, 0.0f);
+    if (entr.x > entr.y) {
+        if (entr.x > entr.z) {
+            norm = glm::vec3(invEntr.x < 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
+        } else {
+            norm = glm::vec3(0.0f, 0.0f, invEntr.z < 0.0f ? 1.0f : -1.0f);
+        }
     } else {
-        norm = glm::vec3(0.0f, 0.0f, invEntr.z < 0.0f ? 1.0f : -1.0f);
+        if (entr.y > entr.z) {
+            norm = glm::vec3(0.0f, invEntr.y < 0.0f ? 1.0f : -1.0f, 0.0f);
+        } else {
+            norm = glm::vec3(0.0f, 0.0f, invEntr.z < 0.0f ? 1.0f : -1.0f);
+        }
     }
 
     return entrTime;
 }
+
+float AABB::sweepTest2(const AABB& a, const AABB& b, glm::vec3 vel, glm::vec3& norm) {
+    float hitTime = 0.0f;
+    float outTime = 1.0f;
+    glm::vec3 overlapTime = glm::vec3(0.0f);
+    vel = -vel;
+
+    if (vel.x < 0.0f) {
+        if (b.max.x < a.min.x) return 1.0f;
+        if (b.max.x > a.min.x) outTime = glm::min((a.min.x - b.max.x) / vel.x, outTime);
+        if (a.max.x < b.min.x) {
+            overlapTime.x = (a.max.x - b.min.x) / vel.x;
+            hitTime = glm::max(overlapTime.x, hitTime);
+        }
+    } else if (vel.x > 0.0f) {
+        if (b.min.x > a.max.x) return 1.0f;
+        if (a.max.x > b.min.x) outTime = glm::min((a.max.x - b.min.x) / vel.x, outTime);
+        if (b.max.x < a.min.x) {
+            overlapTime.x = (a.min.x - b.max.x) / vel.x;
+            hitTime = glm::max(overlapTime.x, hitTime);
+        }
+    }
+
+    if (hitTime > outTime) return 1.0f;
+
+    if (vel.y < 0.0f) {
+        if (b.max.y < a.min.y) return 1.0f;
+        if (b.max.y > a.min.y) outTime = glm::min((a.min.y - b.max.y) / vel.y, outTime);
+        if (a.max.y < b.min.y) {
+            overlapTime.y = (a.max.y - b.min.y) / vel.y;
+            hitTime = glm::max(overlapTime.y, hitTime);
+        }
+    } else if (vel.y > 0.0f) {
+        if (b.min.y > a.max.y) return 1.0f;
+        if (a.max.y > b.min.y) outTime = glm::min((a.max.y - b.min.y) / vel.y, outTime);
+        if (b.max.y < a.min.y) {
+            overlapTime.y = (a.min.y - b.max.y) / vel.y;
+            hitTime = glm::max(overlapTime.y, hitTime);
+        }
+    }
+
+    if (hitTime > outTime) return 1.0f;
+
+    if (vel.z < 0.0f) {
+        if (b.max.z < a.min.z) return 1.0f;
+        if (b.max.z > a.min.z) outTime = glm::min((a.min.z - b.max.z) / vel.z, outTime);
+        if (a.max.z < b.min.z) {
+            overlapTime.z = (a.max.z - b.min.z) / vel.z;
+            hitTime = glm::max(overlapTime.z, hitTime);
+        }
+    } else if (vel.z > 0.0f) {
+        if (b.min.z > a.max.z) return 1.0f;
+        if (a.max.z > b.min.z) outTime = glm::min((a.max.z - b.min.z) / vel.z, outTime);
+        if (b.max.z < a.min.z) {
+            overlapTime.z = (a.min.z - b.max.z) / vel.z;
+            hitTime = glm::max(overlapTime.z, hitTime);
+        }
+    }
+
+    if (hitTime > outTime) return 1.0f;
+
+    if (overlapTime.x > overlapTime.y) {
+        if (overlapTime.x > overlapTime.z) {
+            norm = glm::vec3(glm::sign(vel.x), 0.0f, 0.0f);
+        } else {
+            norm = glm::vec3(0.0f, 0.0f, glm::sign(vel.z));
+        }
+    } else {
+        if (overlapTime.y > overlapTime.z) {
+            norm = glm::vec3(0.0f, glm::sign(vel.y), 0.0f);
+        } else {
+            norm = glm::vec3(0.0f, 0.0f, glm::sign(vel.z));
+        }
+    }
+
+    return hitTime;
+}
+
+float AABB::sweepTest3(const AABB& a, const AABB& b, glm::vec3 v, glm::vec3& n) {
+    glm::vec3 f = glm::vec3(1000.0f);
+    glm::vec3 l = glm::vec3(-1000.0f);
+
+    v = -v;
+    for (int i = 0; i < 3; ++i) {
+        if (v[i] == 0) {
+            f[i] = 0;
+            l[i] = 1;
+            continue;
+        }
+
+        if (a.max[i] < b.min[i] && v[i] < 0)
+            f[i] = (a.max[i] - b.min[i]) / v[i];
+
+        else if (b.max[i] < a.min[i] && v[i] > 0)
+            f[i] = (a.min[i] - b.max[i]) / v[i];
+
+        if (b.max[i] > a.min[i] && v[i] < 0)
+            l[i] = (a.min[i] - b.max[i]) / v[i];
+
+        else if (a.max[i] > b.min[i] && v[i] > 0)
+            l[i] = (a.max[i] - b.min[i]) / v[i];
+    }
+
+    float first = glm::compMax(f);
+    float last = glm::compMax(l);
+
+    if (first >= 0 && last <= 1 && first <= last) {
+
+    } else {
+        return 1.0f;
+    }
+
+    for (size_t i = 0; i < 3; ++i) {
+        if (f[i] == first) {
+            n[i] = v[i] > 0 ? -1.f : 1.f;
+            break;
+        }
+    }
+
+    
+
+    if (first > 1.0f) {
+        first = 1.0f;
+    } else if (first < 0.0f) {
+        first = 0.0f;
+    }
+
+    return first;
+}
+

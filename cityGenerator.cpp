@@ -81,6 +81,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
             //    break;
             //}
             phys.addStatic(box);
+            break;
 
             tries++;
         }

@@ -1,6 +1,6 @@
 #include "game.h"
 
-int numBuildings = 20000;   // 7500
+int numBuildings = 1000;   // 7500
 
 Game::Game(GLuint width, GLuint height)
     : WIDTH{ width }, HEIGHT{ height },
@@ -177,13 +177,13 @@ void Game::toggleOptions() {
     }
     // rebuild color wheel city
     if (Input::justPressed(sf::Keyboard::Num6)) {
-        //physics->clearStatics();
+        physics->clearStatics();
         cg->generate(false, true, numBuildings, *physics);
         std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
     }
     // rebuild regular city
     if (Input::justPressed(sf::Keyboard::Num7)) {
-        //physics->clearStatics();
+        physics->clearStatics();
         cg->generate(false, false, numBuildings, *physics);
         std::cout << ("BUILT NORMAL CITY") << std::endl;
     }
@@ -203,7 +203,7 @@ void Game::update(GLfloat delta) {
 
     if (menu->justClosed) {
         player->flying = false;
-        em->init(0);
+        em->init(1000);
     }
     if (menu->justOpened) {
         //em->deleteEntities();
