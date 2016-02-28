@@ -6,7 +6,7 @@
 
 class Enemy : public Entity {
 public:
-    Enemy(int player, glm::vec3 start, glm::vec3 scale);
+    Enemy(int player, glm::vec3 start, glm::vec3 scale, glm::vec3 color);
 
     void update(GLfloat delta) override;
 

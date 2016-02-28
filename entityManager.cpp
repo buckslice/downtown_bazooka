@@ -32,18 +32,20 @@ void EntityManager::init(int numberOfDudes) {
         glm::vec3 variance = Mth::randInsideUnitCube();
         variance.x = variance.z = abs(variance.x);
         scale += variance * .25f;
+
+        glm::vec3 color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
         if (elite) {
             scale *= Mth::rand01() + 2.0f;
+            color = glm::vec3(0.8f, 1.0f, 0.6f);
         }
-        Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale);
+        Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
 
         if (elite) { // gold elites 
             e->speed = Mth::rand01() * 5.0f + 10.0f;
             e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-            e->getTransform()->color = glm::vec3(0.8f, 1.0f, 0.6f);
-        } else {    // red grunts
-            e->getTransform()->color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
         }
+
+        entities.push_back(e);
     }
 
 }

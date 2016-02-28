@@ -25,7 +25,7 @@ public:
     void addStatic(AABB obj);
     void addStatics(const std::vector<AABB>& objs);
     bool checkStatic(AABB obj);
-    //void clearStatics();
+    void clearStatics();
     //void clearDynamics();
     
     static Collider* getCollider(int index);
@@ -58,6 +58,7 @@ private:
     // better name would probably be objectsInLeaves or something lol
     // but superMatrix sounds BADASS
     std::vector<std::vector<leafObject>> superMatrix;
+    //std::vector<std::vector<int>> staticMatrix;
 
     // used to prevent unnecessary additional checks
     std::unordered_set<int> staticResolvedSet;

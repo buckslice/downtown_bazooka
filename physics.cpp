@@ -20,6 +20,13 @@ Physics::Physics() {
 //int totalAABBChecks = 0;
 //int totalSweepTests = 0;
 
+// notes from thread
+// The rest of my algorithm is as optimal as I could make it.I have an 8 - level quad -
+// tree with nodes linear in RAM for best caching. Insertion into any node is nearly instantaneous,
+// as calculating the depth and then the node in that depth for a given AABB is only a few
+// instructions total(as apposed to the naive implementation which would have me starting at the top
+// and searching for the best - fit node with a bunch of AABB tests).
+
 void Physics::update(float delta) {
     bool printedErrorThisFrame = false;
 
@@ -41,8 +48,8 @@ void Physics::update(float delta) {
         if (dobj.id < 0 || !dobj.data.awake) {
             continue;
         }
-        
-        // gets list of leafs this object could possibly be in (using swept AABB)
+
+        // gets list of leafs this object is in (using swept AABB)
         getLeafs(dynamicLeafList, dobj.data.getSwept(delta));
 
         // BASIC can continue from here because they aren't being collided against
@@ -53,24 +60,24 @@ void Physics::update(float delta) {
         // add your dynamic objects index into the superMatrix 
         // at every leaf you could possibly be in
         for (size_t i = 0, len = dynamicLeafList.size(); i < len; ++i) {
-            superMatrix[dynamicLeafList[i]].push_back(leafObject{ dndx, false });
+            superMatrix[dynamicLeafList[i]].push_back(leafObject{ dndx, true });
         }
     }
 
-    // add each static object into superMatrix
-    std::vector<int> leafsThisObjectIsIn;
-    for (int ondx = 0, len = static_cast<int>(staticObjects.size()); ondx < len; ++ondx) {
-        leafsThisObjectIsIn.clear();
+    //// add each static object into superMatrix
+    //std::vector<int> staticLeafList;
+    //for (int ondx = 0, len = static_cast<int>(staticObjects.size()); ondx < len; ++ondx) {
+    //    staticLeafList.clear();
 
-        // gets list of leafs this object is in 
-        getLeafs(leafsThisObjectIsIn, staticObjects[ondx]);
+    //    // gets list of leafs this object is in 
+    //    getLeafs(staticLeafList, staticObjects[ondx]);
 
-        // add your static object list index into the super lookup matrix 
-        // at every leaf youre at
-        for (size_t i = 0, len = leafsThisObjectIsIn.size(); i < len; ++i) {
-            superMatrix[leafsThisObjectIsIn[i]].push_back(leafObject{ ondx, false });
-        }
-    }
+    //    // add your static object list index into the super lookup matrix 
+    //    // at every leaf youre at
+    //    for (size_t i = 0, len = staticLeafList.size(); i < len; ++i) {
+    //        superMatrix[staticLeafList[i]].push_back(leafObject{ ondx, false });
+    //    }
+    //}
 
 
     // for each dynamic object check it against all objects in its leaf(s)
@@ -99,7 +106,7 @@ void Physics::update(float delta) {
             // could also be something else though perhaps with the quadtree
             // or the different sets pruning too aggresively
             if (resolutionAttempts == 9 && !printedErrorThisFrame) {
-                //std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
+                std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
                 printedErrorThisFrame = true;   // to avoid spam
             }
 
@@ -128,7 +135,8 @@ void Physics::update(float delta) {
                     AABB otherAABB;
                     if (obj.dynamic) {
                         if (col.type == ColliderType::BASIC ||
-                            dynamicResolvedSet.count(obj.index) || dynamicCheckSet.count(obj.index)) {
+                            dynamicResolvedSet.count(obj.index) || dynamicCheckSet.count(obj.index) ||
+                            dndx == obj.index) {
                             continue;
                         }
 
@@ -199,6 +207,7 @@ void Physics::update(float delta) {
                     // then reset collision variables to ignore the collision basically
                     if (col.type == ColliderType::TRIGGER ||
                         other.type == ColliderType::TRIGGER) {
+                        std::cout << "wtfack" << std::endl;
                         time = 1.0f;
                         norm = glm::vec3(0.0f);
                     }
@@ -214,8 +223,14 @@ void Physics::update(float delta) {
             float h = tg->queryHeight(col.pos.x, col.pos.z);
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
-            if (col.pos.y < h || norm.y != 0.0f) {
+            // check to make sure normal is pointing up actually now
+            if (col.pos.y < h || norm.y > 0.0f) {
                 col.grounded = true;
+                col.vel.y = 0.0f;
+                rvel.y = 0.0f;
+            }
+
+            if (norm.y < 0.0f) {
                 col.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
@@ -346,11 +361,11 @@ bool Physics::checkStatic(AABB obj) {
     return false;
 }
 
-//void Physics::clearStatics() {
-//    staticObjects.clear();
-//    treeMatrix.clear();
-//    treeMatrix.resize(aabbTree.size());
-//}
+void Physics::clearStatics() {
+    staticObjects.clear();
+    superMatrix.clear();
+    superMatrix.resize(aabbTree.size());
+}
 
 int Physics::registerDynamic(int transform) {
     int index = dynamicObjects->get();

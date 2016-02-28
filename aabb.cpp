@@ -4,7 +4,15 @@
 AABB::AABB() {}
 
 bool AABB::check(const AABB& a, const AABB& b) {
-    return glm::compMax(glm::max(a.min - b.max, b.min - a.max)) < 0;
+    //return glm::compMax(glm::max(a.min - b.max, b.min - a.max)) < 0;
+
+    return
+        a.min.x <= b.max.x &&
+        a.min.y <= b.max.y &&
+        a.min.z <= b.max.z &&
+        a.max.x >= b.min.x &&
+        a.max.y >= b.min.y &&
+        a.max.z >= b.min.z;
 }
 
 glm::vec3 AABB::getCenter() {

@@ -1,6 +1,6 @@
 #include "game.h"
 
-int numBuildings = 1000;   // 7500
+int numBuildings = 20000;   // 7500
 
 Game::Game(GLuint width, GLuint height)
     : WIDTH{ width }, HEIGHT{ height },
@@ -19,9 +19,13 @@ Game::Game(GLuint width, GLuint height)
     window->setFramerateLimit(60);
 
     // load music track	
-    if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
-        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-    }
+    //if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
+    //    std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+    //}
+    //// set up music
+    //mainTrack.setLoop(true);
+    //mainTrack.setVolume(20.0f);
+    //mainTrack.play(); // ENSIFERUM
 
     // main systems
     graphics = new Graphics(*window);
@@ -47,11 +51,6 @@ Game::Game(GLuint width, GLuint height)
     em = new EntityManager(player);
 
     menu = new Menu(player);
-
-    // set up music
-    mainTrack.setLoop(true);
-    mainTrack.setVolume(20.0f);
-    //mainTrack.play(); // ENSIFERUM
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
@@ -204,7 +203,7 @@ void Game::update(GLfloat delta) {
 
     if (menu->justClosed) {
         player->flying = false;
-        em->init(1000);
+        em->init(0);
     }
     if (menu->justOpened) {
         //em->deleteEntities();

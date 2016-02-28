@@ -1,19 +1,20 @@
 #include "enemy.h"
 #include "graphics.h"
 
-Enemy::Enemy(int player, glm::vec3 start, glm::vec3 scale) : Entity(start, scale) {
+Enemy::Enemy(int player, glm::vec3 start, glm::vec3 scale, glm::vec3 color) : Entity(start, scale) {
     this->player = player;  // player transform
     speed = Mth::rand01() * 5.0f + 5.0f;
     jumpVel = Mth::rand01() * 10.0f + 20.0f;
-    
+
     Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
-    model->setPos(0.0f, 1.0f, 0.0f);
-    model->setScale(1.0f, 2.0f, 1.0f);
+    model->setPos(0.0f, scale.y / 2.0f, 0.0f);
+    model->setScale(scale);
 
     getTransform()->visible = false;
+    getTransform()->color = color;
     getTransform()->parentAllWithColor(model);
 
-    //getCollider()->type = ColliderType::FULL;
+    getCollider()->type = ColliderType::FULL;
 }
 
 void Enemy::update(GLfloat delta) {
@@ -24,10 +25,6 @@ void Enemy::update(GLfloat delta) {
         col.vel.y = jumpVel;
         col.grounded = false;
         jumpTimer += Mth::rand01() * 10.0f + 2.0f;
-    }
-
-    if (col.vel.y != 0.0f) {
-        col.grounded = false;
     }
 
     glm::vec3 dirToPlayer = Graphics::getTransform(player)->getWorldPos() - getTransform()->getWorldPos();
