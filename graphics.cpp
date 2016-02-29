@@ -31,6 +31,7 @@ Graphics::Graphics() {
 int Graphics::registerTransform(bool solid) {
     int i = boxes->get();
     getTransform(i)->reset()->solid = solid;
+    //std::cout << boxes->getFreeList().size() << std::endl;
     return i;
 }
 
@@ -159,7 +160,7 @@ void Graphics::uploadBoxes() {
 
     auto bx = boxes->getObjects();  // should make Pool class iterator
     for (size_t i = 0, len = bx.size(); i < len; ++i) {
-        if (bx[i].id < 0 || !bx[i].data.visible) { // iterator could do this check in ++ operator
+        if (bx[i].id < 0 || !bx[i].data.shouldDraw()) { // iterator could do this check in ++ operator
             continue;
         }
         Transform& t = bx[i].data;

@@ -7,6 +7,12 @@
 #include "mathutil.h"
 #include "pool.h"
 
+enum Visibility {
+    VISIBLE,         // show yourself
+    HIDDEN_SELF,     // hide just yourself
+    HIDDEN           // hide yourself and your children
+};
+
 class Transform {
 public:
     Transform();
@@ -41,6 +47,10 @@ public:
 
     // get model matrix for rendering
     glm::mat4 getModelMatrix();
+
+    bool shouldDraw();
+
+    void setVisibility(Visibility vis);
 
     // variadic template mass parenting function
     // kind of annoying that you need two functions, maybe theres better way
@@ -78,7 +88,6 @@ public:
     Transform* reset();
 
     glm::vec3 color;
-    bool visible = true;
     // maybe when you register you specify solid or not and it gets put on different list
     bool solid = true;
 
@@ -91,6 +100,8 @@ private:
     // may be worth caching parents matrix too like benny does
 
     bool needUpdate = true;    // set to true whenever model matrix needs to be recalculated
+
+    Visibility visibility;
 
     // should switch this to index later once more work is done with pools / slotmaps
     Transform* parent = nullptr;

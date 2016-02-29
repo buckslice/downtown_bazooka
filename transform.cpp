@@ -75,6 +75,25 @@ glm::mat4 Transform::getModelMatrix() {
     return model;
 }
 
+bool Transform::shouldDraw() {
+    if (visibility != VISIBLE) {
+        return false;
+    }
+    Transform* p = parent;
+    while (p != nullptr) {
+        if (p->visibility != HIDDEN) {
+            p = p->parent;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Transform::setVisibility(Visibility visibility) {
+    this->visibility = visibility;
+}
+
 // way to reset it since they will be stored in pools
 // maybe could just recall constructor?
 Transform* Transform::reset() {
@@ -83,5 +102,6 @@ Transform* Transform::reset() {
     scale = glm::vec3(1.0f);
     color = glm::vec3(1.0f);
     parent = nullptr;
+    visibility = VISIBLE;
     return this;
 }

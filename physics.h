@@ -35,11 +35,13 @@ public:
     Terrain* tg;   // ref to terrain for collision detection
 
 private:
-    const int SPLIT_COUNT = 6;
+    const int SPLIT_COUNT = 7;
     const float MATRIX_SIZE = 1000.0f;
 
     void getLeafs(std::vector<int>& locs, AABB swept);
 
+    // returns number of dynamics intersecting with collision matrices
+    int getNumberOfIntersections();
 
     // list of static objects (dynamic list is in implementation)
     std::vector<AABB> staticObjects;
@@ -51,7 +53,7 @@ private:
     // a list for each leaf in the aabbTree containing a list of each object in that leaf
     // better name would probably be objectsInLeaves or something lol
     // but superMatrix sounds BADASS
-    std::vector<std::vector<int>> superMatrix;
+    std::vector<std::vector<int>> dynamicMatrix;
     std::vector<std::vector<int>> staticMatrix;
 
     // used to prevent unnecessary additional checks

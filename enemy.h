@@ -6,14 +6,21 @@
 
 class Enemy : public Entity {
 public:
-    Enemy(int player, glm::vec3 start, glm::vec3 scale, glm::vec3 color);
+    Enemy();
 
     void update(GLfloat delta) override;
+
+    void init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 color);
 
     float speed;
     float jumpVel;
 
+    void onCollision(Collider* c);
 private:
-    int player;
+    int id;
+    int player = -1;
     float jumpTimer;
+
+    Transform* model;
+
 };

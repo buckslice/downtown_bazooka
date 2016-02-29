@@ -1,20 +1,36 @@
 #include "enemy.h"
 #include "graphics.h"
+#include "entityManager.h"
 
-Enemy::Enemy(int player, glm::vec3 start, glm::vec3 scale, glm::vec3 color) : Entity(start, scale) {
-    this->player = player;  // player transform
-    speed = Mth::rand01() * 5.0f + 5.0f;
-    jumpVel = Mth::rand01() * 10.0f + 20.0f;
+Enemy::Enemy() {
+    model = Graphics::getTransform(Graphics::registerTransform(false));
+    model->setVisibility(VISIBLE);
 
-    Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
+    getTransform()->setVisibility(HIDDEN);
+    getTransform()->parentAll(model);
+    getCollider()->type = FULL;
+    getCollider()->awake = false;
+
+    // crap doesnt work, need to rethink
+    //getCollider()->onCollisionCallback = onCollision;
+}
+
+void Enemy::init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 color) {
+    this->id = id;
+    this->player = player;
+
+    getTransform()->setVisibility(HIDDEN_SELF);
+    getTransform()->setPos(pos);
     model->setPos(0.0f, scale.y / 2.0f, 0.0f);
     model->setScale(scale);
+    model->color = color;
 
-    getTransform()->visible = false;
-    getTransform()->color = color;
-    getTransform()->parentAllWithColor(model);
-
-    getCollider()->type = ColliderType::FULL;
+    Collider* c = getCollider();
+    glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
+    glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
+    c->setExtents(min, max);
+    c->type = FULL;
+    c->awake = true;
 }
 
 void Enemy::update(GLfloat delta) {
@@ -27,6 +43,10 @@ void Enemy::update(GLfloat delta) {
         jumpTimer += Mth::rand01() * 10.0f + 2.0f;
     }
 
+    if (player < 0) {
+        return;
+    }
+
     glm::vec3 dirToPlayer = Graphics::getTransform(player)->getWorldPos() - getTransform()->getWorldPos();
     dirToPlayer.y = 0.0f;
     if (dirToPlayer != glm::vec3(0.0f)) {
@@ -36,4 +56,11 @@ void Enemy::update(GLfloat delta) {
     col.vel.x = dirToPlayer.x;
     col.vel.z = dirToPlayer.z;
 
+}
+
+void Enemy::onCollision(Collider* other) {
+    if (other->type == TRIGGER && id >= 0) {
+        EntityManagerInstance->ReturnEnemy(id);
+        id = -1;
+    }
 }

@@ -4,7 +4,7 @@
 Player::Player(Camera* cam) : speed(SPEED) {
     this->cam = cam;
     timeSinceJump = 10.0f;
-    getTransform()->visible = false;
+    getTransform()->setVisibility(Visibility::HIDDEN_SELF);
 
     Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
     model->setPos(0.0f, 1.5f, 0.0f);
@@ -33,17 +33,15 @@ Player::Player(Camera* cam) : speed(SPEED) {
     getTransform()->color = glm::vec3(0.2f, 1.0f, 0.7f);
     getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm);
 
-    modelChildren.push_back(model);
-    modelChildren.push_back(face);
-    modelChildren.push_back(lleg);
-    modelChildren.push_back(rleg);
-    modelChildren.push_back(larm);
-    modelChildren.push_back(rarm);
-
     currRot = targRot = glm::quat();
 
-    getCollider()->tag = ColliderTag::PLAYER;
-    getCollider()->type = ColliderType::FULL;
+    Collider* c = getCollider();
+    glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+    glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
+    glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
+    c->setExtents(min, max);
+    c->tag = PLAYER;
+    c->type = FULL;
 }
 
 int Player::getHealth() {
@@ -52,9 +50,7 @@ int Player::getHealth() {
 
 void Player::update(GLfloat delta) {
     bool childrenVisible = cam->getCamDist() > 1.0f;
-    for (size_t i = 0; i < modelChildren.size(); ++i) {
-        modelChildren[i]->visible = childrenVisible;
-    }
+    getTransform()->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
 
     // get movement
     glm::vec3 input = getMovementDir();

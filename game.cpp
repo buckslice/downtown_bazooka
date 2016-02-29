@@ -206,8 +206,7 @@ void Game::update(GLfloat delta) {
         em->init(1000);
     }
     if (menu->justOpened) {
-        //em->deleteEntities();
-        //physics->clearDynamics();
+        em->returnAllObjects();
     }
 
     // update camera

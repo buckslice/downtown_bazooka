@@ -13,7 +13,6 @@ public:
     EntityManager(Player* player);
 
     ~EntityManager() {
-        deleteEntities();
     }
 
     const int MAX_PROJECTILES = 100;
@@ -23,7 +22,7 @@ public:
 
     void update(float delta);
 
-    void deleteEntities();
+    void returnAllObjects();
 
     int curParticle = 0;
     Particle *getNextParticle();
@@ -41,15 +40,19 @@ public:
     void SpawnProjectile(glm::vec3 pos, glm::vec3 vel);
     void ReturnProjectile(int id);
 
+    void SpawnEnemy();
+    void ReturnEnemy(int id);
+
 private:
-
-    std::vector<Entity*> entities;
-
     // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;
     Pool<Projectile>* projectiles;
+    Pool<Enemy>* enemies;
 
     Player* player;
+
+    template <class Entity>
+    void ReturnPooledEntity(int id, Pool<Entity>* pool);
 };
 
 //Global variable for the EntityManager

@@ -14,47 +14,41 @@ EntityManager::EntityManager(Player* player) : player(player) {
     }
 
     // should switch this from pool ?
-    projectiles = new Pool<Projectile>(MAX_PROJECTILES);    
+    projectiles = new Pool<Projectile>(MAX_PROJECTILES);
+    enemies = new Pool<Enemy>(2000);
 
 }
 
 void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
 
-    // TODO ADD DUDES BACK IN (some code will prob go in their constructors now tho)
-    //deleteEntities();
-
     for (int i = 0; i < numberOfDudes; i++) {
-        glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-        bool elite = rand() % 50 == 0;
-
-        glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-        glm::vec3 variance = Mth::randInsideUnitCube();
-        variance.x = variance.z = abs(variance.x);
-        scale += variance * .25f;
-
-        glm::vec3 color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
-        if (elite) {
-            scale *= Mth::rand01() + 2.0f;
-            color = glm::vec3(0.8f, 1.0f, 0.6f);
-        }
-        Enemy* e = new Enemy(player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
-
-        if (elite) { // gold elites 
-            e->speed = Mth::rand01() * 5.0f + 10.0f;
-            e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-        }
-
-        entities.push_back(e);
+        SpawnEnemy();
     }
 
+}
+
+// should make like a PooledEntity child class of Entity or something
+// this is pretty filth for now but whatever
+void EntityManager::returnAllObjects() {
+    for (size_t i = 0, len = projectiles->getSize(); i < len; ++i) {
+        ReturnProjectile(i);
+    }
+    for (size_t i = 0, len = enemies->getSize(); i < len; ++i) {
+        ReturnEnemy(i);
+    }
 }
 
 void EntityManager::update(float delta) {
     player->update(delta);
 
-    for (size_t i = 0, len = entities.size(); i < len; ++i) {
-        entities[i]->update(delta);
+    // update enemies
+    auto& eobjs = enemies->getObjects();
+    for (size_t i = 0, len = eobjs.size(); i < len; ++i) {
+        if (eobjs[i].id < 0) {
+            continue;
+        }
+        eobjs[i].data.update(delta);
     }
 
     // update projectiles
@@ -73,17 +67,7 @@ void EntityManager::update(float delta) {
 
 }
 
-
-void EntityManager::deleteEntities() {
-    for (size_t i = 0, len = entities.size(); i < len; ++i) {
-        delete entities[i];
-    }
-    entities.erase(entities.begin(), entities.end());
-}
-
-
 // particles
-
 Particle* EntityManager::getNextParticle() {
     Particle *p = &particles[curParticle];
     curParticle = (++curParticle) % (MAX_PARTICLES - 1);
@@ -108,25 +92,64 @@ void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 v
     }
 }
 
-
-
 // projectiles
-
 void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
-    int pin = projectiles->get();
-    if (pin < 0) {  // happens if pool is empty
+    int id = projectiles->get();
+    if (id < 0) {  // happens if pool is empty
+        return;
+    }
+    projectiles->getData(id)->init(id, pos, vel);;
+}
+
+void EntityManager::SpawnEnemy() {
+    int id = enemies->get();
+    if (id < 0) {
         return;
     }
 
-    Projectile* p = projectiles->getData(pin);
-    p->init(pin);
-    p->getTransform()->setPos(pos);
-    p->getCollider()->vel = vel;
+    Enemy* e = enemies->getData(id);
+
+    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    bool elite = rand() % 50 == 0;
+
+    glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
+    glm::vec3 variance = Mth::randInsideUnitCube();
+    variance.x = variance.z = abs(variance.x);
+    scale += variance * .25f;
+
+    glm::vec3 color;
+    if (elite) {
+        scale *= Mth::rand01() + 2.0f;
+        color = glm::vec3(0.8f, 1.0f, 0.6f);
+        e->speed = Mth::rand01() * 5.0f + 10.0f;
+        e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
+    } else {
+        color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
+        e->speed = Mth::rand01() * 5.0f + 5.0f;
+        e->jumpVel = Mth::rand01() * 10.0f + 20.0f;
+    }
+
+    e->init(id, player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
+
 }
 
+// should make a sub class of entity / template this or some shit later
 void EntityManager::ReturnProjectile(int id) {
-    Projectile* p = projectiles->getData(id);
-    p->getCollider()->awake = false;
-    p->getTransform()->visible = false;
-    projectiles->ret(id);
+    ReturnPooledEntity(id, projectiles);
+}
+
+void EntityManager::ReturnEnemy(int id) {
+    ReturnPooledEntity(id, enemies);
+}
+
+template <class Entity>
+void EntityManager::ReturnPooledEntity(int id, Pool<Entity>* pool) {
+    auto& objs = pool->getObjects();
+    if (id < 0 || objs[id].id < 0) {
+        return;
+    }
+
+    objs[id].data.getCollider()->awake = false;
+    objs[id].data.getTransform()->setVisibility(HIDDEN);
+    pool->ret(id);
 }

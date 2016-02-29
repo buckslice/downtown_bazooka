@@ -37,8 +37,8 @@ void Physics::update(float delta) {
     int numberOver = 0;
 
     // clear out all data from supermatrix
-    for (size_t i = 0, len = superMatrix.size(); i < len; ++i) {
-        superMatrix[i].clear();
+    for (size_t i = 0, len = dynamicMatrix.size(); i < len; ++i) {
+        dynamicMatrix[i].clear();
     }
 
     // build leaf list for each valid dynamic and add it to superMatrix
@@ -62,7 +62,7 @@ void Physics::update(float delta) {
         // add your dynamic objects index into the superMatrix 
         // at every leaf you could possibly be in
         for (size_t i = 0, len = dynamicLeafList.size(); i < len; ++i) {
-            superMatrix[dynamicLeafList[i]].push_back(dndx);
+            dynamicMatrix[dynamicLeafList[i]].push_back(dndx);
         }
     }
 
@@ -89,6 +89,7 @@ void Physics::update(float delta) {
         auto& dobj = dobjs[dndx];
         Collider& col = dobj.data;
         if (dobj.id < 0 || !col.awake) {
+            col.vel = glm::vec3(0.0f);
             continue;
         }
         col.pos = Graphics::getTransform(col.transform)->getPos();
@@ -107,17 +108,19 @@ void Physics::update(float delta) {
             // my aabb sweeptest fix needs a little tweaking
             // could also be something else though perhaps with the quadtree
             // or the different sets pruning too aggresively
-            if (resolutionAttempts == 9 && !printedErrorThisFrame) {
+            //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
                 //std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
-                numberOver++;
+              //  numberOver++;
                 //printedErrorThisFrame = true;   // to avoid spam
-            }
+            //}
 
+            // should try only clearing these at beginning of dynamic not each resolution
             staticCheckSet.clear();
             dynamicCheckSet.clear();
 
             AABB curDynamic = col.getAABB();
-            AABB broadphase = AABB::getSwept(curDynamic, col.vel * delta);
+            //AABB broadphase = AABB::getSwept(curDynamic, col.vel * delta);
+            AABB broadphase = AABB::getSwept(curDynamic, rvel * delta);
 
             // save time, normal, and index of closest object we hit
             float time = 1.0f;  // holds time of collision (0-1)
@@ -132,41 +135,42 @@ void Physics::update(float delta) {
             for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
                 int leaf = leafList[lndx];
                 // for each object in this leaf
-                std::vector<int>& leafObjects = superMatrix[leaf];
-                for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
-                    int index = leafObjects[ondx];    // other dynamic object
-                    if (col.type == ColliderType::BASIC ||
-                        dynamicResolvedSet.count(index) || dynamicCheckSet.count(index) ||
-                        dndx == index) {
-                        continue;
-                    }
+                if (col.type != ColliderType::BASIC) {
+                    std::vector<int>& leafObjects = dynamicMatrix[leaf];
+                    for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
+                        int index = leafObjects[ondx];    // other dynamic object
+                        if (dynamicResolvedSet.count(index) || dynamicCheckSet.count(index) ||
+                            dndx == index) {
+                            continue;
+                        }
 
-                    // pretent like they aren't moving since you are going first
-                    AABB otherAABB = dobjs[index].data.getAABB();
+                        // pretent like they aren't moving since you are going first
+                        AABB otherAABB = dobjs[index].data.getAABB();
 
-                    // broadphase sweep bounds check
-                    if (!AABB::check(broadphase, otherAABB)) {
-                        // if failed any broadphase then dont check this static again since 
-                        // future resolutions will never exceed previous broadphases
-                        dynamicResolvedSet.insert(index);
-                        continue;
-                    }
-                    // this set just tracks if youve checked this object before during the current resolution attempt 
-                    // done purely to prevent duplicate checks over leaf borders (need to test if this is even worth it lol)
-                    dynamicCheckSet.insert(index);
+                        // broadphase sweep bounds check
+                        if (!AABB::check(broadphase, otherAABB)) {
+                            // if failed any broadphase then dont check this static again since 
+                            // future resolutions will never exceed previous broadphases
+                            dynamicResolvedSet.insert(index);
+                            continue;
+                        }
+                        // this set just tracks if youve checked this object before during the current resolution attempt 
+                        // done purely to prevent duplicate checks over leaf borders (need to test if this is even worth it lol)
+                        dynamicCheckSet.insert(index);
 
-                    // narrow sweep bounds resolution
-                    // calculates exact time of collision
-                    // but still possible for no collision at this point
-                    glm::vec3 n;
-                    float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
-                    if (t < time) { // a collision occured
-                        time = t;
-                        norm = n;
-                        closestIndex = index;
-                        closestIsDynamic = true;
+                        // narrow sweep bounds resolution
+                        // calculates exact time of collision
+                        // but still possible for no collision at this point
+                        glm::vec3 n;
+                        float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
+                        if (t < time) { // a collision occured
+                            time = t;
+                            norm = n;
+                            closestIndex = index;
+                            closestIsDynamic = true;
+                        }
+                        fullTest = true;    // this could maybe be in if above?
                     }
-                    fullTest = true;    // this could maybe be in if above?
                 }
 
                 std::vector<int>& sleafObjects = staticMatrix[leaf];
@@ -264,6 +268,7 @@ void Physics::update(float delta) {
                 rvel = (rvel - proj) * (1.0f - time);
             } else {
                 rvel = glm::vec3(0.0f);
+                break;
             }
 
             // if there was no full collision test then this object is resolved
@@ -281,8 +286,54 @@ void Physics::update(float delta) {
     //std::cout << numberOver << std::endl;
     //std::cout << "AABB checks: " << totalAABBChecks << " Sweep tests: " << totalSweepTests << std::endl;
     //std::cout << dynamicObjects.size() << std::endl;
+    //std::cout << getNumberOfIntersections() << std::endl;
 
 }
+
+int Physics::getNumberOfIntersections() {
+    int count = 0;
+    auto& dobjs = dynamicObjects->getObjects();
+    for (size_t dndx = 0, len = dobjs.size(); dndx < len; ++dndx) {
+        auto& dobj = dobjs[dndx];
+        Collider& col = dobj.data;
+        if (dobj.id < 0 || !col.awake) {
+            continue;
+        }
+        AABB mine = col.getAABB();
+        std::vector<int>& leafList = dynamicLeafLists[dndx];
+        for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
+            int leaf = leafList[lndx];
+            // for each object in this leaf
+            if (col.type != ColliderType::BASIC) {
+                std::vector<int>& leafObjects = dynamicMatrix[leaf];
+                for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
+                    int index = leafObjects[ondx];    // other dynamic object
+                    if (index == dndx) {
+                        continue;
+                    }
+
+                    if (AABB::check(mine, dobjs[index].data.getAABB())) {
+                        count++;
+                    }
+                }
+            }
+
+            std::vector<int>& sleafObjects = staticMatrix[leaf];
+            for (size_t ondx = 0, olen = sleafObjects.size(); ondx < olen; ++ondx) {
+                int index = sleafObjects[ondx];    // other static object
+
+                if (AABB::check(mine, staticObjects[index])) {
+                    count++;
+                }
+
+            }
+        }
+    }
+
+    return count;
+}
+
+
 
 // should only calculate this if player moves far away enough from it
 // like 100.0 units away then recalculate centered on player!!!
@@ -318,7 +369,7 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
     // its same size as aabbTree even though it should only just be leaves but whatever
     // doesn't save that much space and complicates the indexing
     staticMatrix.resize(aabbTree.size());
-    superMatrix.resize(aabbTree.size());
+    dynamicMatrix.resize(aabbTree.size());
 
     // prints the length of a leafs x/z edge in the tree
     //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
@@ -411,8 +462,6 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
 
     return count;
 }
-
-
 
 
 // this should never be called directly so its hidden down here super sketchily

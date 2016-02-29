@@ -8,7 +8,7 @@ public:
     void update(GLfloat delta) override;
 
 
-    void init(int id);
+    void init(int id, glm::vec3 pos, glm::vec3 vel);
 
 private:
     int id;

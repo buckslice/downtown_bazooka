@@ -37,9 +37,12 @@ public:
     // returns obj back to pool
     void ret(int id);
 
+    // returns all objects in pool
+    void returnAll();
+
     // get internal object list from pool (make sure you declare as reference)
     std::vector<obj<T>>& getObjects();
-    std::vector<unsigned>& getFreeList();
+    std::vector<size_t>& getFreeList();
 
     // returns max size
     size_t getSize() {
@@ -48,7 +51,7 @@ public:
 
 private:
     std::vector<obj<T>> objs;
-    std::vector<unsigned> free_list;
+    std::vector<size_t> free_list;
 
 };
 
@@ -59,7 +62,7 @@ Pool<T>::Pool() {
 template <class T>
 Pool<T>::Pool(int max_size) {
     objs.resize(max_size);
-    for (unsigned i = max_size; i > 0; i--) { // careful, size_t is unsigned
+    for (size_t i = max_size; i > 0; i--) { // careful, size_t is unsigned
         free_list.push_back(i - 1);
     }
 }
@@ -68,9 +71,10 @@ template <class T>
 int Pool<T>::get() {
     if (free_list.empty()) {
         std::cout << "POOL EMPTY!!! WEEEEEEEEEEE";
+        // maybe should assert here instead, or just no message?
         return -1;
     }
-    unsigned free = free_list.back();
+    size_t free = free_list.back();
     free_list.pop_back();
     objs[free].id = free;
     return free;
@@ -105,8 +109,18 @@ std::vector<obj<T>>& Pool<T>::getObjects() {
 }
 
 template <class T>
-std::vector<unsigned>& Pool<T>::getFreeList() {
+std::vector<size_t>& Pool<T>::getFreeList() {
     return free_list;
+}
+
+template <class T>
+void Pool<T>::returnAll() {
+    for (size_t i = 0, len = objs.size(); i < len; ++i) {
+        if (objs[i].id < 0) {
+            continue;
+        }
+        ret(i);
+    }
 }
 
 

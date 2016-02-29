@@ -7,7 +7,7 @@ Particle::Particle() : Entity() {
 
 void Particle::activate() {
     Transform* t = getTransform();
-    t->visible = true;
+    t->setVisibility(VISIBLE);
     t->solid = true;
 
     Collider* c = getCollider();
@@ -38,7 +38,7 @@ void Particle::update(GLfloat dt) {
         return;
     } else if ((curlife -= dt) <= 0) {
         c->awake = false;
-        getTransform()->visible = false;
+        getTransform()->setVisibility(HIDDEN);
         return;
     }
 
