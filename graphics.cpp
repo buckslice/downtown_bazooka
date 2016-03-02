@@ -27,7 +27,6 @@ static std::vector<glm::vec3> gcolors;
 Graphics::Graphics() {
 }
 
-
 int Graphics::registerTransform(bool solid) {
     int i = boxes->get();
     getTransform(i)->reset()->solid = solid;

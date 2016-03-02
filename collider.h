@@ -20,7 +20,7 @@ enum ColliderTag {
     DEFAULT
 };
 
-// Collider is a class for moving physics objects
+// Colliders represent dynamic physics objects
 class Collider {
 public:
     int transform;  // id of transform this collider is changing position of
@@ -39,18 +39,11 @@ public:
     void setExtents(glm::vec3 min, glm::vec3 max);
 
     AABB getAABB();
-    AABB getSwept(float delta);    // uses vel
-
-    // function to set when you want to be notified of who you collided with
-    void(*onCollisionCallback)(Collider* other);
-    // could maybe make it fire an event in future event system too perhaps?
 
 private:
-    glm::vec3 extmin;   // (-0.5f, 0.0f, -0.5f)
-    glm::vec3 extmax;   // (0.5f, 2.0f, 0.5f)
+    glm::vec3 extmin; 
+    glm::vec3 extmax;
 
-    // gets set at beginning of each physics iteration
-    // could prob make this better somehow (two out of cache jumps per collider per frame (probly? (i have no clue))
-    glm::vec3 pos; 
-    friend class Physics;   // so physics can directly set pos but nobody else
+    glm::vec3 pos;
+    friend class Physics;
 };

@@ -140,13 +140,6 @@ void Game::getInput() {
     if (gameFocused || lastFocused) {
         input.update();
     }
-
-    if (Input::justPressed(sf::Keyboard::Subtract)) {
-        mouseScroll += 1;
-    }
-    if (Input::justPressed(sf::Keyboard::Add)) {
-        mouseScroll -= 1;
-    }
 }
 
 
@@ -204,6 +197,13 @@ void Game::toggleOptions() {
 }
 
 void Game::update(GLfloat delta) {
+    // plus and minus keys are on shift layer so use equals and dash for convenience
+    if (Input::pressed(sf::Keyboard::Equal)) {
+        mouseScroll += 5.0f * delta;
+    }
+    if (Input::pressed(sf::Keyboard::Dash)) {
+        mouseScroll -= 5.0f * delta;
+    }
 
     //update menu
     menu->update(running);

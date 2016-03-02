@@ -142,6 +142,10 @@ void Player::update(GLfloat delta) {
     }
 }
 
+void Player::onCollision(Collider* other) {
+
+}
+
 void Player::jump() {
     // check if grounded
     Collider& c = *getCollider();
@@ -165,16 +169,16 @@ void Player::addHealth(int amount) {
 glm::vec3 Player::getMovementDir() {
     // calculate movement direction
     glm::vec3 dir(0.0f, 0.0f, 0.0f);
-    if (Input::pressed(sf::Keyboard::W)) {
+    if (Input::pressed(sf::Keyboard::W) || Input::pressed(sf::Keyboard::Up)) {
         dir.z += 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::S)) {
+    if (Input::pressed(sf::Keyboard::S) || Input::pressed(sf::Keyboard::Down)) {
         dir.z -= 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::A)) {
+    if (Input::pressed(sf::Keyboard::A) || Input::pressed(sf::Keyboard::Left)) {
         dir.x -= 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::D)) {
+    if (Input::pressed(sf::Keyboard::D) || Input::pressed(sf::Keyboard::Right)) {
         dir.x += 1.0f;
     }
     if (Input::pressed(sf::Keyboard::LShift)) {

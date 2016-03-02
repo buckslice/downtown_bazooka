@@ -57,3 +57,4 @@ private:
 
 //Global variable for the EntityManager
 extern EntityManager *EntityManagerInstance;
+// try implementing event system that entity manager can listen to!! at least for spawning of things
