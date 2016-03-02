@@ -140,6 +140,13 @@ void Game::getInput() {
     if (gameFocused || lastFocused) {
         input.update();
     }
+
+    if (Input::justPressed(sf::Keyboard::Subtract)) {
+        mouseScroll += 1;
+    }
+    if (Input::justPressed(sf::Keyboard::Add)) {
+        mouseScroll -= 1;
+    }
 }
 
 
