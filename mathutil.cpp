@@ -3,18 +3,28 @@
 const float PI = 3.14159265358979f;
 const float RADSTODEGREES = 180.0f / PI;
 const float DEGREESTORADS = PI / 180.0f;
+const float ZERO = 0.0f;
+std::random_device rd; // RS: type says it all, a random device used for the generator
+std::mt19937 gen(rd()); //RS: generator uses a random device
+
+
 
 // BIG TODO
 // Redo all this shit to use new random from c++11
 // its faster and more uniform!!!!!!!!!!!!!!!!!!
 float Mth::rand01() {
-    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	// RS: below function returns number [0,1) - very rarely returns 1.0 - (10 bits of randomness)
+	return static_cast <float> (std::generate_canonical<double, 10>(gen)); 
 }
 float Mth::rand0X(float X) {
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / X));
+	// RS: I have no idea how/why this works. BUT IT'S SUPPOSED TO
+	std::uniform_real_distribution<> dis(ZERO, X);
+    return static_cast <float> (dis(gen));
 }
 float Mth::randUnit() {
-    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX) * 2.0f - 1.0f;
+	// RS: Bad practice of hardcoding values - it's k cause this wil never change
+	std::uniform_real_distribution<> dis(-1.0f, 1.0f);
+	return static_cast <float> (dis(gen));
 }
 float Mth::randRange(float a, float b) {
     if (a < b) {

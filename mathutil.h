@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <functional>
 #include <algorithm>
+#include <random>;
 
 // theres are defined in the cpp file
 extern const float PI;
@@ -17,13 +18,13 @@ extern const float DEGREESTORADS;   // multiply by this to convert degrees to ra
 class Mth {
 public:
 
-    // returns random float between 0 and 1
+    // returns random float between 0 and 1 -[0,1)
     static float rand01();
 
-    // returns random float between 0 and X
+    // returns random float between 0 and X - [0,X)
     static float rand0X(float X);
 
-    // returns random float between -1 and 1
+    // returns random float between -1 and 1 - [-1,1)
     static float randUnit();
 
     // returns random float between a and b
