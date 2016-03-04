@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "transform.h"
-#include "physics.h"
+#include "collider.h"
 
 class Entity {
 public:
@@ -14,12 +14,15 @@ public:
     ~Entity();
 
     // derived classes have to override this
-    void virtual update(GLfloat delta) = 0;
+    virtual void update(GLfloat delta) = 0;
+
+    // may override this if you want
+    // probably could make a struct to pass in rather than Collider pointer
+    // with more basic info like tag and type only
+    virtual void onCollision(Collider* other) {}
 
     Transform* getTransform();
     Collider* getCollider();
-
-	void virtual onCollision(){}    // TODO here or somewhere else..?
 
     int transform;
     int collider;

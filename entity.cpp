@@ -1,6 +1,6 @@
 #include "entity.h"
 #include "graphics.h"
-
+#include "physics.h"
 
 Entity::Entity(glm::vec3 pos, glm::vec3 extents, glm::vec3 vel) {
     transform = Graphics::registerTransform();

@@ -11,8 +11,7 @@ Enemy::Enemy() {
     getCollider()->type = FULL;
     getCollider()->awake = false;
 
-    // crap doesnt work, need to rethink
-    //getCollider()->onCollisionCallback = onCollision;
+    Physics::setCollisionCallback(this);
 }
 
 void Enemy::init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 color) {
@@ -59,8 +58,7 @@ void Enemy::update(GLfloat delta) {
 }
 
 void Enemy::onCollision(Collider* other) {
-    if (other->type == TRIGGER && id >= 0) {
+    if (other->type == TRIGGER) {
         EntityManagerInstance->ReturnEnemy(id);
-        id = -1;
     }
 }

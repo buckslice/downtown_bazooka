@@ -7,6 +7,7 @@ public:
 
     void update(GLfloat delta) override;
 
+    void onCollision(Collider* other) override;
 
     void init(int id, glm::vec3 pos, glm::vec3 vel);
 

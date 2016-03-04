@@ -3,10 +3,13 @@
 #include "entityManager.h"
 
 Projectile::Projectile(){
-    getCollider()->awake = false;
+    Collider* c = getCollider();
+    c->awake = false;
+    c->type = TRIGGER;
+    c->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
+
     getTransform()->setVisibility(HIDDEN);
     getTransform()->color = glm::vec3(1.0f, 0.2f, 0.0f);
-    getCollider()->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
 }
 
 Projectile::~Projectile() {
@@ -37,4 +40,8 @@ void Projectile::update(GLfloat delta) {
     for (int i = 0; i < 1; i++) {
         EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3.0f);
     }
+}
+
+void Projectile::onCollision(Collider* other) {
+
 }

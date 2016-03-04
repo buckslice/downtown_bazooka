@@ -23,6 +23,7 @@ public:
     int getHealth();
 
     void update(GLfloat delta) override;
+    void onCollision(Collider* other) override;
 
     void jump();
 

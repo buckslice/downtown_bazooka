@@ -5,12 +5,15 @@
 #include "physics.h"
 #include "cityGenerator.h"
 
-// has to be in implementation file because reasons (#staticlife?)
-// should probably research alternatives to this cuz its gross lol
-static Pool<Collider>* dynamicObjects;
+// declared like this so can be accessed from static methods
+const int MAX_DYNAMICS = 10000;
+std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
+std::vector<int> Physics::freeDynamics;
 
 Physics::Physics() {
-    dynamicObjects = new Pool<Collider>(10000);
+    for (int i = MAX_DYNAMICS; i > 0; --i) {
+        freeDynamics.push_back(i - 1);
+    }
 
     generateCollisionMatrix(glm::vec3(0.0f));
 }
@@ -20,19 +23,10 @@ Physics::Physics() {
 //int totalAABBChecks = 0;
 //int totalSweepTests = 0;
 
-// notes from thread
-// The rest of my algorithm is as optimal as I could make it.I have an 8 - level quad -
-// tree with nodes linear in RAM for best caching. Insertion into any node is nearly instantaneous,
-// as calculating the depth and then the node in that depth for a given AABB is only a few
-// instructions total(as apposed to the naive implementation which would have me starting at the top
-// and searching for the best - fit node with a bunch of AABB tests).
-
 void Physics::update(float delta) {
     bool printedErrorThisFrame = false;
 
-    auto& dobjs = dynamicObjects->getObjects();
-    const size_t sizeOfDynamicObjects = dobjs.size();
-    dynamicLeafLists.resize(sizeOfDynamicObjects);
+    dynamicLeafLists.resize(MAX_DYNAMICS);
 
     int numberOver = 0;
 
@@ -42,20 +36,21 @@ void Physics::update(float delta) {
     }
 
     // build leaf list for each valid dynamic and add it to superMatrix
-    for (int dndx = 0, len = static_cast<int>(sizeOfDynamicObjects); dndx < len; ++dndx) {
-        auto& dobj = dobjs[dndx];
+    for (int dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
+        auto& dobj = dynamicObjects[dndx];
         auto& dynamicLeafList = dynamicLeafLists[dndx];
         dynamicLeafList.clear();
+        auto& col = dobj.collider;
         // ensure dynamic object is active and awake
-        if (dobj.id < 0 || !dobj.data.awake) {
+        if (dobj.id < 0 || !col.awake) {
             continue;
         }
 
         // gets list of leafs this object is in (using swept AABB)
-        getLeafs(dynamicLeafList, dobj.data.getSwept(delta));
+        getLeafs(dynamicLeafList, AABB::getSwept(col.getAABB(), col.vel * delta));
 
         // BASIC can continue from here because they aren't being collided against
-        if (dobj.data.type == ColliderType::BASIC) {
+        if (col.type == ColliderType::BASIC) {
             continue;
         }
 
@@ -85,13 +80,16 @@ void Physics::update(float delta) {
     // for each dynamic object check it against all objects in its leaf(s)
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
-    for (size_t dndx = 0; dndx < sizeOfDynamicObjects; ++dndx) {
-        auto& dobj = dobjs[dndx];
-        Collider& col = dobj.data;
+    for (size_t dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
+        auto& dobj = dynamicObjects[dndx];
+        Collider& col = dobj.collider;
         if (dobj.id < 0 || !col.awake) {
             col.vel = glm::vec3(0.0f);
+            col.grounded = false;
             continue;
         }
+
+        // current dynamic position
         col.pos = Graphics::getTransform(col.transform)->getPos();
 
         staticResolvedSet.clear();
@@ -104,13 +102,9 @@ void Physics::update(float delta) {
 
         // try to resolve up to 10 collisions for this object this frame
         for (int resolutionAttempts = 0; resolutionAttempts < 10; ++resolutionAttempts) {
-            // probly an error when this happens
-            // my aabb sweeptest fix needs a little tweaking
-            // could also be something else though perhaps with the quadtree
-            // or the different sets pruning too aggresively
             //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
                 //std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
-              //  numberOver++;
+                //numberOver++;
                 //printedErrorThisFrame = true;   // to avoid spam
             //}
 
@@ -119,7 +113,6 @@ void Physics::update(float delta) {
             dynamicCheckSet.clear();
 
             AABB curDynamic = col.getAABB();
-            //AABB broadphase = AABB::getSwept(curDynamic, col.vel * delta);
             AABB broadphase = AABB::getSwept(curDynamic, rvel * delta);
 
             // save time, normal, and index of closest object we hit
@@ -144,8 +137,8 @@ void Physics::update(float delta) {
                             continue;
                         }
 
-                        // pretent like they aren't moving since you are going first
-                        AABB otherAABB = dobjs[index].data.getAABB();
+                        // pretend like they aren't moving since you are going first
+                        AABB otherAABB = dynamicObjects[index].collider.getAABB();
 
                         // broadphase sweep bounds check
                         if (!AABB::check(broadphase, otherAABB)) {
@@ -206,7 +199,7 @@ void Physics::update(float delta) {
                         closestIndex = index;
                         closestIsDynamic = false;
                     }
-                    fullTest = true;    // this could maybe be in if above?
+                    fullTest = true;    // could be placed in above if statement probably
                 }
             }
 
@@ -215,22 +208,19 @@ void Physics::update(float delta) {
                     // dont let this dynamic collide with this other object again (this frame)
                     dynamicResolvedSet.insert(closestIndex);
 
-                    Collider& other = dobjs[closestIndex].data;
+                    ColliderData& other = dynamicObjects[closestIndex];
 
-                    // call collision callbacks for each object if set
-                    // should probably pass custom struct with tag and other basic info
-                    // that way can have callback if hit static too
-                    if (col.onCollisionCallback != nullptr) {
-                        col.onCollisionCallback(&other);
+                    if (dobj.entity != nullptr) {
+                        dobj.entity->onCollision(&other.collider);
                     }
-                    if (other.onCollisionCallback != nullptr) {
-                        other.onCollisionCallback(&col);
+                    if (other.entity != nullptr) {
+                        other.entity->onCollision(&col);
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER
                     // then reset collision variables to ignore the collision basically
                     if (col.type == ColliderType::TRIGGER ||
-                        other.type == ColliderType::TRIGGER) {
+                        other.collider.type == ColliderType::TRIGGER) {
                         time = 1.0f;
                         norm = glm::vec3(0.0f);
                     }
@@ -279,7 +269,7 @@ void Physics::update(float delta) {
 
         }
 
-        // updates graphics position after fully resolved
+        // update transforms position after fully resolved
         Graphics::getTransform(col.transform)->setPos(col.pos);
     }
 
@@ -292,10 +282,9 @@ void Physics::update(float delta) {
 
 int Physics::getNumberOfIntersections() {
     int count = 0;
-    auto& dobjs = dynamicObjects->getObjects();
-    for (size_t dndx = 0, len = dobjs.size(); dndx < len; ++dndx) {
-        auto& dobj = dobjs[dndx];
-        Collider& col = dobj.data;
+    for (size_t dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
+        auto& dobj = dynamicObjects[dndx];
+        Collider& col = dobj.collider;
         if (dobj.id < 0 || !col.awake) {
             continue;
         }
@@ -312,7 +301,8 @@ int Physics::getNumberOfIntersections() {
                         continue;
                     }
 
-                    if (AABB::check(mine, dobjs[index].data.getAABB())) {
+                    AABB theirs = dynamicObjects[index].collider.getAABB();
+                    if (AABB::check(mine, theirs)) {
                         count++;
                     }
                 }
@@ -334,7 +324,6 @@ int Physics::getNumberOfIntersections() {
 }
 
 
-
 // should only calculate this if player moves far away enough from it
 // like 100.0 units away then recalculate centered on player!!!
 // for now just do every 2 seconds or something
@@ -352,7 +341,7 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
 
             float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
             float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
-
+            
             // bl tl tr br
             aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
             aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
@@ -373,6 +362,10 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
 
     // prints the length of a leafs x/z edge in the tree
     //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
+}
+
+void Physics::setCollisionCallback(Entity* entity) {
+    dynamicObjects[entity->collider].entity = entity;
 }
 
 // add static to statics list and then 
@@ -419,17 +412,26 @@ void Physics::clearStatics() {
 }
 
 int Physics::registerDynamic(int transform) {
-    int index = dynamicObjects->get();
-    getCollider(index)->transform = transform;
+    if (freeDynamics.empty()) {
+        std::cout << "NO FREE DYNAMIC COLLIDERS";
+        return -1;
+    }
+    int index = freeDynamics.back();
+    freeDynamics.pop_back();
+    dynamicObjects[index].id = index;
+    dynamicObjects[index].collider.transform = transform;
     return index;
 }
 
 //void Physics::returnDynamic(int id) {
-//    dynamicObjects->ret(id);
 //}
 
 Collider* Physics::getCollider(int index) {
-    return dynamicObjects->getData(index);
+    assert(index >= 0 && index < MAX_DYNAMICS);
+    if (dynamicObjects[index].id < 0) {
+        return nullptr;
+    }
+    return &dynamicObjects[index].collider;
 }
 
 int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
@@ -443,18 +445,16 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
         }
     }
 
-    auto& dobjs = dynamicObjects->getObjects();
-    for (size_t i = 0, len = dynamicObjects->getSize(); i < len; ++i) {
-        auto& pobj = dobjs[i];
-
+    for (size_t i = 0; i < MAX_DYNAMICS; ++i) {
+        auto& pobj = dynamicObjects[i];
         if (pobj.id < 0) {
             continue;
-        } else if (!pobj.data.awake) {
+        } else if (!pobj.collider.awake) {
             colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }
-        models[count] = pobj.data.getAABB().getModelMatrix();
+        models[count] = pobj.collider.getAABB().getModelMatrix();
         if (++count >= max) {
             return count - 1;
         }
@@ -488,11 +488,11 @@ void checkLeaves(int node) {
 }
 
 // searches tree and returns a list of leaf indices AABB collides with
-void Physics::getLeafs(std::vector<int>& locs, AABB swept) {
+void Physics::getLeafs(std::vector<int>& locs, AABB aabb) {
     htreesize = static_cast<int>(aabbTree.size());
     htree = &aabbTree;
     hnodes = &locs;
-    hswept = swept;
+    hswept = aabb;
     checkLeaves(0);
 }
 
