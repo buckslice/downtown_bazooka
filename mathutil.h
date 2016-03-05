@@ -8,7 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <functional>
 #include <algorithm>
-#include <random>;
+#include <random>
 
 // theres are defined in the cpp file
 extern const float PI;
@@ -16,8 +16,9 @@ extern const float RADSTODEGREES;   // multiply by this to convert radians to de
 extern const float DEGREESTORADS;   // multiply by this to convert degrees to radians
 
 class Mth {
+private:
+    static std::mt19937 rng;        // generator uses a random device
 public:
-
     // returns random float between 0 and 1 -[0,1)
     static float rand01();
 

@@ -30,7 +30,6 @@ private:
     sf::RectangleShape healthBar;
 
     Player* player;
-    sf::Font font;
     int curSelection;
     bool visible = true;
     bool showingInstructions = false;

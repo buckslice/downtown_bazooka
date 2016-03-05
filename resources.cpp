@@ -4,6 +4,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 Resources::Resources() {
+    if (!font.loadFromFile("assets/fonts/OCRAEXT.ttf")) {
+        std::cout << "ERROR::FONT::LOAD_FAILURE";
+    }
+
     loadTextures(true);
     buildShaders();
 }

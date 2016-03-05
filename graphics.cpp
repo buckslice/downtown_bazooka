@@ -163,7 +163,7 @@ void Graphics::uploadBoxes() {
             continue;
         }
         Transform& t = bx[i].data;
-        // if debug rendering then set color to pink (to represent colliderless box)
+        // if debug rendering then set color to pink to show these are just the models (no collider info)
         glm::vec3 color = dstreamSize > 0 ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
         Graphics::addToStream(t.solid, t.getModelMatrix(), color);
     }

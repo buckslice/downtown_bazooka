@@ -7,8 +7,8 @@
 class Resources {
 public:
     static Resources& get() {
-        static Resources res;
-        return res;
+        static Resources instance;
+        return instance;
     }
 
     GLuint gridTex;
@@ -22,17 +22,18 @@ public:
     Shader screenShader;
     Shader blendShader;
 
+    sf::Font font;
+
     void buildShaders();
     void loadTextures(bool mipmapped);
     void toggleBuilding(bool b);
 
+    // singleton: delete copy constructor and assignment operator
+    Resources(Resources const&) = delete;
+    Resources& operator=(Resources const&) = delete;
 private:
     Resources();
-
     ~Resources();
-
-    Resources(Resources const&);   // hide copy ctor
-    Resources& operator=(Resources const&); // hide assign op
 
     void deleteShaders();
     void deleteTextures();

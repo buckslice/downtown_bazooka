@@ -3,10 +3,9 @@
 #include <iostream>
 
 Menu::Menu(Player* player) {
-    if (!font.loadFromFile("assets/fonts/OCRAEXT.ttf")) {
-        //handle error
-        std::cout << "ERROR::FONT::LOAD_FAILURE";
-    }
+
+    sf::Font& font = Resources::get().font;
+
     curSelection = 0;
 
     menu[0].setFont(font);
@@ -35,23 +34,24 @@ Menu::Menu(Player* player) {
     instructions.setFont(font);
     instructions.setColor(DEFAULT_COLOR);
     instructions.setString( // instead of adding a space to front should just move pos over lol XD
-        " WASD : move\n"
-        " Space: jump, select\n"
-        " ESC  : menu, quit\n"
-        " Q    : toggle flymode\n"
-        " E    : shoot\n"
-        "\n"
-        " TAB  : pause\n"
-        " 1    : toggle blur\n"
-        " 2    : toggle mipmaps\n"
-        " 3    : toggle physics debug\n"
-        " 4    : toggle terrain debug\n"
-        " 5    : randomize world seed\n"
-        " 6    : gen colorwheel\n"
-        " 7    : gen normal\n"
-        " 0    : recompile shaders");
+        "WASD : move\n"
+        "E    : shoot\n"
+        "Space: jump, select\n"
+        "ESC  : menu, quit\n"
+        "---------------------------\n"
+        "TAB  : pause\n"
+        "Q    : toggle flymode\n"
+        "1    : toggle blur\n"
+        "2    : toggle mipmaps\n"
+        "3    : toggle physics debug\n"
+        "4    : toggle terrain debug\n"
+        "5    : randomize world seed\n"
+        "6    : gen colorwheel\n"
+        "7    : gen normal\n"
+        "0    : recompile shaders");
 
     instructions.setScale(sf::Vector2f(1.5f, 1.5f));
+    instructions.setPosition(5.0f, 50.0f);
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
     this->player = player;

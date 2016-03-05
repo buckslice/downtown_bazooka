@@ -60,12 +60,20 @@ Game::Game(GLuint width, GLuint height)
     const GLuint MAX_DEBUG = 20000;
     dmodels = new std::vector<glm::mat4>(MAX_DEBUG);
     dcolors = new std::vector<glm::vec3>(MAX_DEBUG);
+
+    fpsText.setFont(Resources::get().font);
+    fpsText.setColor(sf::Color(255, 0, 0));
+    fpsText.setScale(2.0f, 2.0f);
+    fpsText.setPosition(0.0f, -10.0f);
 }
 
 void Game::start() {
+    gameTime.restart();  // holds time since start of game
     while (running) {
 
         GLfloat delta = frameTime.restart().asSeconds();
+
+        updateFpsText(delta);
 
         pollEvents();
 
@@ -238,6 +246,9 @@ void Game::update(GLfloat delta) {
 
     // resolve collisions
     physics->update(delta);
+
+    //testMathUtils();
+
 }
 
 void Game::render() {
@@ -254,6 +265,7 @@ void Game::render() {
     // draw UI
     window->resetGLStates();
     menu->draw(*window);
+    window->draw(fpsText);
 
     if (blurring) {
         graphics->postProcess();
@@ -261,6 +273,50 @@ void Game::render() {
 
     // swap buffers
     window->display();
+}
+
+// calculates a buffers the fps
+void Game::updateFpsText(float delta) {
+    float fps = 1.0f / delta;
+    fpsValues.push(fps);
+    totalFpsQueueValue += fps;
+    if (fpsValues.size() > 30) {
+        totalFpsQueueValue -= fpsValues.front();
+        fpsValues.pop();
+    }
+    float avgFps = totalFpsQueueValue / fpsValues.size();
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << avgFps;
+    fpsText.setString(ss.str());
+}
+
+// test math utils by drawing a bunch of boxes using each function
+void Game::testMathUtils() {
+    int numTestBoxes = 100000;
+    float size = 10.0f;
+    float curTime = fmod(gameTime.getElapsedTime().asSeconds(), 20.0f);
+    glm::vec3 scale = glm::vec3(1.0f);
+    for (int i = 0; i < numTestBoxes; ++i) {
+        glm::vec3 p;
+
+        if (curTime < 5.0f) {
+            p = Mth::randInsideUnitCube() * size;
+        } else if (curTime < 10.0f) {
+            p = Mth::randInsideSphere(size);
+        } else if (curTime < 15.0f) {
+            p = glm::vec3(Mth::randRange(-size, size), Mth::randRange(-size, size), Mth::randRange(-size, size));
+        } else {
+            p = glm::vec3(Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size);
+        }
+
+        p.y += size;
+        glm::mat4 model;
+        model = glm::translate(model, p);
+        model = glm::scale(model, scale);
+
+        HSBColor color(Mth::rand01(), 1.0f, 1.0f);
+        Graphics::addToStream(true, model, color.toRGB());
+    }
 }
 
 // delete all our dumb pointers lol

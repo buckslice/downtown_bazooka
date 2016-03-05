@@ -3,34 +3,25 @@
 const float PI = 3.14159265358979f;
 const float RADSTODEGREES = 180.0f / PI;
 const float DEGREESTORADS = PI / 180.0f;
-const float ZERO = 0.0f;
-std::random_device rd; // RS: type says it all, a random device used for the generator
-std::mt19937 gen(rd()); //RS: generator uses a random device
 
+std::random_device rd;       // random device used to seed the generator
+std::mt19937 Mth::rng(rd());
 
-
-// BIG TODO
-// Redo all this shit to use new random from c++11
-// its faster and more uniform!!!!!!!!!!!!!!!!!!
 float Mth::rand01() {
 	// RS: below function returns number [0,1) - very rarely returns 1.0 - (10 bits of randomness)
-	return static_cast <float> (std::generate_canonical<double, 10>(gen)); 
+	return std::generate_canonical<float, 10>(rng); 
 }
 float Mth::rand0X(float X) {
-	// RS: I have no idea how/why this works. BUT IT'S SUPPOSED TO
-	std::uniform_real_distribution<> dis(ZERO, X);
-    return static_cast <float> (dis(gen));
+	std::uniform_real_distribution<> uni(0.0f, X);
+    return static_cast <float> (uni(rng));
 }
 float Mth::randUnit() {
-	// RS: Bad practice of hardcoding values - it's k cause this wil never change
-	std::uniform_real_distribution<> dis(-1.0f, 1.0f);
-	return static_cast <float> (dis(gen));
+    std::uniform_real_distribution<float> uni(-1.0f, 1.0f);
+    return uni(rng);
 }
 float Mth::randRange(float a, float b) {
-    if (a < b) {
-        return rand0X(b - a) + a;
-    }
-    return rand0X(a - b) + b;
+    std::uniform_real_distribution<float> uni(a, b);
+    return uni(rng);
 }
 
 glm::vec3 Mth::randInsideUnitCube() {

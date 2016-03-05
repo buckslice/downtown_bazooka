@@ -9,9 +9,11 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <Windows.h>
 #include <memory>
+#include <queue>
 
 #include "shader.h"
 #include "camera.h"
@@ -67,7 +69,14 @@ private:
 
     // some utility clocks
     sf::Clock frameTime;
-    sf::Clock animTime;
+    sf::Clock gameTime;
+
+    sf::Text fpsText;
+    std::queue<float> fpsValues;
+    float totalFpsQueueValue;
+
+    void testMathUtils();
+    void updateFpsText(float delta);
 
     sf::Vector2i mouseMove;
     GLfloat mouseScroll;
