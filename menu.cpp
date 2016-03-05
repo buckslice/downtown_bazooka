@@ -40,6 +40,7 @@ Menu::Menu(Player* player) {
         "ESC  : menu, quit\n"
         "---------------------------\n"
         "TAB  : pause\n"
+        "F1   : show FPS\n"
         "Q    : toggle flymode\n"
         "1    : toggle blur\n"
         "2    : toggle mipmaps\n"
