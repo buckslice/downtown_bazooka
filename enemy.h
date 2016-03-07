@@ -21,6 +21,7 @@ private:
     int id;
     int player = -1;
     float jumpTimer;
+	//float shootTimer;
 
     Transform* model;
 

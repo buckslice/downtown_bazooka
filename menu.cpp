@@ -91,7 +91,7 @@ void Menu::draw(sf::RenderWindow& window) {
         float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
         float y = static_cast<float>(HEALTH_BAR_HEIGHT);
         healthBar.setSize(sf::Vector2f(x, y));
-        //window.draw(healthBar);   // commenting for now until we get actual damage events
+        window.draw(healthBar);
     }
 }
 

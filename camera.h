@@ -45,7 +45,7 @@ private:
 
     GLfloat mouseSensitivity;
     GLfloat camDist;
-    GLfloat camDistTarget = 0.0f;
+    GLfloat camDistTarget = 10.0f;
 
     bool autoSpin;
 

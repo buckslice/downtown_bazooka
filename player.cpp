@@ -1,7 +1,7 @@
 #include "player.h"
 #include "entityManager.h"
 
-Player::Player(Camera* cam) : speed(SPEED) {
+Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     this->cam = cam;
     timeSinceJump = 10.0f;
     getTransform()->setVisibility(Visibility::HIDDEN_SELF);
@@ -47,6 +47,8 @@ Player::Player(Camera* cam) : speed(SPEED) {
     c->setExtents(min, max);
     c->tag = PLAYER;
     c->type = FULL;
+
+	Physics::setCollisionCallback(this);
 }
 
 int Player::getHealth() {
@@ -62,12 +64,6 @@ void Player::update(GLfloat delta) {
 
     if (input != glm::vec3(0.0f)) {
         input = glm::normalize(input);
-    }
-    if (Input::pressed(sf::Keyboard::Right)) {
-        addHealth(5);
-    }
-    if (Input::pressed(sf::Keyboard::Left)) {
-        addHealth(-5);
     }
 
     // toggle flying
@@ -90,6 +86,7 @@ void Player::update(GLfloat delta) {
         jump();
     }
     timeSinceJump += delta;
+	invulnTime += delta;
 
     // cam forward in xz plane
     glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
@@ -148,7 +145,10 @@ void Player::update(GLfloat delta) {
 }
 
 void Player::onCollision(Collider* other) {
-
+	if (other->tag == ENEMY && invulnTime >= 0.5f){
+		addHealth(-5);
+		invulnTime = 0.0f;
+	}
 }
 
 void Player::jump() {
