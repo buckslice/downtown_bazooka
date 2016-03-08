@@ -2,6 +2,7 @@
 #include <vector>
 #include "entity.h"
 #include "enemy.h"
+#include "item.h"
 #include "mathutil.h"
 #include "Particle.h"
 #include "resources.h"
@@ -17,6 +18,8 @@ public:
 
     const int MAX_PROJECTILES = 100;
     const int MAX_PARTICLES = 5000;
+	const int MAX_ENEMIES = 2000;
+	const int MAX_ITEMS = 2000;
 
     void init(int numberOfDudes);
 
@@ -43,11 +46,16 @@ public:
     void SpawnEnemy();
     void ReturnEnemy(int id);
 
+	void SpawnItem();
+	void ReturnItem(int id);
+
 private:
     // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;
+	Pool<Item>* items;
     Pool<Projectile>* projectiles;
     Pool<Enemy>* enemies;
+
 
     Player* player;
 

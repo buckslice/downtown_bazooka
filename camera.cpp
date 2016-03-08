@@ -54,6 +54,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
         pitch = 0.0f;
         yaw += 5.0f * delta;
 		camDist = 0.0f;
+		camDistTarget = 10.0f;
 		updateCameraVectors();
 		return;
     } else {

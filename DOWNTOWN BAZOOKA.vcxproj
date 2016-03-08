@@ -172,6 +172,7 @@
     <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
+    <ClCompile Include="item.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mathutil.cpp" />
     <ClCompile Include="menu.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="enemy.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="entityManager.h" />
+    <ClInclude Include="item.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="slotMap.h" />
     <ClInclude Include="game.h" />
