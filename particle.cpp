@@ -56,6 +56,7 @@ void Particle::update(GLfloat dt) {
             scalemult = .9f;
         break;
     case FIRE:
+		getCollider()->vel *= .95f;
         scalemult = .95f;
         break;
     }

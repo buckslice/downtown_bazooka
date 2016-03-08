@@ -312,7 +312,7 @@ void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
     tg.render();
 
     // clear stream vectors
-    smodels.clear();
+	smodels.clear();
     scolors.clear();
     gmodels.clear();
     gcolors.clear();

@@ -3,6 +3,8 @@
 #include "entityManager.h"
 
 Projectile::Projectile(){
+	owner = nullptr;
+
     Collider* c = getCollider();
     c->awake = false;
     c->type = TRIGGER;
@@ -10,12 +12,16 @@ Projectile::Projectile(){
 
     getTransform()->setVisibility(HIDDEN);
     getTransform()->color = glm::vec3(1.0f, 0.2f, 0.0f);
+
+    Physics::setCollisionCallback(this);
 }
 
 Projectile::~Projectile() {
 }
 
-void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel){
+void Projectile::init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel){
+	setOwner(owner);
+
     Transform* t = getTransform();
     Collider* c = getCollider();
     t->setPos(pos);
@@ -30,18 +36,22 @@ void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel){
 
 void Projectile::update(GLfloat delta) {
     timer -= delta;
-    glm::vec3 pos = getTransform()->getWorldPos();
     if (timer <= 0.0f) {
-        EntityManagerInstance->MakeExplosion(pos);
-        EntityManagerInstance->ReturnProjectile(id);
+		onDeath();
         return;
     }
 
-    for (int i = 0; i < 1; i++) {
-        EntityManagerInstance->SpawnParticle(pos, Particle::FIRE, 3.0f);
-    }
+	EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::FIRE, 3.0f);
+}
+
+void Projectile::onDeath(){
+    EntityManagerInstance->ReturnProjectile(id);
+    EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(),100,16.0f,getCollider()->vel);
 }
 
 void Projectile::onCollision(Collider* other) {
-
+	if(getOwner() != nullptr && other == getOwner()->getCollider())
+		return;
+	Entity::onCollision(other);
+	onDeath();
 }

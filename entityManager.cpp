@@ -88,17 +88,17 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float mag, glm
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
     for (int i = 0; i < num; ++i) {
         SpawnParticle(pos, Particle::SPARK, mag * 5.0f, vel);
-        SpawnParticle(pos, Particle::FIRE, mag, vel);
+        SpawnParticle(pos, Particle::FIRE, mag*4, vel);
     }
 }
 
 // projectiles
-void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
+void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel) {
     int id = projectiles->get();
     if (id < 0) {  // happens if pool is empty
         return;
     }
-    projectiles->getData(id)->init(id, pos, vel);;
+    projectiles->getData(id)->init(id, owner, pos, vel);
 }
 
 void EntityManager::SpawnEnemy() {
