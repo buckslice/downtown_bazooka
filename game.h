@@ -92,5 +92,6 @@ private:
     bool blurring;
     bool wireframe;
     bool paused;
+    bool showFPS;
 };
 

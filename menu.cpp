@@ -50,6 +50,7 @@ Menu::Menu(Player* player) {
         "ESC  : menu, quit\n"
         "---------------------------\n"
         "TAB  : pause\n"
+        "F1   : show FPS\n"
         "Q    : toggle flymode\n"
         "1    : toggle blur\n"
         "2    : toggle mipmaps\n"
@@ -115,7 +116,7 @@ void Menu::draw(sf::RenderWindow& window) {
         float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
         float y = static_cast<float>(HEALTH_BAR_HEIGHT);
         healthBar.setSize(sf::Vector2f(x, y));
-        //window.draw(healthBar);   // commenting for now until we get actual damage events
+        window.draw(healthBar);
     }
 }
 

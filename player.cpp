@@ -1,7 +1,7 @@
 #include "player.h"
 #include "entityManager.h"
 
-Player::Player(Camera* cam) : speed(SPEED) {
+Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     this->cam = cam;
     timeSinceJump = 10.0f;
     getTransform()->setVisibility(Visibility::HIDDEN_SELF);
@@ -30,8 +30,13 @@ Player::Player(Camera* cam) : speed(SPEED) {
     rarm->setPos(-0.5f, 1.5f, 0.0f);
     rarm->setScale(1.0f, 0.25f, 0.25f);
 
+    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(false));
+    bazooka->setPos(0.8f, 1.8f, 0.2f);
+    bazooka->setScale(0.5f, 0.5f, 2.0f);
+
     getTransform()->color = glm::vec3(0.2f, 1.0f, 0.7f);
-    getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm);
+    getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm, bazooka);
+    bazooka->color = glm::vec3(0.1f, 0.1f, 0.5f);
 
     currRot = targRot = glm::quat();
 
@@ -42,6 +47,8 @@ Player::Player(Camera* cam) : speed(SPEED) {
     c->setExtents(min, max);
     c->tag = PLAYER;
     c->type = FULL;
+
+	Physics::setCollisionCallback(this);
 }
 
 int Player::getHealth() {
@@ -57,12 +64,6 @@ void Player::update(GLfloat delta) {
 
     if (input != glm::vec3(0.0f)) {
         input = glm::normalize(input);
-    }
-    if (Input::pressed(sf::Keyboard::Right)) {
-        addHealth(5);
-    }
-    if (Input::pressed(sf::Keyboard::Left)) {
-        addHealth(-5);
     }
 
     // toggle flying
@@ -85,6 +86,7 @@ void Player::update(GLfloat delta) {
         jump();
     }
     timeSinceJump += delta;
+	invulnTime += delta;
 
     // cam forward in xz plane
     glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
@@ -143,7 +145,10 @@ void Player::update(GLfloat delta) {
 }
 
 void Player::onCollision(Collider* other) {
-
+	if (other->tag == ENEMY && invulnTime >= 0.5f){
+		addHealth(-5);
+		invulnTime = 0.0f;
+	}
 }
 
 void Player::jump() {

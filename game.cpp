@@ -6,7 +6,8 @@ Game::Game(GLuint width, GLuint height)
     : WIDTH{ width }, HEIGHT{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
     clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
-    mipmapping{ true }, blurring{ true }, wireframe{ false }, paused{ false } {
+    mipmapping{ true }, blurring{ true }, wireframe{ false },
+    paused{ false }, showFPS{ false } {
 
     center.x = WIDTH / 2;
     center.y = HEIGHT / 2;
@@ -199,8 +200,11 @@ void Game::toggleOptions() {
     if (Input::justPressed(sf::Keyboard::Num0)) {
         Resources::get().buildShaders();
     }
-    if (Input::justPressed(sf::Keyboard::Tab) && gameFocused) {
+    if (Input::justPressed(sf::Keyboard::Tab) && gameFocused) { // gameFocused cuz alt tab
         paused = !paused;
+    }
+    if (Input::justPressed(sf::Keyboard::F1)) {
+        showFPS = !showFPS;
     }
 }
 
@@ -265,7 +269,9 @@ void Game::render() {
     // draw UI
     window->resetGLStates();
     menu->draw(*window);
-    window->draw(fpsText);
+    if (showFPS) {
+        window->draw(fpsText);
+    }
 
     if (blurring) {
         graphics->postProcess();
