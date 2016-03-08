@@ -64,7 +64,7 @@ public:
     bool getVisible();
 
     bool justClosed = false;
-    bool justOpened = false;
+    bool justOpened = true;
 
 private:
     void move(bool up);

@@ -40,6 +40,8 @@ public:
     // returns world scale of transform
     glm::vec3 getWorldScale();
 
+	glm::quat getWorldRot();
+
     // get local position
     inline glm::vec3 getPos() { return pos; }
     // get local scale

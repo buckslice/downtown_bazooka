@@ -5,15 +5,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "physics.h"
 #include "entity.h"
-
+enum ParticleType {
+	SPARK,
+	CLOUD,
+	FIRE,
+	BEAM
+};
 class Particle : public Entity {
 public:
-    static const int SPARK = 0;
-    static const int CLOUD = 1;
-    static const int FIRE = 2;
 
     float lifetime, curlife;
-    int effect;
+	ParticleType type;
 
     Particle();
 

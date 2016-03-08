@@ -14,6 +14,7 @@ public:
 private:
 	int id;
 	float rotSpeed;
+	float timer;
 
 	Transform* model;
 };

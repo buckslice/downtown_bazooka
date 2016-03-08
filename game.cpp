@@ -66,6 +66,11 @@ Game::Game(GLuint width, GLuint height)
     fpsText.setColor(sf::Color(255, 0, 0));
     fpsText.setScale(2.0f, 2.0f);
     fpsText.setPosition(0.0f, -10.0f);
+	deadText.setFont(Resources::get().font);
+	deadText.setColor(sf::Color(255, 0, 0));
+	deadText.setScale(3.0f, 3.0f);
+	deadText.setString("GAME OVER!");
+	deadText.setPosition(width / 2.0f - 250.0f, height / 5.0f);
 }
 
 void Game::start() {
@@ -217,19 +222,28 @@ void Game::update(GLfloat delta) {
         mouseScroll -= 5.0f * delta;
     }
 
-    //update menu
-    menu->update(running);
+
 
     if (menu->justClosed) {
-        player->flying = false;
         em->init(1000);
+		player->spawn(glm::vec3(0.0f, 150.0f, 0.0f));
     }
     if (menu->justOpened) {
+		player->spawn(glm::vec3(0.0f, 150.0f, 0.0f));
+		player->getCollider()->awake = false;
         em->returnAllObjects();
     }
+	//update menu
+	menu->update(running);
 
     // update camera
-    cam.setAutoSpin(menu->getVisible());
+	if (player->isDead) {
+		cam.behavior = DEATH;
+	} else if(menu->getVisible()){
+		cam.behavior = AUTOSPIN;
+	} else {
+		cam.behavior = NORMAL;
+	}
     cam.updateCameraDistance(mouseScroll);
     cam.update(mouseMove.x, mouseMove.y, delta);
 
@@ -238,11 +252,6 @@ void Game::update(GLfloat delta) {
     }
 
     em->update(delta);
-    if (menu->getVisible()) {
-        // reset player to floating above city
-        player->getTransform()->setPos(glm::vec3(0.0f, 150.0f, 0.0f));
-        player->getCollider()->vel = glm::vec3(0.0f);
-    }
 
     glm::vec3 pp = player->getTransform()->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
@@ -272,7 +281,15 @@ void Game::render() {
     if (showFPS) {
         window->draw(fpsText);
     }
+	if (player->isDead) {
+		sf::RectangleShape shape;
+		shape.setFillColor(sf::Color(0, 0, 0, 200));
+		shape.setPosition(sf::Vector2f());
+		shape.setSize(sf::Vector2f(WIDTH, HEIGHT));
+		window->draw(shape);
+		window->draw(deadText);
 
+	}
     if (blurring) {
         graphics->postProcess();
     }

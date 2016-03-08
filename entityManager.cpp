@@ -88,9 +88,9 @@ Particle* EntityManager::getNextParticle() {
     return p;
 }
 
-Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float mag, glm::vec3 vel) {
+Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float mag, glm::vec3 vel) {
     Particle* p = getNextParticle();
-    p->effect = effect;
+    p->type = effect;
     p->activate();
     p->getCollider()->vel = vel + Mth::randInsideSphere(1.0f) * mag;
     Transform* t = p->getTransform();
@@ -102,18 +102,21 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float mag, glm
 
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
     for (int i = 0; i < num; ++i) {
-        SpawnParticle(pos, Particle::SPARK, mag * 5.0f, vel);
-        SpawnParticle(pos, Particle::FIRE, mag*4, vel);
+        SpawnParticle(pos, SPARK, mag * 5.0f, vel);
+        SpawnParticle(pos, FIRE, mag*4, vel);
     }
 }
 
 // projectiles
-void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel) {
+void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel, bool forPlayer) {
     int id = projectiles->get();
     if (id < 0) {  // happens if pool is empty
         return;
     }
-    projectiles->getData(id)->init(id, owner, pos, vel);
+	Projectile* p = projectiles->getData(id);
+	p->getCollider()->tag = forPlayer ? PLAYER_PROJECTILE : ENEMY_PROJECTILE;
+	p->type = forPlayer ? ROCKET : LASER;
+    p->init(id, owner, pos, vel);
 }
 
 void EntityManager::SpawnEnemy() {
@@ -160,7 +163,7 @@ void EntityManager::SpawnItem() {
 	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
 	glm::vec3 color = glm::vec3(0.7f, 1.0f, 0.5f);
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	float rotSpeed = 1.0f;
+	float rotSpeed = 60.0f;
 	i->init(id, rotSpeed, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
 }
 

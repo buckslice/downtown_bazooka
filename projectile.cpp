@@ -40,18 +40,33 @@ void Projectile::update(GLfloat delta) {
 		onDeath();
         return;
     }
-
-	EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::FIRE, 3.0f);
+	switch (type)
+	{
+	case ROCKET:
+		EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), FIRE, 3.0f);
+		break;
+	case ProjectileType::LASER:
+		for (int i = 0; i < 2; ++i) {
+			EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), BEAM, 10.0f, Mth::randInsideUnitCube());
+		}
+		break;
+	default:
+		break;
+	}
+	
 }
 
 void Projectile::onDeath(){
     EntityManagerInstance->ReturnProjectile(id);
-    EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(),100,16.0f,getCollider()->vel);
+	if (getCollider()->tag == PLAYER_PROJECTILE) {
+		EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(), 100, 16.0f, getCollider()->vel);
+	}
 }
 
 void Projectile::onCollision(Collider* other) {
 	if(getOwner() != nullptr && other == getOwner()->getCollider())
 		return;
-	Entity::onCollision(other);
-	onDeath();
+	if (other->tag == PLAYER || other->tag == ENEMY) {
+		onDeath();
+	}
 }

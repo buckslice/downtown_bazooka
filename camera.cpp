@@ -8,7 +8,6 @@ Camera::Camera()
     pitch = 0.0f;
     worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     camDist = 0.0f;
-    autoSpin = false;
     transform = new Transform();
     updateCameraVectors();
 }
@@ -20,7 +19,6 @@ Camera::Camera(GLfloat yaw, GLfloat pitch, bool firstPerson)
     this->pitch = pitch;
     worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     camDist = 0.0f;
-    autoSpin = false;
     transform = new Transform();
     updateCameraVectors();
 }
@@ -50,33 +48,37 @@ void Camera::updateCameraVectors() {
 }
 
 void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
-    if (autoSpin) {
-        pitch = 0.0f;
-        yaw += 5.0f * delta;
+	switch (behavior) {
+	case AUTOSPIN:
+		pitch = 0.0f;
+		yaw += 5.0f * delta;
 		camDist = 0.0f;
 		camDistTarget = 10.0f;
 		updateCameraVectors();
 		return;
-    } else {
-        // update yaw and pitch from mouse deltas
-        yaw += mdx * mouseSensitivity;
-        if (yaw > 360.0f) {
-            yaw -= 360.0f;
-        }
-        if (yaw < 0.0f) {
-            yaw += 360.0f;
-        }
-        pitch -= mdy * mouseSensitivity;
-        pitch = glm::clamp(pitch, -89.0f, 89.0f);
-    }
+	case NORMAL:
+		// update yaw and pitch from mouse deltas
+		yaw += mdx * mouseSensitivity;
+		if (yaw > 360.0f) {
+			yaw -= 360.0f;
+		}
+		if (yaw < 0.0f) {
+			yaw += 360.0f;
+		}
+		pitch -= mdy * mouseSensitivity;
+		pitch = glm::clamp(pitch, -89.0f, 89.0f);
+		break;
+	case DEATH:
+		pitch = -90.0f;
+		camDistTarget += 4.0f * delta;
+		yaw += 5.0f * delta;
+
+
+	}
     // lerp camDist towards target
     GLfloat t = std::max(std::min(delta*10.0f, 1.0f), 0.0f);
     camDist = (1.0f - t) * camDist + t * camDistTarget; // manual lerp what is this
     updateCameraVectors();
-}
-
-void Camera::setAutoSpin(bool value) {
-    autoSpin = value;
 }
 
 GLfloat scrollSpeed = 2.0f;

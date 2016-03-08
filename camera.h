@@ -14,12 +14,16 @@ const GLfloat SENSITIVITY = 0.25f;
 
 const GLfloat NEAR_PLANE = 0.1f;
 const GLfloat FAR_PLANE = 2000.0f;
-
+enum CameraBehavior {
+	NORMAL,
+	AUTOSPIN,
+	DEATH
+};
 class Camera {
 
 public:
     Transform* transform;
-
+	CameraBehavior behavior;
     glm::vec3 forward;
     glm::vec3 up;
     glm::vec3 right;
@@ -37,8 +41,6 @@ public:
 
     GLfloat getCamDist();
 
-    void setAutoSpin(bool value);
-
 private:
     GLfloat yaw;
     GLfloat pitch;
@@ -46,8 +48,6 @@ private:
     GLfloat mouseSensitivity;
     GLfloat camDist;
     GLfloat camDistTarget = 10.0f;
-
-    bool autoSpin;
 
     void updateCameraVectors();
 };

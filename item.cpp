@@ -6,10 +6,10 @@
 Item::Item() {
 	model = Graphics::getTransform(Graphics::registerTransform(false));
 	model->setVisibility(VISIBLE);
-
-	getTransform()->setVisibility(HIDDEN_SELF);
+	model->setPos(0.0f, 1.0f, 0.0f);
+	model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));
+	getTransform()->setVisibility(HIDDEN);
 	getTransform()->parentAll(model);
-	model->setPos(0.0f, 0.5f, 0.0f);
 	getCollider()->type = TRIGGER;
 	getCollider()->tag = ITEM;
 	getCollider()->awake = false;
@@ -22,7 +22,9 @@ Item::~Item() {
 }
 
 void Item::update(GLfloat delta) {
-	model->rotate(20.0f*delta, glm::vec3(1.0f, 0.0f, 1.0f));
+	timer += delta;
+	getTransform()->rotate(rotSpeed*delta, glm::vec3(0.0f, 1.0f, 0.0f));
+	model->setPos(0.0f, 1.0f + sin(timer * 2.0f) * 0.5, 0.0f);
 }
 
 void Item::onCollision(Collider * other) {
@@ -35,6 +37,7 @@ void Item::init(int id, float rotSpeed, glm::vec3 pos, glm::vec3 scale, glm::vec
 	Transform* t = getTransform();
 	Collider* c = getCollider();
 	t->setPos(pos);
+	getTransform()->setVisibility(HIDDEN_SELF);
 
 	c->awake = true;
 	c->tag = ITEM;
