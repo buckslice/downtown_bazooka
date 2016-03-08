@@ -2,11 +2,56 @@
 
 #include "SFML/Graphics.hpp"
 #include "player.h"
+#include <string>
 
 #define MAX_NUMBER_OF_ITEMS 3
-#define DEFAULT_COLOR sf::Color::White
+#define DEFAULT_COLOR sf::Color(0,64,0)
 #define TITLE_COLOR sf::Color::Yellow
-#define SELECTED_COLOR sf::Color::Green
+#define SELECTED_COLOR sf::Color(0,128,0)
+
+class TextOption {
+	std::string Text;
+	sf::Font &Font;
+	sf::Text *Characters;
+	sf::Vector2f Position;
+	sf::Vector2f *DesiredOffsets;
+	bool IsSelected;
+public:
+	TextOption() : TextOption("BLAH"){}
+	TextOption(std::string text) : Text(text),Font(Resources::get().font){
+		int length = Text.length();
+		Characters = new sf::Text[Text.length()];
+		DesiredOffsets = new sf::Vector2f[length];
+		for(int i = 0; i < length; i++){
+			Characters[i] = sf::Text(std::string(1,text[i]),Font,120U);
+			Characters[i].setPosition(sf::Vector2f(Mth::rand0X(2000)-1000,Mth::rand0X(2000)-1000));
+		}
+		SetIsSelected(false);
+	}
+	~TextOption() {
+		delete[] Characters;
+		delete[] DesiredOffsets;
+	}
+
+	void SetIsSelected(bool b) {
+		IsSelected = b;
+		int length = Text.length();
+		for(int i = 0; i < length; i++){
+			Characters[i].setColor(IsSelected ? SELECTED_COLOR : DEFAULT_COLOR);
+			DesiredOffsets[i] = IsSelected ? sf::Vector2f() : sf::Vector2f(Mth::rand0X(70)-35,Mth::rand0X(70)-35);
+		}
+	}
+
+	void draw(sf::RenderWindow& window,sf::Vector2f basepos){
+		Position = basepos;
+		int length = Text.length();
+		for(int i = 0; i < length; i++){
+			sf::Vector2f desiredpos = Position+DesiredOffsets[i]+sf::Vector2f((i-length/2)*55,0);
+			Characters[i].setPosition(Characters[i].getPosition()*.95f+desiredpos*.05f);
+			window.draw(Characters[i]);
+		}
+	}
+};
 
 class Menu {
 public:
@@ -24,10 +69,14 @@ public:
 private:
     void move(bool up);
 
-    sf::Text menu[MAX_NUMBER_OF_ITEMS];
+    //sf::Text menu[MAX_NUMBER_OF_ITEMS];
+	TextOption **menu;
+
     sf::Text title;
     sf::Text instructions;
     sf::RectangleShape healthBar;
+
+	sf::Sprite titleSprite;
 
     Player* player;
     int curSelection;

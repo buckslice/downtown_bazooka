@@ -9,6 +9,8 @@ public:
 
     void onCollision(Collider* other) override;
 
+	void onDeath();
+
     void init(int id, glm::vec3 pos, glm::vec3 vel);
 
 private:
