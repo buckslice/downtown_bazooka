@@ -19,7 +19,7 @@ class Mth {
 private:
     static std::mt19937 rng;        // generator uses a random device
 public:
-    // returns random float between 0 and 1 -[0,1)
+    // returns random float between 0 and 1 - [0,1)
     static float rand01();
 
     // returns random float between 0 and X - [0,X)
