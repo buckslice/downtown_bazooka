@@ -48,14 +48,14 @@ Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     c->tag = PLAYER;
     c->type = FULL;
 
-	Physics::setCollisionCallback(this);
+    Physics::setCollisionCallback(this);
 }
 
-void Player::spawn(glm::vec3 spawnPos) {
-	flying = false;
-	health = MAX_HEALTH;
-	getTransform()->setPos(spawnPos);
-	getCollider()->awake = true;
+void Player::spawn(glm::vec3 spawnPos, bool awake) {
+    flying = false;
+    health = MAX_HEALTH;
+    getTransform()->setPos(spawnPos);
+    getCollider()->awake = awake;
 }
 
 int Player::getHealth() {
@@ -63,10 +63,11 @@ int Player::getHealth() {
 }
 
 void Player::update(GLfloat delta) {
-	isDead = health <= 0.0f;
-	if (isDead) {
-		return;
-	}
+    isDead = health <= 0.0f;
+    if (isDead) {
+        getCollider()->awake = false;
+        return;
+    }
     bool childrenVisible = cam->getCamDist() > 1.0f;
     getTransform()->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
 
@@ -97,7 +98,7 @@ void Player::update(GLfloat delta) {
         jump();
     }
     timeSinceJump += delta;
-	invulnTime += delta;
+    invulnTime += delta;
 
     // cam forward in xz plane
     glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
@@ -155,15 +156,15 @@ void Player::update(GLfloat delta) {
     }
 }
 
-void Player::onCollision(Collider* other) {
-	if ((other->tag == ENEMY || other->tag == ENEMY_PROJECTILE) && invulnTime >= 0.5f){
-		addHealth(-5);
-		invulnTime = 0.0f;
-	}
+void Player::onCollision(CollisionData data) {
+    if ((data.tag == ENEMY || data.tag == ENEMY_PROJECTILE) && invulnTime >= 0.5f) {
+        addHealth(-5);
+        invulnTime = 0.0f;
+    }
 
-	if (other->tag == ITEM) {
-		addHealth(10);
-	}
+    if (data.tag == ITEM) {
+        addHealth(10);
+    }
 }
 
 void Player::jump() {
@@ -178,7 +179,7 @@ void Player::jump() {
 void Player::shoot() {
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(this, shootPos, getCollider()->vel + cam->forward*40.0f, true);
+    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f, true);
 }
 
 void Player::addHealth(int amount) {

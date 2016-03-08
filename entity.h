@@ -17,9 +17,7 @@ public:
     virtual void update(GLfloat delta) = 0;
 
     // may override this if you want
-    // probably could make a struct to pass in rather than Collider pointer
-    // with more basic info like tag and type only
-    virtual void onCollision(Collider* other) {}
+    virtual void onCollision(CollisionData data) {}
 
     Transform* getTransform();
     Collider* getCollider();

@@ -20,13 +20,13 @@ Game::Game(GLuint width, GLuint height)
     window->setFramerateLimit(60);
 
     // load music track	
-    //if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
-    //    std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-    //}
-    //// set up music
-    //mainTrack.setLoop(true);
-    //mainTrack.setVolume(20.0f);
-    //mainTrack.play(); // ENSIFERUM
+    if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
+        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+    }
+    // set up music
+    mainTrack.setLoop(true);
+    mainTrack.setVolume(20.0f);
+    mainTrack.play(); // ENSIFERUM
 
     // main systems
     graphics = new Graphics(*window);
@@ -52,6 +52,7 @@ Game::Game(GLuint width, GLuint height)
     em = new EntityManager(player);
 
     menu = new Menu(player);
+    window->resetGLStates();
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
@@ -66,15 +67,15 @@ Game::Game(GLuint width, GLuint height)
     fpsText.setColor(sf::Color(255, 0, 0));
     fpsText.setScale(2.0f, 2.0f);
     fpsText.setPosition(0.0f, -10.0f);
-	deadText.setFont(Resources::get().font);
-	deadText.setColor(sf::Color(255, 0, 0));
-	deadText.setScale(3.0f, 3.0f);
-	deadText.setString("GAME OVER!");
-	deadText.setPosition(width / 2.0f - 250.0f, height / 5.0f);
+    deadText.setFont(Resources::get().font);
+    deadText.setColor(sf::Color(255, 0, 0));
+    deadText.setScale(4.0f, 4.0f);
+    deadText.setString("GAME OVER!");
 }
 
 void Game::start() {
     gameTime.restart();  // holds time since start of game
+    frameTime.restart();
     while (running) {
 
         GLfloat delta = frameTime.restart().asSeconds();
@@ -222,28 +223,26 @@ void Game::update(GLfloat delta) {
         mouseScroll -= 5.0f * delta;
     }
 
-
-
+    //update menu
+    menu->update(running);
     if (menu->justClosed) {
         em->init(1000);
-		player->spawn(glm::vec3(0.0f, 150.0f, 0.0f));
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), true);
     }
     if (menu->justOpened) {
-		player->spawn(glm::vec3(0.0f, 150.0f, 0.0f));
-		player->getCollider()->awake = false;
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
         em->returnAllObjects();
     }
-	//update menu
-	menu->update(running);
 
     // update camera
-	if (player->isDead) {
-		cam.behavior = DEATH;
-	} else if(menu->getVisible()){
-		cam.behavior = AUTOSPIN;
-	} else {
-		cam.behavior = NORMAL;
-	}
+    if (player->isDead) {
+        cam.behavior = DEATH;
+    } else if (menu->getVisible()) {
+        cam.behavior = AUTOSPIN;
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
+    } else {
+        cam.behavior = NORMAL;
+    }
     cam.updateCameraDistance(mouseScroll);
     cam.update(mouseMove.x, mouseMove.y, delta);
 
@@ -281,15 +280,18 @@ void Game::render() {
     if (showFPS) {
         window->draw(fpsText);
     }
-	if (player->isDead) {
-		sf::RectangleShape shape;
-		shape.setFillColor(sf::Color(0, 0, 0, 200));
-		shape.setPosition(sf::Vector2f());
-		shape.setSize(sf::Vector2f(WIDTH, HEIGHT));
-		window->draw(shape);
-		window->draw(deadText);
+    if (player->isDead) {
+        int width = window->getSize().x;
+        int height = window->getSize().y;
+        sf::RectangleShape shape;
+        shape.setFillColor(sf::Color(0, 0, 0, 150));
+        shape.setPosition(sf::Vector2f());
+        shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
+        deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
+        window->draw(shape);
+        window->draw(deadText);
 
-	}
+    }
     if (blurring) {
         graphics->postProcess();
     }

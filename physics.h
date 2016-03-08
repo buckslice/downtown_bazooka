@@ -51,6 +51,8 @@ public:
 
     //static void returnDynamic(int id);
 
+    static void sendOverlapEvent(AABB aabb, CollisionData data);
+
     // builds collision tree centered around a point
     void generateCollisionMatrix(glm::vec3 center);
 
@@ -65,7 +67,7 @@ private:
 
     // searches tree and returns a list of leaf indices AABB collides with
     // see notes below for ideas on how to improve lookup speed
-    void getLeafs(std::vector<int>& locs, AABB aabb);
+    static void getLeafs(std::vector<int>& locs, AABB aabb);
 
     // returns number of dynamics intersecting with collision matrices
     int getNumberOfIntersections();
@@ -77,14 +79,13 @@ private:
     std::vector<AABB> staticObjects;
 
     // aabb quadtree that is used to determine what leaf(s) an obj is in
-    std::vector<AABB> aabbTree;
+    static std::vector<AABB> aabbTree;
     // list for each dynamic object that tells them which leaf(s) they are in
     std::vector<std::vector<int>> dynamicLeafLists;
 
     // a list for each leaf in the aabbTree containing a list of each object in that leaf
-    // better name would probably be objectsInLeaves or something lol
-    // but superMatrix sounds BADASS
-    std::vector<std::vector<int>> dynamicMatrix;
+    // better name would probably be objectsInLeaves or something but yolo
+    static std::vector<std::vector<int>> dynamicMatrix;
     std::vector<std::vector<int>> staticMatrix;
 
     // used to prevent unnecessary additional checks

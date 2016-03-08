@@ -10,22 +10,18 @@ public:
     Projectile();
     ~Projectile();
 
-	virtual void setOwner(Entity *owner){this->owner = owner;}
-	Entity *getOwner(){return owner;}
-
     void update(GLfloat delta) override;
 
-    void onCollision(Collider* other) override;
+    void onCollision(CollisionData data) override;
 
 	void onDeath();
 
-    void init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel);
+    void init(int id, glm::vec3 pos, glm::vec3 vel);
 
 	ProjectileType type;
 
 private:
     int id;
     float timer;
-	Entity *owner;
 };
 

@@ -76,12 +76,10 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
             sz = Mth::rand01() * 10.0f + b * 20.0f + 5.0f;
 
             AABB box(glm::vec3(p.x - sx / 2.0, 0.0f, p.y - sz / 2.0), glm::vec3(p.x + sx / 2.0, sy, p.y + sz / 2.0));
-            //if (!phys.checkStatic(box)) {
-            //    phys.addStatic(box);
-            //    break;
-            //}
-            phys.addStatic(box);
-            break;
+            if (!phys.checkStatic(box)) {
+                phys.addStatic(box);
+                break;
+            }
 
             tries++;
         }

@@ -271,7 +271,7 @@ outer:  // jump here if built max this frame
 
 void Terrain::render() {
     // render all terrain chunks
-    Resources& r = Resources::get();
+    //Resources& r = Resources::get();
 
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {

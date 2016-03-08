@@ -17,7 +17,6 @@ extern std::vector<GLuint> elems;
 static std::vector<Mesh*> meshes;
 static Pool<Transform>* boxes;
 
-// will be replaced later by pools
 static std::vector<glm::mat4> smodels;
 static std::vector<glm::vec3> scolors;
 static std::vector<glm::mat4> gmodels;
@@ -52,7 +51,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);    // TODO change to not use diff shader without texture
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    boxes = new Pool<Transform>(15000);
+    boxes = new Pool<Transform>(10000);
 
     // testing out new transforms by setting up some arrows for the axes
     Transform* xbox = getTransform(registerTransform(false));

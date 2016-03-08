@@ -10,7 +10,7 @@ public:
 
     void update(GLfloat delta) override;
 
-    void onCollision(Collider* other) override;
+    void onCollision(CollisionData data) override;
 
     void init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 color);
 
@@ -21,7 +21,7 @@ private:
     int id;
     int player = -1;
     float jumpTimer;
-	float shootTimer;
+    float shootTimer;
 
     Transform* model;
 

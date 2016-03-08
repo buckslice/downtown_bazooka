@@ -22,12 +22,12 @@ EntityManager::EntityManager(Player* player) : player(player) {
 
 void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
-
     for (int i = 0; i < numberOfDudes; i++) {
         SpawnEnemy();
-		SpawnItem();
     }
-
+    for (int i = 0; i < numberOfDudes; i++) {
+        SpawnItem();
+    }
 }
 
 // should make like a PooledEntity child class of Entity or something
@@ -108,7 +108,7 @@ void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 v
 }
 
 // projectiles
-void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel, bool forPlayer) {
+void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer) {
     int id = projectiles->get();
     if (id < 0) {  // happens if pool is empty
         return;
@@ -116,7 +116,7 @@ void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel,
 	Projectile* p = projectiles->getData(id);
 	p->getCollider()->tag = forPlayer ? PLAYER_PROJECTILE : ENEMY_PROJECTILE;
 	p->type = forPlayer ? ROCKET : LASER;
-    p->init(id, owner, pos, vel);
+    p->init(id, pos, vel);
 }
 
 void EntityManager::SpawnEnemy() {
@@ -163,8 +163,7 @@ void EntityManager::SpawnItem() {
 	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
 	glm::vec3 color = glm::vec3(0.7f, 1.0f, 0.5f);
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	float rotSpeed = 60.0f;
-	i->init(id, rotSpeed, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
+	i->init(id, 60.0f, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
 }
 
 // should make a sub class of entity / template this or some shit later
@@ -175,7 +174,6 @@ void EntityManager::ReturnProjectile(int id) {
 void EntityManager::ReturnEnemy(int id) {
     ReturnPooledEntity(id, enemies);
 }
-
 
 void EntityManager::ReturnItem(int id) {
 	ReturnPooledEntity(id, items);

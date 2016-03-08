@@ -12,13 +12,20 @@ enum ColliderType {
 // maybe just make collision callback except a simplified collider struct
 // with a enum tag and position and stuff maybe
 enum ColliderTag {
+    DEFAULT,
     PLAYER,
     PLAYER_PROJECTILE,
     ENEMY_PROJECTILE,
     ENEMY,
+    EXPLOSION,
     TERRAIN, 
-    DEFAULT,
 	ITEM
+};
+
+// could add Entity* later if need be
+struct CollisionData {
+    ColliderType type;
+    ColliderTag tag;
 };
 
 // Colliders represent dynamic physics objects

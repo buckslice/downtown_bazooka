@@ -2,9 +2,7 @@
 #include "graphics.h"
 #include "entityManager.h"
 
-Projectile::Projectile(){
-	owner = nullptr;
-
+Projectile::Projectile() {
     Collider* c = getCollider();
     c->awake = false;
     c->type = TRIGGER;
@@ -19,8 +17,7 @@ Projectile::Projectile(){
 Projectile::~Projectile() {
 }
 
-void Projectile::init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel){
-	setOwner(owner);
+void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel) {
 
     Transform* t = getTransform();
     Collider* c = getCollider();
@@ -37,36 +34,39 @@ void Projectile::init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel){
 void Projectile::update(GLfloat delta) {
     timer -= delta;
     if (timer <= 0.0f) {
-		onDeath();
+        onDeath();
         return;
     }
-	switch (type)
-	{
-	case ROCKET:
-		EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), FIRE, 3.0f);
-		break;
-	case ProjectileType::LASER:
-		for (int i = 0; i < 2; ++i) {
-			EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), BEAM, 10.0f, Mth::randInsideUnitCube());
-		}
-		break;
-	default:
-		break;
-	}
-	
+    switch (type) {
+    case ROCKET:
+        EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), FIRE, 3.0f);
+        break;
+    case ProjectileType::LASER:
+        for (int i = 0; i < 2; ++i) {
+            EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), BEAM, 10.0f, Mth::randInsideUnitCube());
+        }
+        break;
+    default:
+        break;
+    }
+
 }
 
-void Projectile::onDeath(){
+void Projectile::onDeath() {
     EntityManagerInstance->ReturnProjectile(id);
-	if (getCollider()->tag == PLAYER_PROJECTILE) {
-		EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(), 100, 16.0f, getCollider()->vel);
-	}
+    if (getCollider()->tag == PLAYER_PROJECTILE) {
+        EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(), 100, 16.0f, getCollider()->vel);
+        glm::vec3 p = getTransform()->getWorldPos();
+        glm::vec3 s = glm::vec3(20.0f) / 2.0f;
+        Physics::sendOverlapEvent(AABB(p - s, p + s), CollisionData{ BASIC, EXPLOSION });
+    }
 }
 
-void Projectile::onCollision(Collider* other) {
-	if(getOwner() != nullptr && other == getOwner()->getCollider())
-		return;
-	if (other->tag == PLAYER || other->tag == ENEMY) {
-		onDeath();
-	}
+void Projectile::onCollision(CollisionData data) {
+    ColliderTag tag = getCollider()->tag;
+    if (data.tag == PLAYER && tag != PLAYER_PROJECTILE) {
+        onDeath();
+    } else if (data.tag == ENEMY && tag != ENEMY_PROJECTILE) {
+        onDeath();
+    }
 }

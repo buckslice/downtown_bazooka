@@ -6,42 +6,21 @@
 
 Menu::Menu(Player* player) {
     menu = nullptr;
-
     curSelection = 0;
-
+    this->player = player;
     setVisible(true);
 
-    sf::Texture image;
-    if (image.loadFromFile("assets/images/ui/Title.png")) {
-        titleSprite.setTexture(image);
-    }
-
-    //menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
-    //menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
-    //menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
-
-    /*menu[0].setFont(font);
-    menu[0].setColor(SELECTED_COLOR);
-    menu[0].setString("Play");
-    menu[0].setScale(sf::Vector2f(2.0f, 2.0f));
-
-    menu[1].setFont(font);
-    menu[1].setColor(DEFAULT_COLOR);
-    menu[1].setString("Instructions");
-    menu[1].setScale(sf::Vector2f(2.0f, 2.0f));
-
-    menu[2].setFont(font);
-    menu[2].setColor(DEFAULT_COLOR);
-    menu[2].setString("Quit");
-    menu[2].setScale(sf::Vector2f(2.0f, 2.0f));*/
+    //if (titleTexture.loadFromFile("assets/images/ui/Title.png")) {
+    //    titleSprite.setTexture(titleTexture);
+    //}
 
     title.setFont(Resources::get().font);
-    title.setCharacterSize(90);
+    title.setCharacterSize(110U);
     title.setColor(TITLE_COLOR);
     title.setString("DOWNTOWN BAZOOKA");
 
     instructions.setFont(Resources::get().font);
-    instructions.setColor(DEFAULT_COLOR);
+    instructions.setColor(SELECTED_COLOR);
     instructions.setString( // instead of adding a space to front should just move pos over lol XD
         "WASD : move\n"
         "E    : shoot\n"
@@ -64,15 +43,10 @@ Menu::Menu(Player* player) {
     instructions.setPosition(5.0f, 50.0f);
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
-    this->player = player;
-
-    this->setVisible(true);
-
     // this should give the width in pixels of the text so we can use that to center it
     // but too bad it crashes the game so hard lol whyyyyyy???
     // some sort of weird access violation where we arent reseting states right??? bugged pos???
     //sf::FloatRect rect = title.getLocalBounds();
-
 
 }
 
@@ -83,28 +57,25 @@ void Menu::draw(sf::RenderWindow& window) {
     int width = window.getSize().x;
     int height = window.getSize().y;
     if (visible) {
+        sf::RectangleShape shape;
+        shape.setFillColor(sf::Color(0, 0, 0, 150));
+        shape.setPosition(sf::Vector2f());
+        shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
+        window.draw(shape);
         if (showingInstructions) {
             window.draw(instructions);
         } else {
-            sf::RectangleShape shape;
-            shape.setFillColor(sf::Color(0, 0, 0, 200));
-            shape.setPosition(sf::Vector2f());
-            shape.setSize(sf::Vector2f(width, height));
-            window.draw(shape);
             // set positions incase resize
-            //titleSprite.setPosition(width / 2, height / 2);
+            //titleSprite.setPosition(width / 2.0f - 500.0f, height / 5.0f);
             //window.draw(titleSprite);
 
-            title.setPosition(sf::Vector2f(width / 2 - 440.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
-            //menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
-            //menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
-            //menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
+            title.setPosition(sf::Vector2f(width / 2.0f - 530.0f, height * 0.05f));
 
             window.draw(title);
             if (menu == nullptr)
                 setVisible(true);
             for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
-                menu[i]->draw(window, sf::Vector2f(width / 2, height / (MAX_NUMBER_OF_ITEMS + 1)*(1.f + i)));
+                menu[i]->draw(window, sf::Vector2f(width / 2.0f, height / (MAX_NUMBER_OF_ITEMS + 1)*(1.0f + i)));
                 //window.draw(menu[i]);
             }
         }

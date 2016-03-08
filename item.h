@@ -8,7 +8,7 @@ public:
 
 	void update(GLfloat delta) override;
 
-	void onCollision(Collider* other) override;
+	void onCollision(CollisionData data) override;
 
 	void init(int id, float rotSpeed, glm::vec3 pos, glm::vec3 scale, glm::vec3 color);
 private:

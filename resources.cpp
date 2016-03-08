@@ -32,6 +32,7 @@ void Resources::loadTextures(bool mipmapped) {
     gridTex = GLHelper::loadTexture("assets/images/grid.png", mipmapped);
     terrainTex = GLHelper::loadTexture("assets/images/grid2.png", mipmapped);
     solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
+
     loadedTexturesBefore = true;
 }
 

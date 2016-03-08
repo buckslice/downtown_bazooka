@@ -21,12 +21,12 @@ public:
 
     Player(Camera* cam);
 
-	void spawn(glm::vec3 spawnPos);
+	void spawn(glm::vec3 spawnPos, bool awake);
 
     int getHealth();
 
     void update(GLfloat delta) override;
-    void onCollision(Collider* other) override;
+    void onCollision(CollisionData data) override;
 
     void jump();
 

@@ -9,6 +9,8 @@
 const int MAX_DYNAMICS = 10000;
 std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
 std::vector<int> Physics::freeDynamics;
+std::vector<AABB> Physics::aabbTree;
+std::vector<std::vector<int>> Physics::dynamicMatrix;
 
 Physics::Physics() {
     for (int i = MAX_DYNAMICS; i > 0; --i) {
@@ -25,9 +27,6 @@ Physics::Physics() {
 
 void Physics::update(float delta) {
     bool printedErrorThisFrame = false;
-
-    dynamicLeafLists.resize(MAX_DYNAMICS);
-
     int numberOver = 0;
 
     // clear out all data from supermatrix
@@ -211,10 +210,10 @@ void Physics::update(float delta) {
                     ColliderData& other = dynamicObjects[closestIndex];
 
                     if (dobj.entity != nullptr) {
-                        dobj.entity->onCollision(&other.collider);
+                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag });
                     }
                     if (other.entity != nullptr) {
-                        other.entity->onCollision(&col);
+                        other.entity->onCollision(CollisionData{ col.type, col.tag });
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER
@@ -341,7 +340,7 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
 
             float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
             float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
-            
+
             // bl tl tr br
             aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
             aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
@@ -359,6 +358,7 @@ void Physics::generateCollisionMatrix(glm::vec3 center) {
     // doesn't save that much space and complicates the indexing
     staticMatrix.resize(aabbTree.size());
     dynamicMatrix.resize(aabbTree.size());
+    dynamicLeafLists.resize(MAX_DYNAMICS);
 
     // prints the length of a leafs x/z edge in the tree
     //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
@@ -421,6 +421,21 @@ int Physics::registerDynamic(int transform) {
     dynamicObjects[index].id = index;
     dynamicObjects[index].collider.transform = transform;
     return index;
+}
+
+void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
+    std::vector<int> indices;
+    getLeafs(indices, aabb);
+
+    for (size_t i = 0, ilen = indices.size(); i < ilen; ++i) {
+        for (size_t j = 0, jlen = dynamicMatrix[indices[i]].size(); j < jlen; ++j) {
+            ColliderData& cd = dynamicObjects[dynamicMatrix[indices[i]][j]];
+            if (cd.entity != nullptr && AABB::check(aabb, cd.collider.getAABB())) {
+                cd.entity->onCollision(data);
+            }
+        }
+    }
+
 }
 
 //void Physics::returnDynamic(int id) {
