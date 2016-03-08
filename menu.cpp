@@ -2,24 +2,23 @@
 #include "input.h"
 #include <iostream>
 
-#define USESPRITES 0
+#define USESPRITES 1
 
 Menu::Menu(Player* player) {
-	menu = nullptr;
+    menu = nullptr;
 
     curSelection = 0;
 
-	sf::Texture image;
-	setVisible(true);
+    setVisible(true);
 
-#if USESPRITES
-	bool b = image.loadFromFile("assets/images/ui/Title.png");
-	titleSprite.setTexture(image);
-#endif //USESPRITES
-	
-            //menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
-            //menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
-            //menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
+    sf::Texture image;
+    if (image.loadFromFile("assets/images/ui/Title.png")) {
+        titleSprite.setTexture(image);
+    }
+
+    //menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
+    //menu[1].setPosition(sf::Vector2f(width / 2 - 190.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 2.3f));
+    //menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
 
     /*menu[0].setFont(font);
     menu[0].setColor(SELECTED_COLOR);
@@ -37,7 +36,7 @@ Menu::Menu(Player* player) {
     menu[2].setScale(sf::Vector2f(2.0f, 2.0f));*/
 
     title.setFont(Resources::get().font);
-	title.setCharacterSize(90);
+    title.setCharacterSize(90);
     title.setColor(TITLE_COLOR);
     title.setString("DOWNTOWN BAZOOKA");
 
@@ -67,7 +66,7 @@ Menu::Menu(Player* player) {
 
     this->player = player;
 
-	this->setVisible(true);
+    this->setVisible(true);
 
     // this should give the width in pixels of the text so we can use that to center it
     // but too bad it crashes the game so hard lol whyyyyyy???
@@ -87,16 +86,14 @@ void Menu::draw(sf::RenderWindow& window) {
         if (showingInstructions) {
             window.draw(instructions);
         } else {
-			sf::RectangleShape shape;
-			shape.setFillColor(sf::Color(0,0,0,200));
-			shape.setPosition(sf::Vector2f());
-			shape.setSize(sf::Vector2f(width,height));
-			window.draw(shape);
+            sf::RectangleShape shape;
+            shape.setFillColor(sf::Color(0, 0, 0, 200));
+            shape.setPosition(sf::Vector2f());
+            shape.setSize(sf::Vector2f(width, height));
+            window.draw(shape);
             // set positions incase resize
-#if USESPRITES
-			titleSprite.setPosition(width/2,height/2);
-			window.draw(titleSprite);
-#endif //USESPRITES
+            //titleSprite.setPosition(width / 2, height / 2);
+            //window.draw(titleSprite);
 
             title.setPosition(sf::Vector2f(width / 2 - 440.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 0.3f));
             //menu[0].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 1.3f));
@@ -104,10 +101,10 @@ void Menu::draw(sf::RenderWindow& window) {
             //menu[2].setPosition(sf::Vector2f(width / 2 - 65.0f, height / (MAX_NUMBER_OF_ITEMS + 1) * 3.3f));
 
             window.draw(title);
-			if(menu == nullptr)
-				setVisible(true);
+            if (menu == nullptr)
+                setVisible(true);
             for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
-				menu[i]->draw(window,sf::Vector2f(width/2,height/(MAX_NUMBER_OF_ITEMS+1)*(1.f+i)));
+                menu[i]->draw(window, sf::Vector2f(width / 2, height / (MAX_NUMBER_OF_ITEMS + 1)*(1.f + i)));
                 //window.draw(menu[i]);
             }
         }
@@ -182,18 +179,18 @@ void Menu::update(bool& running) {
 }
 
 void Menu::setVisible(bool visible) {
-	if (visible && menu == nullptr) {
-		menu = new TextOption*[MAX_NUMBER_OF_ITEMS];
-		menu[0] = new TextOption("Play");
-		menu[1] = new TextOption("Instructions");
-		menu[2] = new TextOption("Quit");
-		menu[0]->SetIsSelected(true);
-	}else if(!visible && menu != nullptr){
-		for(int i = 0; i < MAX_NUMBER_OF_ITEMS; i++)
-			delete menu[i];
-		delete[] menu;
-		menu = nullptr;
-	}
+    if (visible && menu == nullptr) {
+        menu = new TextOption*[MAX_NUMBER_OF_ITEMS];
+        menu[0] = new TextOption("Play");
+        menu[1] = new TextOption("Instructions");
+        menu[2] = new TextOption("Quit");
+        menu[0]->SetIsSelected(true);
+    } else if (!visible && menu != nullptr) {
+        for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++)
+            delete menu[i];
+        delete[] menu;
+        menu = nullptr;
+    }
     this->visible = visible;
 }
 

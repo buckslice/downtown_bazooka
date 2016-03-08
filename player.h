@@ -34,7 +34,7 @@ public:
 private:
     Camera* cam;
     int health;
-	float invulnTime = 0.0f;
+    float invulnTime = 0.0f;
     float speed;
     float timeSinceJump = -1.0f;
 
