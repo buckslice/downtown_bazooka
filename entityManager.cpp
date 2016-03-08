@@ -93,12 +93,12 @@ void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 v
 }
 
 // projectiles
-void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel) {
+void EntityManager::SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel) {
     int id = projectiles->get();
     if (id < 0) {  // happens if pool is empty
         return;
     }
-    projectiles->getData(id)->init(id, pos, vel);;
+    projectiles->getData(id)->init(id, owner, pos, vel);
 }
 
 void EntityManager::SpawnEnemy() {

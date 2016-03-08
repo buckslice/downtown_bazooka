@@ -158,7 +158,7 @@ void Player::jump() {
 void Player::shoot() {
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f);
+    EntityManagerInstance->SpawnProjectile(this, shootPos, getCollider()->vel + cam->forward*40.0f);
 }
 
 void Player::addHealth(int amount) {

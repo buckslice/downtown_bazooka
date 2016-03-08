@@ -3,6 +3,8 @@
 #include "entityManager.h"
 
 Projectile::Projectile(){
+	owner = nullptr;
+
     Collider* c = getCollider();
     c->awake = false;
     c->type = TRIGGER;
@@ -17,7 +19,9 @@ Projectile::Projectile(){
 Projectile::~Projectile() {
 }
 
-void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel){
+void Projectile::init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel){
+	setOwner(owner);
+
     Transform* t = getTransform();
     Collider* c = getCollider();
     t->setPos(pos);
@@ -37,7 +41,7 @@ void Projectile::update(GLfloat delta) {
         return;
     }
 
-	//EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::FIRE, 3.0f);
+	EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), Particle::FIRE, 3.0f);
 }
 
 void Projectile::onDeath(){
@@ -46,6 +50,8 @@ void Projectile::onDeath(){
 }
 
 void Projectile::onCollision(Collider* other) {
+	if(getOwner() != nullptr && other == getOwner()->getCollider())
+		return;
 	Entity::onCollision(other);
 	onDeath();
 }

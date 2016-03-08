@@ -37,7 +37,7 @@ public:
     // num dictates how many particles in explosion
     void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0, 0, 0));
 
-    void SpawnProjectile(glm::vec3 pos, glm::vec3 vel);
+    void SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel);
     void ReturnProjectile(int id);
 
     void SpawnEnemy();
