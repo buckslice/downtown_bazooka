@@ -53,6 +53,9 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
     if (autoSpin) {
         pitch = 0.0f;
         yaw += 5.0f * delta;
+		camDist = 0.0f;
+		updateCameraVectors();
+		return;
     } else {
         // update yaw and pitch from mouse deltas
         yaw += mdx * mouseSensitivity;

@@ -9,6 +9,7 @@ Enemy::Enemy() {
     getTransform()->setVisibility(HIDDEN);
     getTransform()->parentAll(model);
     getCollider()->type = FULL;
+	getCollider()->tag = ENEMY;
     getCollider()->awake = false;
 
     Physics::setCollisionCallback(this);
@@ -29,6 +30,7 @@ void Enemy::init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 c
     glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
     c->setExtents(min, max);
     c->type = FULL;
+	c->tag = ENEMY;
     c->awake = true;
 }
 
@@ -36,11 +38,13 @@ void Enemy::update(GLfloat delta) {
     Collider& col = *getCollider();
 
     jumpTimer -= delta;
+	//shootTimer -= delta;
     if (col.grounded && jumpTimer < 0.0f) {
         col.vel.y = jumpVel;
         col.grounded = false;
         jumpTimer += Mth::rand01() * 10.0f + 2.0f;
     }
+
 
     if (player < 0) {
         return;
@@ -51,6 +55,11 @@ void Enemy::update(GLfloat delta) {
     if (dirToPlayer != glm::vec3(0.0f)) {
         dirToPlayer = glm::normalize(dirToPlayer) * speed;
     }
+	// this is to make the enemies shoot, but it is incomplete because I wasn't sure where to tag the projectiles as ENEMY_PROJECTILE
+	//if (shootTimer < 0.0f) {
+	//	EntityManagerInstance->SpawnProjectile(getTransform()->getWorldPos(), getCollider()->vel + dirToPlayer*40.0f);
+	//	shootTimer += Mth::rand01() * 10.0f + 2.0f;
+	//}
 
     col.vel.x = dirToPlayer.x;
     col.vel.z = dirToPlayer.z;
