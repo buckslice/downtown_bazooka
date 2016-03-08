@@ -30,7 +30,7 @@ Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     rarm->setPos(-0.5f, 1.5f, 0.0f);
     rarm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(true));
     bazooka->setPos(0.8f, 1.8f, 0.2f);
     bazooka->setScale(0.5f, 0.5f, 2.0f);
 
@@ -51,11 +51,22 @@ Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
 	Physics::setCollisionCallback(this);
 }
 
+void Player::spawn(glm::vec3 spawnPos) {
+	flying = false;
+	health = MAX_HEALTH;
+	getTransform()->setPos(spawnPos);
+	getCollider()->awake = true;
+}
+
 int Player::getHealth() {
     return health;
 }
 
 void Player::update(GLfloat delta) {
+	isDead = health <= 0.0f;
+	if (isDead) {
+		return;
+	}
     bool childrenVisible = cam->getCamDist() > 1.0f;
     getTransform()->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
 
@@ -145,7 +156,7 @@ void Player::update(GLfloat delta) {
 }
 
 void Player::onCollision(Collider* other) {
-	if (other->tag == ENEMY && invulnTime >= 0.5f){
+	if ((other->tag == ENEMY || other->tag == ENEMY_PROJECTILE) && invulnTime >= 0.5f){
 		addHealth(-5);
 		invulnTime = 0.0f;
 	}
@@ -167,7 +178,7 @@ void Player::jump() {
 void Player::shoot() {
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(this, shootPos, getCollider()->vel + cam->forward*40.0f);
+    EntityManagerInstance->SpawnProjectile(this, shootPos, getCollider()->vel + cam->forward*40.0f, true);
 }
 
 void Player::addHealth(int amount) {

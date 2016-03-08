@@ -70,7 +70,7 @@ Pool<T>::Pool(int max_size) {
 template <class T>
 int Pool<T>::get() {
     if (free_list.empty()) {
-        std::cout << "POOL EMPTY!!! WEEEEEEEEEEE";
+        //std::cout << "POOL EMPTY!!! WEEEEEEEEEEE";
         // maybe should assert here instead, or just no message?
         return -1;
     }

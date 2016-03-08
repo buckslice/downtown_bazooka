@@ -34,13 +34,13 @@ public:
     // effect dictates appearance, lifetime, and velocity over time
     // mag is magnitude of randomized velocity
     // vel is initial velocity
-    Particle* SpawnParticle(glm::vec3 pos, int effect = Particle::SPARK, float mag = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
+    Particle* SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
 
     // make explosion out of particles at position pos
     // num dictates how many particles in explosion
     void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0, 0, 0));
 
-    void SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel);
+    void SpawnProjectile(Entity *owner, glm::vec3 pos, glm::vec3 vel, bool forPlayer);
     void ReturnProjectile(int id);
 
     void SpawnEnemy();

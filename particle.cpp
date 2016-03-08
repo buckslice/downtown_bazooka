@@ -14,7 +14,7 @@ void Particle::activate() {
     c->awake = true;
 
     float gravmult;
-    switch (effect) {
+    switch (type) {
     case SPARK:
         gravmult = 5.0f;
         lifetime = 1.0f;
@@ -27,6 +27,9 @@ void Particle::activate() {
         gravmult = Mth::rand0X(.15f) - .5f;
         lifetime = 2.0f;
         break;
+	case BEAM:
+		gravmult = 0.0f;
+		lifetime = 0.5f;
     }
     c->gravityMultiplier = gravmult;
     curlife = lifetime;
@@ -42,8 +45,9 @@ void Particle::update(GLfloat dt) {
         return;
     }
 
+	// scalemult unused
     float scalemult;
-    switch (effect) {
+    switch (type) {
     case SPARK:
         scalemult = .97f;
         getCollider()->vel *= curlife + (1.0f - curlife) * 0.75f;
@@ -59,6 +63,10 @@ void Particle::update(GLfloat dt) {
 		getCollider()->vel *= .95f;
         scalemult = .95f;
         break;
+	case BEAM:
+		scalemult = 1.02f;
+		getCollider()->vel *= curlife + (1.0f - curlife) * 0.75f;
+		break;
     }
 
     Transform* t = getTransform();
@@ -67,9 +75,11 @@ void Particle::update(GLfloat dt) {
 }
 
 glm::vec3 Particle::getColor() {
-    switch (effect) {
+    switch (type) {
     case FIRE:
         return glm::vec3(1.0f, curlife / lifetime, 0.0f);
+	case BEAM:
+		return HSBColor(curlife / lifetime * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
     }
     return glm::vec3(1.0f);
 }

@@ -55,9 +55,12 @@ glm::vec3 Transform::getWorldScale() {  // world scale?
     return scale;
 }
 
-// should add in functions to set world pos and world scale
-// and have it calculate proper local based on your parents
-// also do equivalent things for rotation but prob wont use much
+glm::quat Transform::getWorldRot() {
+	if (parent != nullptr) {
+		return parent->getWorldRot() * rot;
+	}
+	return rot;
+}
 
 glm::mat4 Transform::getModelMatrix() {
     if (needUpdate) {   // recalculate model matrix if needs update

@@ -17,8 +17,11 @@ const GLfloat JUMPSPEED = 25.0f;
 class Player : public Entity {
 public:
     bool flying = false;
+	bool isDead = false;
 
     Player(Camera* cam);
+
+	void spawn(glm::vec3 spawnPos);
 
     int getHealth();
 

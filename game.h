@@ -72,6 +72,7 @@ private:
     sf::Clock gameTime;
 
     sf::Text fpsText;
+	sf::Text deadText;
     std::queue<float> fpsValues;
     float totalFpsQueueValue;
 

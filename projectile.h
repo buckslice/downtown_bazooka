@@ -1,5 +1,10 @@
 #pragma once
 #include "entity.h"
+enum ProjectileType {
+	ROCKET,
+	LASER
+};
+
 class Projectile : public Entity {
 public:
     Projectile();
@@ -15,6 +20,8 @@ public:
 	void onDeath();
 
     void init(int id, Entity *owner, glm::vec3 pos, glm::vec3 vel);
+
+	ProjectileType type;
 
 private:
     int id;
