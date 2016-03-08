@@ -15,7 +15,8 @@ EntityManager::EntityManager(Player* player) : player(player) {
 
     // should switch this from pool ?
     projectiles = new Pool<Projectile>(MAX_PROJECTILES);
-    enemies = new Pool<Enemy>(2000);
+    enemies = new Pool<Enemy>(MAX_ENEMIES);
+	items = new Pool<Item>(MAX_ITEMS);
 
 }
 
@@ -24,6 +25,7 @@ void EntityManager::init(int numberOfDudes) {
 
     for (int i = 0; i < numberOfDudes; i++) {
         SpawnEnemy();
+		SpawnItem();
     }
 
 }
@@ -37,6 +39,9 @@ void EntityManager::returnAllObjects() {
     for (size_t i = 0, len = enemies->getSize(); i < len; ++i) {
         ReturnEnemy(i);
     }
+	for (size_t i = 0, len = items->getSize(); i < len; ++i) {
+		ReturnItem(i);
+	}
 }
 
 void EntityManager::update(float delta) {
@@ -50,6 +55,15 @@ void EntityManager::update(float delta) {
         }
         eobjs[i].data.update(delta);
     }
+
+	// update items
+	auto& iobjs = items->getObjects();
+	for (size_t i = 0, len = iobjs.size(); i < len; ++i) {
+		if (iobjs[i].id < 0) {
+			continue;
+		}
+		iobjs[i].data.update(delta);
+	}
 
     // update projectiles
     auto& pobjs = projectiles->getObjects();
@@ -84,6 +98,7 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, int effect, float mag, glm
     t->setScale(glm::vec3(.25f));
     return p;
 }
+
 
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
     for (int i = 0; i < num; ++i) {
@@ -133,6 +148,22 @@ void EntityManager::SpawnEnemy() {
 
 }
 
+
+void EntityManager::SpawnItem() {
+	int id = items->get();
+	if (id < 0) {
+		return;
+	}
+
+	Item* i = items->getData(id);
+
+	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+	glm::vec3 color = glm::vec3(0.7f, 1.0f, 0.5f);
+	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	float rotSpeed = 1.0f;
+	i->init(id, rotSpeed, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
+}
+
 // should make a sub class of entity / template this or some shit later
 void EntityManager::ReturnProjectile(int id) {
     ReturnPooledEntity(id, projectiles);
@@ -140,6 +171,11 @@ void EntityManager::ReturnProjectile(int id) {
 
 void EntityManager::ReturnEnemy(int id) {
     ReturnPooledEntity(id, enemies);
+}
+
+
+void EntityManager::ReturnItem(int id) {
+	ReturnPooledEntity(id, items);
 }
 
 template <class Entity>

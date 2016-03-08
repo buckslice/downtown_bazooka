@@ -149,6 +149,10 @@ void Player::onCollision(Collider* other) {
 		addHealth(-5);
 		invulnTime = 0.0f;
 	}
+
+	if (other->tag == ITEM) {
+		addHealth(10);
+	}
 }
 
 void Player::jump() {

@@ -17,7 +17,8 @@ enum ColliderTag {
     ENEMY_PROJECTILE,
     ENEMY,
     TERRAIN, 
-    DEFAULT
+    DEFAULT,
+	ITEM
 };
 
 // Colliders represent dynamic physics objects

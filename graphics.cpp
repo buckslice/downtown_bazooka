@@ -52,7 +52,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);    // TODO change to not use diff shader without texture
     gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
 
-    boxes = new Pool<Transform>(10000);
+    boxes = new Pool<Transform>(15000);
 
     // testing out new transforms by setting up some arrows for the axes
     Transform* xbox = getTransform(registerTransform(false));
