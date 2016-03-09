@@ -6,7 +6,7 @@
 
 #define MAX_NUMBER_OF_ITEMS 3
 #define DEFAULT_COLOR sf::Color(0,128,64)
-#define TITLE_COLOR sf::Color::Yellow
+#define TITLE_COLOR sf::Color(255, 128, 0)
 #define SELECTED_COLOR sf::Color(0,255,128)
 
 class TextOption {
@@ -38,7 +38,7 @@ public:
         int length = Text.length();
         for (int i = 0; i < length; i++) {
             Characters[i].setColor(IsSelected ? SELECTED_COLOR : DEFAULT_COLOR);
-            DesiredOffsets[i] = IsSelected ? sf::Vector2f() : sf::Vector2f(Mth::rand0X(70) - 35, Mth::rand0X(70) - 35);
+            DesiredOffsets[i] = IsSelected ? sf::Vector2f() : sf::Vector2f(Mth::randRange(-20.0f, 20.0f), Mth::randRange(-20.0f, 20.0f));
         }
     }
 
@@ -47,7 +47,7 @@ public:
         int length = Text.length();
         for (int i = 0; i < length; i++) {
             sf::Vector2f desiredpos = Position + DesiredOffsets[i] + sf::Vector2f((i - length / 2)*45.0f, 0);
-            Characters[i].setPosition(Characters[i].getPosition()*.90f + desiredpos*.1f);
+            Characters[i].setPosition(Characters[i].getPosition()*.90f + desiredpos*.10f);
             window.draw(Characters[i]);
         }
     }
@@ -69,7 +69,6 @@ public:
 private:
     void move(bool up);
 
-    //sf::Text menu[MAX_NUMBER_OF_ITEMS];
     TextOption **menu;
 
     sf::Text title;
