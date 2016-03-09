@@ -7,7 +7,12 @@
 #include "Particle.h"
 #include "resources.h"
 #include "cityGenerator.h"
-
+const int MAX_PROJECTILES = 200;
+const int MAX_PARTICLES = 5000;
+const int MAX_ENEMIES = 1100;
+const int MAX_ITEMS = 1100;
+const float SPAWN_HEIGHT = 200.0f;
+const float SPAWN_OFFSET = 50.0f; // how much lower the player spawns from the items and enemies
 class EntityManager {
 public:
 
@@ -15,11 +20,6 @@ public:
 
     ~EntityManager() {
     }
-
-    const int MAX_PROJECTILES = 200;
-    const int MAX_PARTICLES = 5000;
-	const int MAX_ENEMIES = 1100;
-    const int MAX_ITEMS = 1100;
 
     void init(int numberOfDudes);
 

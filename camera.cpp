@@ -53,7 +53,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
 		pitch = 0.0f;
 		yaw += 5.0f * delta;
 		camDist = 0.0f;
-		camDistTarget = 10.0f;
+		camDistTarget = DEFAULT_CAMDISTTARGET;
 		updateCameraVectors();
 		return;
 	case NORMAL:
@@ -72,8 +72,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
 		pitch = -90.0f;
 		camDistTarget += 4.0f * delta;
 		yaw += 5.0f * delta;
-
-
+		break;
 	}
     // lerp camDist towards target
     GLfloat t = std::max(std::min(delta*10.0f, 1.0f), 0.0f);

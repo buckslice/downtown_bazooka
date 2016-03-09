@@ -53,9 +53,8 @@ void Enemy::update(GLfloat delta) {
     }
 
     glm::vec3 dirToPlayer = Graphics::getTransform(player)->getWorldPos() - getTransform()->getWorldPos();
-	glm::vec3 shootDir = dirToPlayer + Mth::randInsideUnitCube() * 20.0f;
+	glm::vec3 shootDir = dirToPlayer + Mth::randInsideUnitCube() * AIM_DEVIANCE;
 	float distsq = glm::dot(dirToPlayer, dirToPlayer);
-	float closeEnough = 100.0f;
 	if (shootDir != glm::vec3(0.0f)) {
 		shootDir = glm::normalize(shootDir);
 	}
@@ -63,8 +62,7 @@ void Enemy::update(GLfloat delta) {
     if (dirToPlayer != glm::vec3(0.0f)) {
         dirToPlayer = glm::normalize(dirToPlayer) * speed;
     }
-	// this is to make the enemies shoot, but it is incomplete because I wasn't sure where to tag the projectiles as ENEMY_PROJECTILE
-	if (shootTimer < 0.0f && distsq <= closeEnough * closeEnough) {
+	if (shootTimer < 0.0f && distsq <= SHOOT_VECINITY * SHOOT_VECINITY) {
 		EntityManagerInstance->SpawnProjectile(getTransform()->getWorldPos(), getCollider()->vel + shootDir*40.0f, false);
         shootTimer = Mth::rand01() * 10.0f + 5.0f;
 	}

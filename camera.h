@@ -14,6 +14,8 @@ const GLfloat SENSITIVITY = 0.25f;
 
 const GLfloat NEAR_PLANE = 0.1f;
 const GLfloat FAR_PLANE = 2000.0f;
+
+const float DEFAULT_CAMDISTTARGET = 10.0f;
 enum CameraBehavior {
 	NORMAL,
 	AUTOSPIN,
@@ -47,7 +49,7 @@ private:
 
     GLfloat mouseSensitivity;
     GLfloat camDist;
-    GLfloat camDistTarget = 10.0f;
+    GLfloat camDistTarget = DEFAULT_CAMDISTTARGET;
 
     void updateCameraVectors();
 };

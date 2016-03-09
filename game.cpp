@@ -3,7 +3,7 @@
 int numBuildings = 1000;   // 7500
 
 Game::Game(GLuint width, GLuint height)
-    : WIDTH{ width }, HEIGHT{ height },
+    : WIDTH{ width }, HEIGHT{ height }, gameVolume(DEFAULT_VOLUME),
     running{ true }, lastFocused{ false }, gameFocused{ false },
     clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
     mipmapping{ true }, blurring{ true }, wireframe{ false },
@@ -25,7 +25,7 @@ Game::Game(GLuint width, GLuint height)
     }
     // set up music
     mainTrack.setLoop(true);
-    mainTrack.setVolume(20.0f);
+    mainTrack.setVolume(gameVolume);
     mainTrack.play(); // ENSIFERUM
 
     // main systems
@@ -227,10 +227,10 @@ void Game::update(GLfloat delta) {
     menu->update(running);
     if (menu->justClosed) {
         em->init(1000);
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), true);
+        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), true);
     }
     if (menu->justOpened) {
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
+        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
         em->returnAllObjects();
     }
 
@@ -239,7 +239,7 @@ void Game::update(GLfloat delta) {
         cam.behavior = DEATH;
     } else if (menu->getVisible()) {
         cam.behavior = AUTOSPIN;
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
+        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
     } else {
         cam.behavior = NORMAL;
     }

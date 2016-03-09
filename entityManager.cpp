@@ -128,7 +128,7 @@ void EntityManager::SpawnEnemy() {
     Enemy* e = enemies->getData(id);
 
     glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    bool elite = rand() % 50 == 0;
+    bool elite = Mth::rand01() <= 0.02;
 
     glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
     glm::vec3 variance = Mth::randInsideUnitCube();
@@ -147,7 +147,7 @@ void EntityManager::SpawnEnemy() {
         e->jumpVel = Mth::rand01() * 10.0f + 20.0f;
     }
 
-    e->init(id, player->transform, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
+    e->init(id, player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), scale, color);
 
 }
 
@@ -163,7 +163,7 @@ void EntityManager::SpawnItem() {
 	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
 	glm::vec3 color = glm::vec3(0.7f, 1.0f, 0.5f);
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	i->init(id, 60.0f, glm::vec3(rnd.x, 200.0f, rnd.y), scale, color);
+	i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), scale, color);
 }
 
 // should make a sub class of entity / template this or some shit later

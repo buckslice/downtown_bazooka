@@ -28,7 +28,7 @@
 #include "enemy.h"
 #include "mathutil.h"
 #include "entityManager.h"
-
+const float DEFAULT_VOLUME = 20.0f;
 class Game {
 public:
     Game(GLuint width, GLuint height);
@@ -50,6 +50,7 @@ public:
 private:
     GLuint WIDTH;
     GLuint HEIGHT;
+	float gameVolume;
     sf::Vector2i center;
     sf::Music mainTrack;
     sf::RenderWindow* window;

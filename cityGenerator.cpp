@@ -39,7 +39,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
                 city = Mth::randomPointInCircle(CITY_SIZE / 2.0f);
             }
             tries++;
-        } while (tooClose(400.0f, city, cities) && tries < 100);
+        } while (tooClose(MIN_DIST, city, cities) && tries < MAX_TRIES);
         
         cities.push_back(city);
     }
@@ -53,7 +53,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
         float sx, sy, sz;
         int tries = 0;
         glm::vec2 p;
-        while (tries < 100) {
+        while (tries < MAX_TRIES) {
             if (square) {
                 p = Mth::randomPointInSquare(CITY_SIZE);
             } else {
@@ -94,8 +94,8 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
         // set up color for building
         glm::vec3 c;
         if (!colorByAngle) {
-            if (sy < 20.0f) {
-                if (rand() % 20 == 1) {
+            if (sy < LOW_HEIGHT) {
+                if (Mth::rand01() <= 0.05f) {
                     c = glm::vec3(0.0f, 1.0f, 0.25f);    // green
                 } else {
                     float n = Noise::ridged_2D(pos.x + seedX, pos.z + seedY, 3, .001f);
@@ -105,8 +105,8 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
                         c = glm::vec3(0.0f, 1.0f, 1.0f);    // teal
                     }
                 }
-            } else if (sy < 60.0f) {
-                float t = Mth::blend(sy, 20.0f, 60.0f);
+            } else if (sy < HIGH_HEIGHT) {
+                float t = Mth::blend(sy, LOW_HEIGHT, HIGH_HEIGHT);
                 c = Mth::lerp(glm::vec3(0.3f, 0.0f, 1.0f), glm::vec3(1.0f, 0.4f, 0.0f), t);
 
                 //c = glm::vec3(Mth::rand01() * .25f + .5f, 0.0, 1.0f);	// purp
@@ -117,7 +117,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
             // make colors based on angle
             glm::vec2 r = glm::vec2(1.0f, 0.0f);
             float angle = atan2(p.y, p.x) - atan2(r.y, r.x);
-            angle *= 180.0f / PI;
+            angle *= RADSTODEGREES;
             if (angle < 0.0f) {
                 angle += 360.0;
             }

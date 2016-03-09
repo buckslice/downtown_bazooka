@@ -7,8 +7,12 @@
 #include "graphics.h"
 #include "physics.h"
 
+const int MAX_TRIES = 100;
 const float CITY_SIZE = 2000.0f;    // distance from one side to another
 const float BLEND_DISTANCE = 500.0f;
+const float MIN_DIST = 400.0f;
+const float LOW_HEIGHT = 20.0f;
+const float HIGH_HEIGHT = 60.0f;
 
 class CityGenerator {
 public:
