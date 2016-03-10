@@ -141,6 +141,7 @@ void EntityManager::SpawnEnemy() {
         color = glm::vec3(0.8f, 1.0f, 0.6f);
         e->speed = Mth::rand01() * 5.0f + 10.0f;
         e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
+		e->health *= 3.0f;
     } else {
         color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
         e->speed = Mth::rand01() * 5.0f + 5.0f;

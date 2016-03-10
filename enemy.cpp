@@ -37,7 +37,10 @@ void Enemy::init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 c
 }
 
 void Enemy::update(GLfloat delta) {
-    Collider& col = *getCollider();
+	if (health <= 0.0f) {
+		EntityManagerInstance->ReturnEnemy(id);
+	}
+	Collider& col = *getCollider();
 
     jumpTimer -= delta;
 	shootTimer -= delta;
@@ -74,6 +77,6 @@ void Enemy::update(GLfloat delta) {
 
 void Enemy::onCollision(CollisionData data) {
     if (data.tag == PLAYER_PROJECTILE || data.tag == EXPLOSION) {
-        EntityManagerInstance->ReturnEnemy(id);
+		health -= 25.0f;
     }
 }

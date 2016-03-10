@@ -17,12 +17,14 @@ public:
 
     float speed;
     float jumpVel;
+	float health = MAX_HEALTH;
 
 private:
     int id;
     int player = -1;
     float jumpTimer;
     float shootTimer;
+
 
     Transform* model;
 

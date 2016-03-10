@@ -3,7 +3,7 @@
 int numBuildings = 1000;   // 7500
 
 Game::Game(GLuint width, GLuint height)
-    : WIDTH{ width }, HEIGHT{ height }, gameVolume(DEFAULT_VOLUME),
+    : WIDTH{ width }, HEIGHT{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
     clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
     mipmapping{ true }, blurring{ true }, wireframe{ false },
@@ -353,6 +353,7 @@ Game::~Game() {
     delete player;
     delete em;
     delete menu;
+	delete audio;
 
     delete dmodels;
     delete dcolors;

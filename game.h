@@ -48,7 +48,6 @@ public:
 private:
     GLuint WIDTH;
     GLuint HEIGHT;
-	float gameVolume;
     sf::Vector2i center;
     sf::RenderWindow* window;
     Graphics* graphics;
