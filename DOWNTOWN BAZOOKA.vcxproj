@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aabb.cpp" />
+    <ClCompile Include="audio.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="collider.cpp" />
@@ -187,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
+    <ClInclude Include="audio.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="cityGenerator.h" />
     <ClInclude Include="collider.h" />

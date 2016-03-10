@@ -19,14 +19,7 @@ Game::Game(GLuint width, GLuint height)
     window = new sf::RenderWindow(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Default, settings);
     window->setFramerateLimit(60);
 
-    // load music track	
-    if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
-        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-    }
-    // set up music
-    mainTrack.setLoop(true);
-    mainTrack.setVolume(gameVolume);
-    mainTrack.play(); // ENSIFERUM
+
 
     // main systems
     graphics = new Graphics(*window);
@@ -52,6 +45,9 @@ Game::Game(GLuint width, GLuint height)
     em = new EntityManager(player);
 
     menu = new Menu(player);
+
+	audio = new Audio();
+	audio->playMainTrack();
     window->resetGLStates();
 
     // mouse and window focusing variables
@@ -223,7 +219,7 @@ void Game::update(GLfloat delta) {
         mouseScroll -= 5.0f * delta;
     }
 
-    //update menu
+    // update menu
     menu->update(running);
     if (menu->justClosed) {
         em->init(1000);
@@ -233,6 +229,9 @@ void Game::update(GLfloat delta) {
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
         em->returnAllObjects();
     }
+
+	// update audio
+	audio->update(delta);
 
     // update camera
     if (player->isDead) {

@@ -7,7 +7,6 @@
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -15,6 +14,7 @@
 #include <memory>
 #include <queue>
 
+#include "audio.h"
 #include "shader.h"
 #include "camera.h"
 #include "cityGenerator.h"
@@ -22,13 +22,11 @@
 #include "glHelper.h"
 #include "physics.h"
 #include "menu.h"
-#include "game.h"
 #include "graphics.h"
 #include "input.h"
 #include "enemy.h"
 #include "mathutil.h"
 #include "entityManager.h"
-const float DEFAULT_VOLUME = 20.0f;
 class Game {
 public:
     Game(GLuint width, GLuint height);
@@ -52,7 +50,6 @@ private:
     GLuint HEIGHT;
 	float gameVolume;
     sf::Vector2i center;
-    sf::Music mainTrack;
     sf::RenderWindow* window;
     Graphics* graphics;
     Physics* physics;
@@ -63,6 +60,7 @@ private:
     Player* player;
     EntityManager* em;
     Menu* menu;
+	Audio* audio;
 
     // debug rendering stuff
     std::vector<glm::mat4>* dmodels;
