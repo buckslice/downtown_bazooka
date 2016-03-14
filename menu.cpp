@@ -61,7 +61,9 @@ void Menu::draw(sf::RenderWindow& window) {
         shape.setFillColor(sf::Color(0, 0, 0, 150));
         shape.setPosition(sf::Vector2f());
         shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
+        glDepthMask(GL_FALSE);
         window.draw(shape);
+        glDepthMask(GL_TRUE);
         if (showingInstructions) {
             window.draw(instructions);
         } else {

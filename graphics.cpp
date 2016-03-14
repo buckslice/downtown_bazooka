@@ -9,9 +9,9 @@
 #include "glm/ext.hpp"
 
 // so can declare at bottom of file
-extern std::vector<Vertex> regVerts;
-extern std::vector<Vertex> offsetVerts;
-extern std::vector<GLuint> elems;
+extern std::vector<Vertex> cubeVertices;
+extern std::vector<Vertex> offsetCubeVertices;
+extern std::vector<GLuint> cubeElements;
 
 // have to do statics in implementation i guess??
 static std::vector<Mesh*> meshes;
@@ -48,8 +48,10 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     initGL(window);
 
-    solidBox = new Mesh(regVerts, elems, Resources::get().solidTex);    // TODO change to not use diff shader without texture
-    gridBox = new Mesh(regVerts, elems, Resources::get().gridTex);
+
+    solidBox = new Mesh(cubeVertices, cubeElements, Resources::get().solidTex);    // TODO change to not use diff shader without texture
+    gridBox = new Mesh(cubeVertices, cubeElements, Resources::get().gridTex);
+    skybox = new Skybox();
 
     boxes = new Pool<Transform>(10000);
 
@@ -203,7 +205,6 @@ void Graphics::initGL(sf::RenderWindow& window) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     glBindVertexArray(0);
 
-    floorMesh = new Mesh(regVerts, elems, Resources::get().gridTex);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set black clear color
     //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -241,13 +242,14 @@ void Graphics::renderQuad() {
 }
 
 // RENDER SCENE TO FRAMEBUFFER
-void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
+void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer) {
     Resources& r = Resources::get();
     if (toFrameBuffer) {
         glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
     } else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -305,10 +307,7 @@ void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
     }
 
     // draw terrain
-    r.terrainShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    tg.render();
+    terrainGen.render(view, proj);
 
     // clear stream vectors
 	smodels.clear();
@@ -324,14 +323,22 @@ void Graphics::renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer) {
 }
 
 
-void Graphics::postProcess() {
+void Graphics::finalProcessing(Camera& cam, bool blurring) {
     Resources& r = Resources::get();
 
     // BLUR PASS
     glDisable(GL_DEPTH_TEST);	//dont need this now
     blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, r.screenShader, r.blurShader);
 
-    // FINAL PASS (combines blur buffer with original scene buffer)
+    glEnable(GL_DEPTH_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
+    glm::mat4 view = cam.getViewMatrix();
+    glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
+    skybox->render(view, proj);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+
+    // FINAL PASS (combines blur buffer with scene buffer)
     glClear(GL_COLOR_BUFFER_BIT);
     r.blendShader.use();
     glActiveTexture(GL_TEXTURE0);
@@ -403,8 +410,7 @@ Graphics::~Graphics() {
         delete meshes[i];
     }
     meshes.erase(meshes.begin(), meshes.end());
-
-    delete floorMesh;
+    delete skybox;
 }
 
 void Graphics::addToStream(bool solid, glm::mat4& model, glm::vec3& color) {
@@ -550,7 +556,7 @@ GLuint Graphics::registerMesh() {
 // these methods are pretty retarded actually wtf am i doing?
 GLuint Graphics::registerMesh(GLuint tex) {
 
-    meshes.push_back(new Mesh(offsetVerts, elems, tex));
+    meshes.push_back(new Mesh(offsetCubeVertices, cubeElements, tex));
 
     return meshes.size() - 1;
 
@@ -572,13 +578,14 @@ bool Graphics::isValidMeshID(GLuint id) {
 }
 
 
+
 // helps make square texture look better on buildings
 GLfloat _vn = 1.0f / 32.0f;
 
 // each uv starts in bottom left (when looking at face) and progresses clockwise around
-std::vector<Vertex> regVerts = {
+std::vector<Vertex> cubeVertices = {
     //front
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
+    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
     Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
     Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
     Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
@@ -610,7 +617,7 @@ std::vector<Vertex> regVerts = {
 
 };
 
-std::vector<Vertex> offsetVerts = {
+std::vector<Vertex> offsetCubeVertices = {
     Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
     Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
     Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
@@ -643,7 +650,7 @@ std::vector<Vertex> offsetVerts = {
 
 };
 
-std::vector<GLuint> elems = {
+std::vector<GLuint> cubeElements = {
     0,1,2,
     2,3,0,
 

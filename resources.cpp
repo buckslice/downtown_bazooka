@@ -9,12 +9,24 @@ Resources::Resources() {
     }
 
     loadTextures(true);
+
+    std::vector<std::string> faces;
+    faces.push_back("assets/images/skybox/nightsky_rt.tga");
+    faces.push_back("assets/images/skybox/nightsky_lf.tga");
+    faces.push_back("assets/images/skybox/nightsky_up.tga");
+    faces.push_back("assets/images/skybox/nightsky_dn.tga");
+    faces.push_back("assets/images/skybox/nightsky_bk.tga");
+    faces.push_back("assets/images/skybox/nightsky_ft.tga");
+    skyboxTex = GLHelper::loadCubeMap(faces);
+
     buildShaders();
 }
 
 Resources::~Resources() {
     deleteTextures();
     deleteShaders();
+
+    glDeleteTextures(1, &skyboxTex);
 }
 
 bool loadedTexturesBefore = false;
@@ -36,10 +48,6 @@ void Resources::loadTextures(bool mipmapped) {
     loadedTexturesBefore = true;
 }
 
-void Resources::toggleBuilding(bool b) {
-    glDeleteTextures(1, &gridTex);
-    //gridTex = GLHelper::loadTexture("assets/images/")
-}
 
 
 bool loadedShadersBefore = false;
@@ -83,6 +91,12 @@ void Resources::buildShaders() {
     blendShader.use();
     glUniform1i(glGetUniformLocation(blendShader.program, "scene"), 0);
     glUniform1i(glGetUniformLocation(blendShader.program, "blur"), 1);
+
+    // skyboxShader
+    success &= skyboxShader.build("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+    skyboxShader.use();
+    glUniform1i(glGetUniformLocation(skyboxShader.program, "skybox"), 0);
+
 
     if (success && loadedShadersBefore) {
         std::cout << "SHADERS::RECOMPILE::SUCCESS" << std::endl;

@@ -15,18 +15,20 @@ public:
     GLuint terrainTex;
     GLuint solidTex;
 
+    GLuint skyboxTex;
+
     Shader instanceShader;
     Shader tiledShader;
     Shader terrainShader;
     Shader blurShader;
     Shader screenShader;
     Shader blendShader;
+    Shader skyboxShader;
 
     sf::Font font;
 
     void buildShaders();
     void loadTextures(bool mipmapped);
-    void toggleBuilding(bool b);
 
     // singleton: delete copy constructor and assignment operator
     Resources(Resources const&) = delete;

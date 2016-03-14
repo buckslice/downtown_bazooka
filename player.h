@@ -8,7 +8,7 @@
 #include "input.h"
 #include "projectile.h"
 
-const int MAX_HEALTH = 100;
+const float MAX_HEALTH = 100.0f;
 const int HEALTH_BAR_HEIGHT = 20;
 
 const GLfloat SPEED = 15.0f;
@@ -23,7 +23,7 @@ public:
 
 	void spawn(glm::vec3 spawnPos, bool awake);
 
-    int getHealth();
+    float getHealth();
 
     void update(GLfloat delta) override;
     void onCollision(CollisionData data) override;
@@ -32,11 +32,11 @@ public:
 
     void shoot();
 
-    void addHealth(int amount);
+    void addHealth(float amount);
 
 private:
     Camera* cam;
-    int health;
+    float health;
     float invulnTime = 0.0f;
     float speed;
     float timeSinceJump = -1.0f;

@@ -269,9 +269,12 @@ outer:  // jump here if built max this frame
 
 }
 
-void Terrain::render() {
-    // render all terrain chunks
-    //Resources& r = Resources::get();
+// render all terrain chunks
+void Terrain::render(glm::mat4 view, glm::mat4 proj) {
+    Resources& r = Resources::get();
+    r.terrainShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {

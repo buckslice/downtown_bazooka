@@ -58,7 +58,7 @@ void Player::spawn(glm::vec3 spawnPos, bool awake) {
     getCollider()->awake = awake;
 }
 
-int Player::getHealth() {
+float Player::getHealth() {
     return health;
 }
 
@@ -182,9 +182,9 @@ void Player::shoot() {
     EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f, true);
 }
 
-void Player::addHealth(int amount) {
+void Player::addHealth(float amount) {
     health += amount;
-    health = std::max(0, std::min(health, MAX_HEALTH));
+    health = std::max(0.0f, std::min(health, MAX_HEALTH));
 }
 
 glm::vec3 Player::getMovementDir() {

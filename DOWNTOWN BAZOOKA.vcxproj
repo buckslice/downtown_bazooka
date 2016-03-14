@@ -183,6 +183,7 @@
     <ClCompile Include="player.cpp" />
     <ClCompile Include="projectile.cpp" />
     <ClCompile Include="resources.cpp" />
+    <ClCompile Include="skybox.cpp" />
     <ClCompile Include="terrain.cpp" />
     <ClCompile Include="transform.cpp" />
   </ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="entityManager.h" />
     <ClInclude Include="item.h" />
     <ClInclude Include="pool.h" />
+    <ClInclude Include="skybox.h" />
     <ClInclude Include="slotMap.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="glHelper.h" />

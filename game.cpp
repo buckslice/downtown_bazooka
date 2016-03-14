@@ -275,6 +275,7 @@ void Game::render() {
 
     // draw UI
     window->resetGLStates();
+    glEnable(GL_DEPTH_TEST);
     menu->draw(*window);
     if (showFPS) {
         window->draw(fpsText);
@@ -287,13 +288,14 @@ void Game::render() {
         shape.setPosition(sf::Vector2f());
         shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
         deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
+        glDepthMask(GL_FALSE);
         window->draw(shape);
         window->draw(deadText);
+        glDepthMask(GL_TRUE);
 
     }
-    if (blurring) {
-        graphics->postProcess();
-    }
+
+    graphics->finalProcessing(cam, blurring);
 
     // swap buffers
     window->display();

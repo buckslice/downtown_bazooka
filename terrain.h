@@ -63,7 +63,7 @@ public:
 
     void update(glm::vec3 pl);
 
-    void render();
+    void render(glm::mat4 view, glm::mat4 proj);
 
     float queryHeight(float x, float z);
 

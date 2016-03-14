@@ -7,6 +7,8 @@
 #include "mesh.h"
 #include "terrain.h"
 #include "pool.h"
+#include "skybox.h"
+
 
 const GLuint BLUR_DOWNSAMPLE = 2;
 
@@ -21,7 +23,7 @@ public:
 
     void resize(int width, int height);
     //void renderUI();
-    void postProcess();
+    void finalProcessing(Camera& cam, bool blurring);
     void buildBuffers();
 
     // should later add options for mesh type
@@ -71,10 +73,8 @@ private:
     std::vector<glm::mat4>* dmodels;
     std::vector<glm::vec3>* dcolors;
 
-    //Pool<Transform> boxTransforms;
-
-    Mesh* floorMesh;
-
     Mesh* solidBox;
     Mesh* gridBox;
+
+    Skybox* skybox;
 };
