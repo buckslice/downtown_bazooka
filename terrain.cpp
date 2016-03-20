@@ -17,7 +17,7 @@ bool Terrain::toggleDebugColors() {
 }
 
 float minh, maxh;
-CVertex Chunk::genPoint(float x, float y) {
+CTVertex Chunk::genPoint(float x, float y) {
     const int max = 2;
     double f[max];
     uint32_t id[max];
@@ -73,10 +73,10 @@ CVertex Chunk::genPoint(float x, float y) {
     float scale = 100.0f;
     h *= scale;
 
-    return CVertex{ glm::vec3(x, h, y), color, glm::vec2() };
+    return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
 }
 
-CVertex Chunk::genTest(float x, float y) {
+CTVertex Chunk::genTest(float x, float y) {
     const int max = 3;
     double f[max];
     uint32_t id[max];
@@ -92,7 +92,7 @@ CVertex Chunk::genTest(float x, float y) {
     //glm::vec3 color = glm::vec3(h);
 
     h *= 100.0f;
-    return CVertex{ glm::vec3(x, h, y), color, glm::vec2() };
+    return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
 }
 
 void Chunk::generate() {
@@ -117,7 +117,7 @@ void Chunk::generate() {
             float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
-            CVertex cv = genPoint(xo, yo);
+            CTVertex cv = genPoint(xo, yo);
             if (debugColors) {
                 cv.color = debugColor;
             }
@@ -146,7 +146,7 @@ void Chunk::generate() {
         tris.push_back(i);
     }
     //std::cout << tris.size() << std::endl;
-    mesh = new ColorMesh(verts, tris, Resources::get().terrainTex);
+    mesh = new StandardMesh(verts, tris, Resources::get().terrainTex);
 }
 
 Chunk::Chunk(point pos) {
@@ -259,7 +259,6 @@ outer:  // jump here if built max this frame
 
             // delete this chunks stuff
             coordsByIndices.erase(c->pos);
-            c->mesh->destroy();
             delete c;
 
             // decrement to offset next increment since we lost an element
@@ -278,14 +277,13 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
 
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
-        chunks[i]->mesh->draw();
+        chunks[i]->mesh->render();
     }
 
 }
 
 void Terrain::deleteChunks() {
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
-        chunks[i]->mesh->destroy();
         delete chunks[i];
     }
     chunks.erase(chunks.begin(), chunks.end());

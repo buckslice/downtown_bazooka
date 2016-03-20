@@ -24,17 +24,10 @@ public:
     void resize(int width, int height);
     //void renderUI();
     void finalProcessing(Camera& cam, bool blurring);
-    void buildBuffers();
 
     // should later add options for mesh type
     static GLuint registerMesh();   // because i cant figure out how to give default argument to static function
     static GLuint registerMesh(GLuint tex);
-
-    // builds or updates color buffer for given mesh
-    static void setColors(GLuint mesh_id, std::vector<glm::vec3>& colors);
-
-    // builds or updates model buffer for given mesh
-    static void setModels(GLuint mesh_id, std::vector<glm::mat4>& models);
 
     static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
     static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
@@ -50,11 +43,6 @@ private:
     GLuint WIDTH;
     GLuint HEIGHT;
 
-    static void genColorBuffer(Mesh* mesh);
-    static void genModelBuffer(Mesh* mesh);
-
-    void setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
-
     void uploadBoxes();
 
     static bool isValidMeshID(GLuint id);
@@ -62,6 +50,11 @@ private:
     void initGL(sf::RenderWindow& window);
     void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iters, Shader screen, Shader blur);
     void renderQuad();
+
+    void buildBuffers();
+    void destroyBuffers();
+
+    void printGLErrors();
 
     FBO sceneBuffer;
     FBO blurResult;
@@ -73,8 +66,9 @@ private:
     std::vector<glm::mat4>* dmodels;
     std::vector<glm::vec3>* dcolors;
 
-    Mesh* solidBox;
-    Mesh* gridBox;
+    PIMesh* solidStream;
+    TIMesh* gridStream;
+    TIMesh* buildingCube;
 
     Skybox* skybox;
 };

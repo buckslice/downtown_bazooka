@@ -18,7 +18,7 @@ public:
     GLuint skyboxTex;
 
     Shader instanceShader;
-    Shader tiledShader;
+    Shader instanceTexShader;
     Shader terrainShader;
     Shader blurShader;
     Shader screenShader;

@@ -11,181 +11,235 @@
 
 #include "shader.h"
 
+extern std::vector<GLuint> cubeElements;
+
 struct Vertex {
+    Vertex(glm::vec3 position) :
+        position(position) {
+    }
     glm::vec3 position;
-    //glm::vec3 normal;
+};
+
+struct TVertex : Vertex {
+    TVertex(glm::vec3 position, glm::vec2 texcoord) :
+        Vertex(position), texcoord(texcoord) {
+    }
     glm::vec2 texcoord;
 };
 
-struct CVertex {
-    glm::vec3 position;
-    glm::vec3 color;    // maybe add in alpha later??
+//struct CVertex : Vertex {
+//    glm::vec3 color;
+//};
+
+struct CTVertex : Vertex {
+    CTVertex(glm::vec3 position, glm::vec3 color, glm::vec2 texcoord) :
+        Vertex(position), color(color), texcoord(texcoord) {
+    }
+    glm::vec3 color;
     glm::vec2 texcoord;
 };
 
-//struct Texture
-
-
+template<class Vertex>
 class Mesh {
 public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
-    GLuint texture;
-
-    GLuint modelBuffer;
-    GLuint colorBuffer;
-
+    const GLuint TRIS;
     bool visible = false;
-    bool builtColors = false;
-    bool builtModels = false;
 
-    Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, GLuint texture) {
+    virtual void render() = 0;
+
+    Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : TRIS(indices.size()) {
         this->vertices = vertices;
         this->indices = indices;
-        this->texture = texture;
 
-        setupMesh();
-    }
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
 
-    void draw() {
-        // set bindings
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        // bind array to remember attributes
         glBindVertexArray(VAO);
 
-        // draw
-        if (amount == 0) {
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-        } else {
-            glDrawElementsInstanced(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0, amount);
-        }
+        // load vertex buffer onto GPU
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // load element buffer onto GPU
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        // unbind stuff
+        // set up attribute pointers
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+
         glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    // not sure if need this but #safety?
     ~Mesh() {
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
         glDeleteBuffers(1, &EBO);
     }
 
-    GLuint getVAO() {
-        return VAO;
-    }
-
-    void setInstanceAmount(GLuint amount) {
-        this->amount = amount;
-    }
-
-
-private:
+protected:
     // render handles
     GLuint VAO, VBO, EBO;
+};
 
-    glm::vec3 color;
+// used for standard models (none in game yet) and terrain
+class StandardMesh : Mesh<CTVertex> {
+    // bool manual mesh binding?
 
-    GLuint amount = 0;  // if 0 no instancing, if > 0 then instanced
+public:
 
-    void setupMesh() {
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
+    GLuint texture;
+    //bool manualBinding = true;
 
-        // bind array to remember attributes
-        glBindVertexArray(VAO);
-        // load vertex buffer on GPU
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-        // load element buffer to GPU
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
-
+    StandardMesh(std::vector<CTVertex>& vertices, std::vector<GLuint> indices, GLuint texture) : Mesh(vertices, indices) {
+        this->texture = texture;
         // set up attribute pointers
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
-        //glEnableVertexAttribArray(1);
-        //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
+        glBindVertexArray(VAO);
+
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texcoord));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(CTVertex), (GLvoid*)offsetof(CTVertex, color));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(CTVertex), (GLvoid*)offsetof(CTVertex, texcoord));
 
         glBindVertexArray(0);
     }
 
-};
-
-
-class ColorMesh {
-public:
-    GLuint texture;
-    GLuint indicesSize;
-
-    GLuint modelBuffer;
-    GLuint colorBuffer;
-
-    ColorMesh() {
-    }
-
-    ColorMesh(std::vector<CVertex>& vertices, std::vector<GLuint>& indices, GLuint texture) {
-        this->texture = texture;
-        indicesSize = indices.size();
-        setupMesh(vertices, indices);
-    }
-
-    void draw() {
+    void render() override {
+        // check visibility (or do in base?)
         // set bindings
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
 
         // draw
-        glDrawElements(GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0);
 
         // unbind stuff
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    void destroy() {
-        glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
-        glDeleteBuffers(1, &EBO);
+
+};
+
+template <class Vertex>
+class IMesh : public Mesh<Vertex> {
+public:
+    GLuint count;
+
+    GLuint colorBuffer;
+    GLuint modelBuffer;
+    bool builtColors = false;
+    bool builtModels = false;
+
+    IMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : Mesh<Vertex>(vertices, indices) {
     }
 
-    GLuint getVAO() {
-        return VAO;
-    }
-
-private:
-    // render handles
-    GLuint VAO, VBO, EBO;
-
-    void setupMesh(std::vector<CVertex>& vertices, std::vector<GLuint>& indices) {
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
-
-        // bind array to remember attributes
+    // sets up instancing buffers starting at attribute 'start'
+    // could probably just make constructor do this but couldn't figure out how
+    // to handle adding additional attributes correctly in child classes
+    void setInstanceBuffers(GLuint attribStart) {
         glBindVertexArray(VAO);
-        // load vertex buffer on GPU
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(CVertex), &vertices[0], GL_STATIC_DRAW);
-        // load element buffer to gpu
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+        // build color buffer
+        glGenBuffers(1, &colorBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+        glEnableVertexAttribArray(attribStart);
+        glVertexAttribPointer(attribStart, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
+        glVertexAttribDivisor(attribStart, 1);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // set up attribute pointers
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(CVertex), (GLvoid*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(CVertex), (GLvoid*)offsetof(CVertex, color));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(CVertex), (GLvoid*)offsetof(CVertex, texcoord));
-
+        // build model buffer
+        glGenBuffers(1, &modelBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
+        for (int i = 0; i < 4; i++) {
+            glEnableVertexAttribArray(++attribStart);
+            glVertexAttribPointer(attribStart, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(i * sizeof(glm::vec4)));
+            glVertexAttribDivisor(attribStart, 1);
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+    }
+
+    // stream should be set if this function is getting called each frame
+    void setColors(std::vector<glm::vec3>& colors, bool stream) {
+        if (colors.size() == 0) {
+            return;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    void setModels(std::vector<glm::mat4>& models, bool stream) {
+        if (models.size() == 0) {
+            visible = false;
+            return;
+        }
+        visible = true;
+        count = models.size();
+        glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
+        glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::mat4), &models[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
 };
 
+class PIMesh : public IMesh <Vertex> {
+public:
+    PIMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : IMesh<Vertex>(vertices, indices) {
+        setInstanceBuffers(1);
+    }
+
+    void render() override {
+        if (count <= 0) {
+            return;
+        }
+
+        glBindVertexArray(VAO);
+        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, count);
+        glBindVertexArray(0);
+    }
+
+    static std::vector<Vertex> cubeVertices;
+};
+
+
+class TIMesh : public IMesh<TVertex> {
+public:
+    GLuint texture;
+
+    TIMesh(std::vector<TVertex>& vertices, std::vector<GLuint>& indices, GLuint texture) : IMesh<TVertex>(vertices, indices) {
+        this->texture = texture;
+        glBindVertexArray(VAO);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TVertex), (GLvoid*)offsetof(TVertex, texcoord));
+        glBindVertexArray(0);
+        setInstanceBuffers(2);
+    }
+
+    void render() override {
+        if (count <= 0) {
+            return;
+        }
+
+        // set bindings
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(VAO);
+
+        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, count);
+
+        // unbind stuff
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    static std::vector<TVertex> cubeVertices;
+    static std::vector<TVertex> offsetCubeVertices;
+
+};

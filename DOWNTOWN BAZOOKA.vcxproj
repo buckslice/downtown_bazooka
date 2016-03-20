@@ -177,6 +177,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mathutil.cpp" />
     <ClCompile Include="menu.cpp" />
+    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="noise.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="physics.cpp" />

@@ -97,7 +97,7 @@ template <class T>
 void Pool<T>::ret(int id) {
     // assert crashes the program if the boolean statement evaluates false
     // only works in debug mode and you can #define NDEBUG to skip it in that file (or maybe whole project, not sure)
-    assert(id >= 0 && id < objs.size());
+    //assert(id >= 0 && id < objs.size());
     objs[id].id = -1;
     free_list.push_back(id);
 }

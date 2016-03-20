@@ -19,11 +19,9 @@ Game::Game(GLuint width, GLuint height)
     window = new sf::RenderWindow(sf::VideoMode(WIDTH, HEIGHT), "DOWNTOWN BAZOOKA", sf::Style::Default, settings);
     window->setFramerateLimit(60);
 
-
-
     // main systems
     graphics = new Graphics(*window);
-    Resources::get();   // load resources
+    Resources::get();   // makes sure to load resources
     physics = new Physics();
     cg = new CityGenerator();
     tg = new Terrain();
@@ -34,7 +32,7 @@ Game::Game(GLuint width, GLuint height)
     //srand(1); //my testing seed for physics bugs lol
 
     // generate a random city
-    cg->generate(false, true, numBuildings, *physics);
+    //cg->generate(false, true, numBuildings, *physics);
 
     // init camera
     player = new Player(&cam);
@@ -45,10 +43,10 @@ Game::Game(GLuint width, GLuint height)
     em = new EntityManager(player);
 
     menu = new Menu(player);
+    //window->resetGLStates();
 
-	audio = new Audio();
-	audio->playMainTrack();
-    window->resetGLStates();
+    audio = new Audio();
+    //audio->playMainTrack();
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
@@ -67,6 +65,7 @@ Game::Game(GLuint width, GLuint height)
     deadText.setColor(sf::Color(255, 0, 0));
     deadText.setScale(4.0f, 4.0f);
     deadText.setString("GAME OVER!");
+
 }
 
 void Game::start() {
@@ -222,7 +221,7 @@ void Game::update(GLfloat delta) {
     // update menu
     menu->update(running);
     if (menu->justClosed) {
-        em->init(1000);
+        em->init(0);
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), true);
     }
     if (menu->justOpened) {
@@ -230,8 +229,8 @@ void Game::update(GLfloat delta) {
         em->returnAllObjects();
     }
 
-	// update audio
-	audio->update(delta);
+    // update audio
+    audio->update(delta);
 
     // update camera
     if (player->isDead) {
@@ -274,8 +273,12 @@ void Game::render() {
     graphics->renderScene(cam, *tg, blurring);
 
     // draw UI
+    // TODO relocate all this code to be inside menu
     window->resetGLStates();
+
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.01f);
     menu->draw(*window);
     if (showFPS) {
         window->draw(fpsText);
@@ -290,10 +293,10 @@ void Game::render() {
         deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
         glDepthMask(GL_FALSE);
         window->draw(shape);
-        window->draw(deadText);
         glDepthMask(GL_TRUE);
-
+        window->draw(deadText);
     }
+    glDisable(GL_ALPHA_TEST);
 
     graphics->finalProcessing(cam, blurring);
 
@@ -303,10 +306,13 @@ void Game::render() {
 
 // calculates a buffers the fps
 void Game::updateFpsText(float delta) {
+    if (delta < 0.005f) {
+        delta = 0.005f;
+    }
     float fps = 1.0f / delta;
     fpsValues.push(fps);
     totalFpsQueueValue += fps;
-    if (fpsValues.size() > 30) {
+    while (fpsValues.size() > 30) {
         totalFpsQueueValue -= fpsValues.front();
         fpsValues.pop();
     }
@@ -318,30 +324,31 @@ void Game::updateFpsText(float delta) {
 
 // test math utils by drawing a bunch of boxes using each function
 void Game::testMathUtils() {
-    int numTestBoxes = 100000;
+    int numTestBoxes = 500000;
     float size = 10.0f;
     float curTime = fmod(gameTime.getElapsedTime().asSeconds(), 20.0f);
+    curTime = 0.0f;
     glm::vec3 scale = glm::vec3(1.0f);
     for (int i = 0; i < numTestBoxes; ++i) {
         glm::vec3 p;
-
-        if (curTime < 5.0f) {
-            p = Mth::randInsideUnitCube() * size;
-        } else if (curTime < 10.0f) {
-            p = Mth::randInsideSphere(size);
-        } else if (curTime < 15.0f) {
-            p = glm::vec3(Mth::randRange(-size, size), Mth::randRange(-size, size), Mth::randRange(-size, size));
-        } else {
-            p = glm::vec3(Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size);
-        }
+        //if (curTime < 5.0f) {
+        //    p = Mth::randInsideUnitCube() * size;
+        //} else if (curTime < 10.0f) {
+        //    p = Mth::randInsideSphere(size);
+        //} else if (curTime < 15.0f) {
+        //    p = glm::vec3(Mth::randRange(-size, size), Mth::randRange(-size, size), Mth::randRange(-size, size));
+        //} else {
+        //    p = glm::vec3(Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size);
+        //}
 
         p.y += size;
         glm::mat4 model;
         model = glm::translate(model, p);
         model = glm::scale(model, scale);
 
-        HSBColor color(Mth::rand01(), 1.0f, 1.0f);
-        Graphics::addToStream(true, model, color.toRGB());
+        //HSBColor color(Mth::rand01(), 1.0f, 1.0f);
+        //Graphics::addToStream(true, model, color.toRGB());
+        Graphics::addToStream(true, model, glm::vec3(1.0f));
     }
 }
 
@@ -355,7 +362,7 @@ Game::~Game() {
     delete player;
     delete em;
     delete menu;
-	delete audio;
+    delete audio;
 
     delete dmodels;
     delete dcolors;

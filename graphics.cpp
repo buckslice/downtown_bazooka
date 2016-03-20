@@ -14,7 +14,7 @@ extern std::vector<Vertex> offsetCubeVertices;
 extern std::vector<GLuint> cubeElements;
 
 // have to do statics in implementation i guess??
-static std::vector<Mesh*> meshes;
+//static std::vector<Mesh*> meshes;
 static Pool<Transform>* boxes;
 
 static std::vector<glm::mat4> smodels;
@@ -48,9 +48,9 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     initGL(window);
 
+    solidStream = new PIMesh(PIMesh::cubeVertices, cubeElements);
+    gridStream = new TIMesh(TIMesh::cubeVertices, cubeElements, Resources::get().gridTex);
 
-    solidBox = new Mesh(cubeVertices, cubeElements, Resources::get().solidTex);    // TODO change to not use diff shader without texture
-    gridBox = new Mesh(cubeVertices, cubeElements, Resources::get().gridTex);
     skybox = new Skybox();
 
     boxes = new Pool<Transform>(10000);
@@ -174,7 +174,9 @@ void Graphics::uploadBoxes() {
 void Graphics::initGL(sf::RenderWindow& window) {
     // init glew (must be after window creation)
     glewExperimental = GL_TRUE;
-    glewInit();
+    if (glewInit() != GLEW_OK) {
+        std::cout << "ERROR::GLEW_INIT_FAILED!!!" << std::endl;
+    }
 
     // setup OpenGL options
     glViewport(0, 0, WIDTH, HEIGHT);
@@ -215,22 +217,26 @@ void Graphics::resize(int width, int height) {
     WIDTH = width;
     HEIGHT = height;
     glViewport(0, 0, WIDTH, HEIGHT);
-    // destroy buffers and then rebuild
-    blurBuffers[0].destroy();
-    blurBuffers[1].destroy();
-    sceneBuffer.destroy();
-    blurResult.destroy();
-
+    // rebuild buffers
+    destroyBuffers();
     buildBuffers();
 }
 
 void Graphics::buildBuffers() {
     // initialize buffers
     for (GLuint i = 0; i < 2; i++) {
-        blurBuffers[i] = GLHelper::buildFBO(WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE, false);
+        // doesnt need depth if / when redo FBOs to have optional depth
+        blurBuffers[i] = GLHelper::buildFBO(WIDTH / BLUR_DOWNSAMPLE, HEIGHT / BLUR_DOWNSAMPLE);
     }
-    sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT, true);
-    blurResult = GLHelper::buildFBO(WIDTH, HEIGHT, true);
+    sceneBuffer = GLHelper::buildFBO(WIDTH, HEIGHT);
+    blurResult = GLHelper::buildFBO(WIDTH, HEIGHT);
+}
+
+void Graphics::destroyBuffers() {
+    blurBuffers[0].destroy();
+    blurBuffers[1].destroy();
+    sceneBuffer.destroy();
+    blurResult.destroy();
 }
 
 // render a fullscreen quad
@@ -241,7 +247,7 @@ void Graphics::renderQuad() {
     glBindVertexArray(0);
 }
 
-// RENDER SCENE TO FRAMEBUFFER
+// renders main scene (optionally to the scene buffer if blurring)
 void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer) {
     Resources& r = Resources::get();
     if (toFrameBuffer) {
@@ -250,60 +256,59 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    r.instanceShader.use();
     // set projection and view matrices
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
-    // draw all instanced cube meshes
+    //glDisable(GL_TEXTURE_2D);
+    r.instanceShader.use();
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     if (dstreamSize > 0) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        solidBox->visible = true;
-        solidBox->setInstanceAmount(dstreamSize);
-        if (!solidBox->builtModels) {
-            Graphics::genModelBuffer(solidBox);
-        }
-        if (!solidBox->builtColors) {
-            Graphics::genColorBuffer(solidBox);
-        }
-        glBindBuffer(GL_ARRAY_BUFFER, solidBox->modelBuffer);
-        glBufferData(GL_ARRAY_BUFFER, dstreamSize * sizeof(glm::mat4), &(*dmodels)[0], GL_STREAM_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, solidBox->colorBuffer);
-        glBufferData(GL_ARRAY_BUFFER, dstreamSize * sizeof(glm::vec3), &(*dcolors)[0], GL_STREAM_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // set and draw debug stream
+        solidStream->visible = true;
+        solidStream->setModels(*dmodels, true);
+        solidStream->setColors(*dcolors, true);
 
-        solidBox->draw();
+        solidStream->render();
 
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        for (size_t i = 0, len = meshes.size(); i < len; ++i) {
-            if (meshes[i]->visible) {
-                meshes[i]->draw();
-            }
-        }
+        //for (size_t i = 0, len = meshes.size(); i < len; ++i) {
+        //    if (meshes[i]->visible) {
+        //        meshes[i]->draw();
+        //    }
+        //}
     }
 
+    // upload boxes to corresponding streams
     uploadBoxes();
 
-    // should just make solidbox a different model without textures
-    Graphics::setStream(solidBox, smodels, scolors);
-    Graphics::setStream(gridBox, gmodels, gcolors);
-    if (solidBox->visible) {
-        solidBox->draw();
+    // set and draw normal streams
+    solidStream->setModels(smodels, true);
+    solidStream->setColors(scolors, true);
+    if (solidStream->visible) {
+        solidStream->render();
     }
-    if (gridBox->visible) {
-        gridBox->draw();
+    //glEnable(GL_TEXTURE_2D);
+
+    // draw textured cube instances
+    r.instanceTexShader.use();
+    glUniformMatrix4fv(glGetUniformLocation(r.instanceTexShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(r.instanceTexShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    gridStream->setModels(gmodels, true);
+    gridStream->setColors(gcolors, true);
+    if (gridStream->visible) {
+        gridStream->render();
     }
 
     // draw terrain
@@ -326,17 +331,26 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
 void Graphics::finalProcessing(Camera& cam, bool blurring) {
     Resources& r = Resources::get();
 
-    // BLUR PASS
-    glDisable(GL_DEPTH_TEST);	//dont need this now
-    blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, r.screenShader, r.blurShader);
+    if (blurring) {
+        // BLUR PASS
+        glDisable(GL_DEPTH_TEST);
+        blurColorBuffer(sceneBuffer.color, blurResult.frame, 4, r.screenShader, r.blurShader);
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
+    } else {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
+    // render skybox
     glEnable(GL_DEPTH_TEST);
-    glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
     skybox->render(view, proj);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
+
+    if (!blurring) {
+        return;
+    }
 
     // FINAL PASS (combines blur buffer with scene buffer)
     glClear(GL_COLOR_BUFFER_BIT);
@@ -345,6 +359,7 @@ void Graphics::finalProcessing(Camera& cam, bool blurring) {
     glBindTexture(GL_TEXTURE_2D, sceneBuffer.color);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, blurResult.color);
+    glActiveTexture(GL_TEXTURE0);
     // blur strength is how bright the blur is
     glUniform1f(glGetUniformLocation(r.blendShader.program, "blurStrength"), 3.0f);
     renderQuad();
@@ -404,13 +419,21 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
 
 
 Graphics::~Graphics() {
-    for (size_t i = 0, len = meshes.size(); i < len; ++i) {
-        glDeleteBuffers(1, &meshes[i]->colorBuffer);
-        glDeleteBuffers(1, &meshes[i]->modelBuffer);
-        delete meshes[i];
-    }
-    meshes.erase(meshes.begin(), meshes.end());
+    //for (size_t i = 0, len = meshes.size(); i < len; ++i) {
+    //    glDeleteBuffers(1, &meshes[i]->colorBuffer);
+    //    glDeleteBuffers(1, &meshes[i]->modelBuffer);
+    //    delete meshes[i];
+    //}
+    //meshes.erase(meshes.begin(), meshes.end());
+    destroyBuffers();
     delete skybox;
+}
+
+void Graphics::printGLErrors() {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
 }
 
 void Graphics::addToStream(bool solid, glm::mat4& model, glm::vec3& color) {
@@ -449,103 +472,6 @@ void Graphics::setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::
     this->dcolors = colors;
 }
 
-void Graphics::setStream(Mesh* m, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
-    int len = models.size();
-    if (len == 0 || len != colors.size()) {
-        m->visible = false;
-        return;
-    }
-    m->visible = true;
-
-    m->setInstanceAmount(len);
-    if (!m->builtModels) {
-        Graphics::genModelBuffer(m);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m->modelBuffer);
-    glBufferData(GL_ARRAY_BUFFER, len * sizeof(glm::mat4), &models[0], GL_STREAM_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    if (!m->builtColors) {
-        Graphics::genColorBuffer(m);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
-    glBufferData(GL_ARRAY_BUFFER, len * sizeof(glm::vec3), &colors[0], GL_STREAM_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-
-void Graphics::setColors(GLuint mesh_id, std::vector<glm::vec3>& colors) {
-    if (colors.size() == 0) {
-        return;
-    }
-
-    Mesh* m = meshes[mesh_id];
-    if (!m->builtColors) {
-        Graphics::genColorBuffer(m);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m->colorBuffer);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void Graphics::setModels(GLuint mesh_id, std::vector<glm::mat4>& models) {
-    Mesh* m = meshes[mesh_id];
-    if (models.size() == 0) {
-        m->visible = false;
-        return;
-    }
-    m->visible = true;
-
-    m->setInstanceAmount(models.size());
-    if (!m->builtModels) {
-        Graphics::genModelBuffer(m);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m->modelBuffer);
-    glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-// builds color buffer
-void Graphics::genColorBuffer(Mesh* mesh) {
-    GLuint colorBuffer;
-    glGenBuffers(1, &colorBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-    glBindVertexArray(mesh->getVAO());
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
-    glVertexAttribDivisor(2, 1);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    mesh->colorBuffer = colorBuffer;
-    mesh->builtColors = true;
-}
-
-// builds model buffer for instanced mesh
-void Graphics::genModelBuffer(Mesh* mesh) {
-    GLuint modelBuffer;
-    glGenBuffers(1, &modelBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
-    glBindVertexArray(mesh->getVAO());
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)0);
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(sizeof(glm::vec4)));
-    glEnableVertexAttribArray(5);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(2 * sizeof(glm::vec4)));
-    glEnableVertexAttribArray(6);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (GLvoid*)(3 * sizeof(glm::vec4)));
-    glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
-    glVertexAttribDivisor(5, 1);
-    glVertexAttribDivisor(6, 1);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    mesh->modelBuffer = modelBuffer;
-    mesh->builtModels = true;
-}
-
 GLuint Graphics::registerMesh() {
     return registerMesh(Resources::get().gridTex);
 }
@@ -556,116 +482,24 @@ GLuint Graphics::registerMesh() {
 // these methods are pretty retarded actually wtf am i doing?
 GLuint Graphics::registerMesh(GLuint tex) {
 
-    meshes.push_back(new Mesh(offsetCubeVertices, cubeElements, tex));
+    //meshes.push_back(new Mesh(offsetCubeVertices, cubeElements, tex));
 
-    return meshes.size() - 1;
-
+    //return meshes.size() - 1;
+    return 0;
 }
 
 void Graphics::setMeshVisible(GLuint id, bool value) {
     if (!isValidMeshID(id)) {
         return;
     }
-    meshes[id]->visible = value;
+    //meshes[id]->visible = value;
 }
 
 bool Graphics::isValidMeshID(GLuint id) {
-    if (id < 0 || id >= meshes.size()) {
-        std::cout << "ERROR::MESH_ID_INVALID" << std::endl;
-        return false;
-    }
+    //if (id < 0 || id >= meshes.size()) {
+    //    std::cout << "ERROR::MESH_ID_INVALID" << std::endl;
+    //    return false;
+    //}
     return true;
 }
 
-
-
-// helps make square texture look better on buildings
-GLfloat _vn = 1.0f / 32.0f;
-
-// each uv starts in bottom left (when looking at face) and progresses clockwise around
-std::vector<Vertex> cubeVertices = {
-    //front
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    //back
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    //left
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-    //right
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    //bottom
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-    //top
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-
-};
-
-std::vector<Vertex> offsetCubeVertices = {
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1.0f, _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, _vn) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f - _vn) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f - _vn) },
-
-    Vertex{ glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 1.0f) },
-
-    Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
-    Vertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
-
-};
-
-std::vector<GLuint> cubeElements = {
-    0,1,2,
-    2,3,0,
-
-    4,5,6,
-    6,7,4,
-
-    8,9,10,
-    10,11,8,
-
-    12,13,14,
-    14,15,12,
-
-    16,17,18,
-    18,19,16,
-
-    20,21,22,
-    22,23,20
-};

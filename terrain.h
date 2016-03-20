@@ -42,15 +42,15 @@ public:
     float getHeight(float x, float z);
 
     std::pair<int, int> pos;
-    ColorMesh* mesh;
+    StandardMesh* mesh;
 
 private:
-    std::vector<CVertex> verts; // save these for collision detection
+    std::vector<CTVertex> verts; // save these for collision detection
 
     void generate();
 
-    CVertex genPoint(float xo, float yo);
-    CVertex genTest(float xo, float yo);
+    CTVertex genPoint(float xo, float yo);
+    CTVertex genTest(float xo, float yo);
 
 };
 

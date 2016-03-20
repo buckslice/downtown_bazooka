@@ -55,26 +55,19 @@ bool loadedShadersBefore = false;
 void Resources::buildShaders() {
     bool success = true;
 
-    // instancedShader
+    // instanceShader
     success &= instanceShader.build("assets/shaders/instanced.vert", "assets/shaders/default.frag");
-    instanceShader.use();
-    glUniform1i(glGetUniformLocation(instanceShader.program, "tex"), 0);
 
-    // tiledShader
-    success &= tiledShader.build("assets/shaders/default.vert", "assets/shaders/tiled.frag");
-    tiledShader.use();
-    glUniform1i(glGetUniformLocation(tiledShader.program, "tex"), 0);
-    //glUniform3f(glGetUniformLocation(tiledShader.program, "Color"), 1.0f, 0.0f, 0.0f);
-    glm::mat4 model;
-    model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(2000.0f, 10.0f, 2000.0f));  // too lazy to import citygen for CITY_SIZE lol
-    glUniformMatrix4fv(glGetUniformLocation(tiledShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    // instancedTexShader
+    success &= instanceTexShader.build("assets/shaders/instanced_textured.vert", "assets/shaders/default_textured.frag");
+    instanceTexShader.use();
+    glUniform1i(glGetUniformLocation(instanceTexShader.program, "tex"), 0);
 
     // terrainShader
-    success &= terrainShader.build("assets/shaders/colormesh.vert", "assets/shaders/default.frag");
+    success &= terrainShader.build("assets/shaders/colormesh.vert", "assets/shaders/default_textured.frag");
     terrainShader.use();
     glUniform1i(glGetUniformLocation(terrainShader.program, "tex"), 0);
-    model = glm::mat4();
+    glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
     glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -109,9 +102,10 @@ void Resources::deleteShaders() {
         return;
     }
     glDeleteProgram(instanceShader.program);
-    glDeleteProgram(tiledShader.program);
+    glDeleteProgram(instanceTexShader.program);
     glDeleteProgram(terrainShader.program);
     glDeleteProgram(blurShader.program);
     glDeleteProgram(screenShader.program);
     glDeleteProgram(blendShader.program);
+    glDeleteProgram(skyboxShader.program);
 }

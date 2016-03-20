@@ -128,7 +128,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
         colors.push_back(c);
     }
 
-    Graphics::setColors(buildingMesh, colors);
-    Graphics::setModels(buildingMesh, models);
+    //Graphics::setColors(buildingMesh, colors);
+    //Graphics::setModels(buildingMesh, models);
 
 }

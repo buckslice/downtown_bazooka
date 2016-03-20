@@ -12,7 +12,8 @@ struct FBO {
     // when buildFBO returns the fbo struct it made will
     // have its destructor called (after it is copied)
     void destroy() {
-        glDeleteBuffers(1, &frame);
+        glDeleteFramebuffers(1, &frame);
+        glDeleteRenderbuffers(1, &depth);
         glDeleteTextures(1, &color);
     }
 };
@@ -23,5 +24,5 @@ public:
 
     static GLuint loadCubeMap(std::vector<std::string> faces);
 
-    static FBO buildFBO(GLuint width, GLuint height, bool withDepth);
+    static FBO buildFBO(GLuint width, GLuint height);
 };
