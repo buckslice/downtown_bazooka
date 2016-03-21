@@ -4,6 +4,7 @@
 #include <glm/gtx/projection.hpp>
 #include "physics.h"
 #include "cityGenerator.h"
+#include "graphics.h"
 
 // declared like this so can be accessed from static methods
 const int MAX_DYNAMICS = 10000;
@@ -231,7 +232,7 @@ void Physics::update(float delta) {
             col.pos += rvel * delta * time;
 
             // check height of terrain
-            float h = tg->queryHeight(col.pos.x, col.pos.z);
+            float h = terrainGen->queryHeight(col.pos.x, col.pos.z);
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
             // check to make sure normal is pointing up actually now

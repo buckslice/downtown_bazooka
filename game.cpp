@@ -1,7 +1,5 @@
 #include "game.h"
 
-int numBuildings = 1000;   // 7500
-
 Game::Game(GLuint width, GLuint height)
     : WIDTH{ width }, HEIGHT{ height },
     running{ true }, lastFocused{ false }, gameFocused{ false },
@@ -23,16 +21,12 @@ Game::Game(GLuint width, GLuint height)
     graphics = new Graphics(*window);
     Resources::get();   // makes sure to load resources
     physics = new Physics();
-    cg = new CityGenerator();
-    tg = new Terrain();
-    physics->tg = tg;
-
-    // init random seed and build city
-    srand(static_cast<unsigned int>(time(NULL)));   //TODO redo random usage with C++11!
-    //srand(1); //my testing seed for physics bugs lol
+    cityGen = new CityGenerator();
+    terrainGen = new Terrain();
+    physics->terrainGen = terrainGen;
 
     // generate a random city
-    //cg->generate(false, true, numBuildings, *physics);
+    cityGen->generate(false, true, NUM_BUILDINGS, *physics);
 
     // init camera
     player = new Player(&cam);
@@ -40,10 +34,10 @@ Game::Game(GLuint width, GLuint height)
     cam.transform->setPos(glm::vec3(0.0f, 1.8f, 0.0f));
     pt->parentAll(cam.transform);
 
-    em = new EntityManager(player);
+    entityManager = new EntityManager(player);
 
     menu = new Menu(player);
-    //window->resetGLStates();
+    window->resetGLStates();
 
     audio = new Audio();
     //audio->playMainTrack();
@@ -51,20 +45,11 @@ Game::Game(GLuint width, GLuint height)
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
     window->setMouseCursorVisible(false);
-    window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be useful
+    window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be more accurate
 
     const GLuint MAX_DEBUG = 20000;
     dmodels = new std::vector<glm::mat4>(MAX_DEBUG);
     dcolors = new std::vector<glm::vec3>(MAX_DEBUG);
-
-    fpsText.setFont(Resources::get().font);
-    fpsText.setColor(sf::Color(255, 0, 0));
-    fpsText.setScale(2.0f, 2.0f);
-    fpsText.setPosition(0.0f, -10.0f);
-    deadText.setFont(Resources::get().font);
-    deadText.setColor(sf::Color(255, 0, 0));
-    deadText.setScale(4.0f, 4.0f);
-    deadText.setString("GAME OVER!");
 
 }
 
@@ -74,8 +59,6 @@ void Game::start() {
     while (running) {
 
         GLfloat delta = frameTime.restart().asSeconds();
-
-        updateFpsText(delta);
 
         pollEvents();
 
@@ -176,25 +159,25 @@ void Game::toggleOptions() {
     }
     // toggle terrain color debug
     if (Input::justPressed(sf::Keyboard::Num4)) {
-        tg->deleteChunks();
-        std::cout << "TERRAIN DEBUG " << (tg->toggleDebugColors() ? "ON" : "OFF") << std::endl;
+        terrainGen->deleteChunks();
+        std::cout << "TERRAIN DEBUG " << (terrainGen->toggleDebugColors() ? "ON" : "OFF") << std::endl;
     }
     // randomize world seed
     if (Input::justPressed(sf::Keyboard::Num5)) {
-        tg->deleteChunks();
-        tg->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
+        terrainGen->deleteChunks();
+        terrainGen->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
         std::cout << "RANDOMIZED WORLD SEED" << std::endl;
     }
     // rebuild color wheel city
     if (Input::justPressed(sf::Keyboard::Num6)) {
         physics->clearStatics();
-        cg->generate(false, true, numBuildings, *physics);
+        cityGen->generate(false, true, NUM_BUILDINGS, *physics);
         std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
     }
     // rebuild regular city
     if (Input::justPressed(sf::Keyboard::Num7)) {
         physics->clearStatics();
-        cg->generate(false, false, numBuildings, *physics);
+        cityGen->generate(false, false, NUM_BUILDINGS, *physics);
         std::cout << ("BUILT NORMAL CITY") << std::endl;
     }
     // recompile shaders if prompted
@@ -219,14 +202,15 @@ void Game::update(GLfloat delta) {
     }
 
     // update menu
-    menu->update(running);
+    running = menu->update(delta);
+
     if (menu->justClosed) {
-        em->init(0);
+        entityManager->init(NUM_ENEMIES);
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), true);
     }
     if (menu->justOpened) {
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
-        em->returnAllObjects();
+        entityManager->returnAllObjects();
     }
 
     // update audio
@@ -248,13 +232,13 @@ void Game::update(GLfloat delta) {
         return;
     }
 
-    em->update(delta);
+    entityManager->update(delta);
 
     glm::vec3 pp = player->getTransform()->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
-    tg->update(pp);
+    terrainGen->update(pp);
 
-    // resolve collisions
+    // detect and resolve collisions
     physics->update(delta);
 
     //testMathUtils();
@@ -269,57 +253,19 @@ void Game::render() {
         graphics->setDebugStream(0, dmodels, dcolors);
     }
 
-    // render graphics
-    graphics->renderScene(cam, *tg, blurring);
+    // render main game scene
+    graphics->renderScene(cam, *cityGen, *terrainGen, blurring);
 
-    // draw UI
-    // TODO relocate all this code to be inside menu
+    // reset states to begin SFML 2D rendering
     window->resetGLStates();
+    // draw UI
+    menu->draw(*window, showFPS);
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.01f);
-    menu->draw(*window);
-    if (showFPS) {
-        window->draw(fpsText);
-    }
-    if (player->isDead) {
-        int width = window->getSize().x;
-        int height = window->getSize().y;
-        sf::RectangleShape shape;
-        shape.setFillColor(sf::Color(0, 0, 0, 150));
-        shape.setPosition(sf::Vector2f());
-        shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
-        deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
-        glDepthMask(GL_FALSE);
-        window->draw(shape);
-        glDepthMask(GL_TRUE);
-        window->draw(deadText);
-    }
-    glDisable(GL_ALPHA_TEST);
-
+    // do final post processing of image (draws skybox here as well)
     graphics->finalProcessing(cam, blurring);
 
     // swap buffers
     window->display();
-}
-
-// calculates a buffers the fps
-void Game::updateFpsText(float delta) {
-    if (delta < 0.005f) {
-        delta = 0.005f;
-    }
-    float fps = 1.0f / delta;
-    fpsValues.push(fps);
-    totalFpsQueueValue += fps;
-    while (fpsValues.size() > 30) {
-        totalFpsQueueValue -= fpsValues.front();
-        fpsValues.pop();
-    }
-    float avgFps = totalFpsQueueValue / fpsValues.size();
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(1) << avgFps;
-    fpsText.setString(ss.str());
 }
 
 // test math utils by drawing a bunch of boxes using each function
@@ -331,24 +277,24 @@ void Game::testMathUtils() {
     glm::vec3 scale = glm::vec3(1.0f);
     for (int i = 0; i < numTestBoxes; ++i) {
         glm::vec3 p;
-        //if (curTime < 5.0f) {
-        //    p = Mth::randInsideUnitCube() * size;
-        //} else if (curTime < 10.0f) {
-        //    p = Mth::randInsideSphere(size);
-        //} else if (curTime < 15.0f) {
-        //    p = glm::vec3(Mth::randRange(-size, size), Mth::randRange(-size, size), Mth::randRange(-size, size));
-        //} else {
-        //    p = glm::vec3(Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size);
-        //}
+        if (curTime < 5.0f) {
+            p = Mth::randInsideUnitCube() * size;
+        } else if (curTime < 10.0f) {
+            p = Mth::randInsideSphere(size);
+        } else if (curTime < 15.0f) {
+            p = glm::vec3(Mth::randRange(-size, size), Mth::randRange(-size, size), Mth::randRange(-size, size));
+        } else {
+            p = glm::vec3(Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size, Mth::rand01()*size*2.0f - size);
+        }
 
         p.y += size;
         glm::mat4 model;
         model = glm::translate(model, p);
         model = glm::scale(model, scale);
 
-        //HSBColor color(Mth::rand01(), 1.0f, 1.0f);
-        //Graphics::addToStream(true, model, color.toRGB());
-        Graphics::addToStream(true, model, glm::vec3(1.0f));
+        HSBColor color(Mth::rand01(), 1.0f, 1.0f);
+        Graphics::addToStream(true, model, color.toRGB());
+        //Graphics::addToStream(true, model, glm::vec3(1.0f));
     }
 }
 
@@ -357,10 +303,10 @@ Game::~Game() {
     delete window;
     delete graphics;
     delete physics;
-    delete cg;
-    delete tg;
+    delete cityGen;
+    delete terrainGen;
     delete player;
-    delete em;
+    delete entityManager;
     delete menu;
     delete audio;
 

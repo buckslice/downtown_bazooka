@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include "mesh.h"
 #include "aabb.h"
-#include "graphics.h"
 #include "physics.h"
 
 const int MAX_TRIES = 100;
@@ -20,9 +19,12 @@ public:
     std::vector<glm::vec3> colors;
 
 	CityGenerator();
+    ~CityGenerator();
+
+    void render();
 
     void generate(bool square, bool colorByAngle, GLuint count, Physics& phys);
 
 private:
-    GLuint buildingMesh;
+    TIMesh* buildingMesh;
 };

@@ -134,16 +134,27 @@ public:
 
     GLuint colorBuffer;
     GLuint modelBuffer;
-    bool builtColors = false;
-    bool builtModels = false;
+    bool built = false;
 
     IMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : Mesh<Vertex>(vertices, indices) {
+    }
+
+    ~IMesh() {
+        if (built) {
+            glDeleteBuffers(1, &colorBuffer);
+            glDeleteBuffers(1, &modelBuffer);
+        }
     }
 
     // sets up instancing buffers starting at attribute 'start'
     // could probably just make constructor do this but couldn't figure out how
     // to handle adding additional attributes correctly in child classes
     void setInstanceBuffers(GLuint attribStart) {
+        if (built) {
+            std::cout << "ERROR::ALREADY_BUILT_INSTANCE_BUFFER" << std::endl;
+            return;
+        }
+
         glBindVertexArray(VAO);
         // build color buffer
         glGenBuffers(1, &colorBuffer);
@@ -163,11 +174,13 @@ public:
         }
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+
+        built = true;
     }
 
     // stream should be set if this function is getting called each frame
     void setColors(std::vector<glm::vec3>& colors, bool stream) {
-        if (colors.size() == 0) {
+        if (colors.size() == 0 || !built) {
             return;
         }
         glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
@@ -176,7 +189,7 @@ public:
     }
 
     void setModels(std::vector<glm::mat4>& models, bool stream) {
-        if (models.size() == 0) {
+        if (models.size() == 0 || !built) {
             visible = false;
             return;
         }
@@ -217,7 +230,7 @@ public:
         this->texture = texture;
         glBindVertexArray(VAO);
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TVertex), (GLvoid*)offsetof(TVertex, texcoord));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TVertex), (GLvoid*)offsetof(TVertex, texcoord));
         glBindVertexArray(0);
         setInstanceBuffers(2);
     }

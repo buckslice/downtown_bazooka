@@ -1,5 +1,6 @@
 #include "player.h"
 #include "entityManager.h"
+#include "graphics.h"
 
 Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     this->cam = cam;
@@ -30,7 +31,7 @@ Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     rarm->setPos(-0.5f, 1.5f, 0.0f);
     rarm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(true));
+    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(false));
     bazooka->setPos(0.8f, 1.8f, 0.2f);
     bazooka->setScale(0.5f, 0.5f, 2.0f);
 

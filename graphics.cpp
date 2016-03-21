@@ -13,9 +13,8 @@ extern std::vector<Vertex> cubeVertices;
 extern std::vector<Vertex> offsetCubeVertices;
 extern std::vector<GLuint> cubeElements;
 
-// have to do statics in implementation i guess??
-//static std::vector<Mesh*> meshes;
 static Pool<Transform>* boxes;
+//static std::vector<Mesh<Vertex>*> meshes;
 
 static std::vector<glm::mat4> smodels;
 static std::vector<glm::vec3> scolors;
@@ -150,7 +149,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     planet->parentAll(moon);
 }
 
-void Graphics::uploadBoxes() {
+void Graphics::uploadTransforms() {
     // the direction from child to parent has to be perpendicular to the 
     // axis of rotation of parent to have normal looking orbit
     // also without seperate transforms each child is basically tidally locked to parent but whatever lol
@@ -248,7 +247,7 @@ void Graphics::renderQuad() {
 }
 
 // renders main scene (optionally to the scene buffer if blurring)
-void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer) {
+void Graphics::renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrainGen, bool toFrameBuffer) {
     Resources& r = Resources::get();
     if (toFrameBuffer) {
         glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
@@ -265,7 +264,6 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
-    //glDisable(GL_TEXTURE_2D);
     r.instanceShader.use();
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -284,13 +282,13 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         //for (size_t i = 0, len = meshes.size(); i < len; ++i) {
         //    if (meshes[i]->visible) {
-        //        meshes[i]->draw();
+        //        meshes[i]->render();
         //    }
         //}
     }
 
     // upload boxes to corresponding streams
-    uploadBoxes();
+    uploadTransforms();
 
     // set and draw normal streams
     solidStream->setModels(smodels, true);
@@ -298,7 +296,6 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
     if (solidStream->visible) {
         solidStream->render();
     }
-    //glEnable(GL_TEXTURE_2D);
 
     // draw textured cube instances
     r.instanceTexShader.use();
@@ -310,6 +307,9 @@ void Graphics::renderScene(Camera& cam, Terrain& terrainGen, bool toFrameBuffer)
     if (gridStream->visible) {
         gridStream->render();
     }
+
+    // draw city (uses same shader as gridStream)
+    cityGen.render();
 
     // draw terrain
     terrainGen.render(view, proj);
@@ -420,13 +420,10 @@ void Graphics::blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iteration
 
 Graphics::~Graphics() {
     //for (size_t i = 0, len = meshes.size(); i < len; ++i) {
-    //    glDeleteBuffers(1, &meshes[i]->colorBuffer);
-    //    glDeleteBuffers(1, &meshes[i]->modelBuffer);
     //    delete meshes[i];
     //}
-    //meshes.erase(meshes.begin(), meshes.end());
-    destroyBuffers();
     delete skybox;
+    destroyBuffers();
 }
 
 void Graphics::printGLErrors() {
@@ -472,34 +469,9 @@ void Graphics::setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::
     this->dcolors = colors;
 }
 
-GLuint Graphics::registerMesh() {
-    return registerMesh(Resources::get().gridTex);
-}
-
 // no way to delete meshes currently but can just set
 // visibility to false if you need
-// really no need to delete mesh ever
-// these methods are pretty retarded actually wtf am i doing?
-GLuint Graphics::registerMesh(GLuint tex) {
-
-    //meshes.push_back(new Mesh(offsetCubeVertices, cubeElements, tex));
-
-    //return meshes.size() - 1;
-    return 0;
-}
-
-void Graphics::setMeshVisible(GLuint id, bool value) {
-    if (!isValidMeshID(id)) {
-        return;
-    }
-    //meshes[id]->visible = value;
-}
-
-bool Graphics::isValidMeshID(GLuint id) {
-    //if (id < 0 || id >= meshes.size()) {
-    //    std::cout << "ERROR::MESH_ID_INVALID" << std::endl;
-    //    return false;
-    //}
-    return true;
+void Graphics::registerMesh(Mesh<Vertex>* mesh) {
+    //meshes.push_back(mesh);
 }
 

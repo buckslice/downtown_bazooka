@@ -12,7 +12,6 @@
 #include <fstream>
 #include <Windows.h>
 #include <memory>
-#include <queue>
 
 #include "audio.h"
 #include "shader.h"
@@ -27,6 +26,7 @@
 #include "enemy.h"
 #include "mathutil.h"
 #include "entityManager.h"
+
 class Game {
 public:
     Game(GLuint width, GLuint height);
@@ -46,6 +46,9 @@ public:
 
 
 private:
+    const GLuint NUM_BUILDINGS = 1000; // 7500
+    const GLuint NUM_ENEMIES = 1000;
+
     GLuint WIDTH;
     GLuint HEIGHT;
     sf::Vector2i center;
@@ -53,11 +56,11 @@ private:
     Graphics* graphics;
     Physics* physics;
     Input input;
-    CityGenerator* cg;
-    Terrain* tg;
+    CityGenerator* cityGen;
+    Terrain* terrainGen;
     Camera cam;
     Player* player;
-    EntityManager* em;
+    EntityManager* entityManager;
     Menu* menu;
 	Audio* audio;
 
@@ -69,13 +72,7 @@ private:
     sf::Clock frameTime;
     sf::Clock gameTime;
 
-    sf::Text fpsText;
-	sf::Text deadText;
-    std::queue<float> fpsValues;
-    float totalFpsQueueValue = 0.0f;
-
     void testMathUtils();
-    void updateFpsText(float delta);
 
     sf::Vector2i mouseMove;
     GLfloat mouseScroll;

@@ -34,7 +34,7 @@ std::vector<TVertex> TIMesh::cubeVertices = {
     TVertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
     TVertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
     TVertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    TVertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    TVertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) }
 
 };
 
@@ -67,7 +67,7 @@ std::vector<TVertex> TIMesh::offsetCubeVertices = {
     TVertex{ glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f) },
     TVertex{ glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f) },
     TVertex{ glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f) },
-    TVertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) },
+    TVertex{ glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f) }
 
 };
 
@@ -121,6 +121,6 @@ std::vector<Vertex> PIMesh::cubeVertices = {
     Vertex{ glm::vec3(-0.5f, 0.5f, 0.5f) },
     Vertex{ glm::vec3(0.5f, 0.5f, 0.5f) },
     Vertex{ glm::vec3(0.5f, 0.5f, -0.5f) },
-    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f) },
+    Vertex{ glm::vec3(-0.5f, 0.5f, -0.5f) }
 
 };

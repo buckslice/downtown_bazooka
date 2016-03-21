@@ -1,6 +1,7 @@
 #include "menu.h"
 #include "input.h"
 #include <iostream>
+#include <iomanip>
 
 #define USESPRITES 1
 
@@ -43,6 +44,19 @@ Menu::Menu(Player* player) {
     instructions.setPosition(5.0f, 50.0f);
     healthBar.setFillColor(sf::Color(180, 255, 0, 255));
 
+    fpsText.setFont(Resources::get().font);
+    fpsText.setColor(sf::Color(255, 0, 0));
+    fpsText.setScale(2.0f, 2.0f);
+    fpsText.setPosition(0.0f, -10.0f);
+    deadText.setFont(Resources::get().font);
+    deadText.setColor(sf::Color(255, 0, 0));
+    deadText.setScale(4.0f, 4.0f);
+    deadText.setString("GAME OVER!");
+
+    overlay.setFillColor(sf::Color(0, 0, 0, 150));
+    overlay.setPosition(sf::Vector2f());
+
+
     // this should give the width in pixels of the text so we can use that to center it
     // but too bad it crashes the game so hard lol whyyyyyy???
     // some sort of weird access violation where we arent reseting states right??? bugged pos???
@@ -53,41 +67,62 @@ Menu::Menu(Player* player) {
 Menu::~Menu() {
 }
 
-void Menu::draw(sf::RenderWindow& window) {
+void Menu::draw(sf::RenderWindow& window, bool showFPS) {
     int width = window.getSize().x;
     int height = window.getSize().y;
-    if (visible) {
-        sf::RectangleShape shape;
-        shape.setFillColor(sf::Color(0, 0, 0, 150));
-        shape.setPosition(sf::Vector2f());
-        shape.setSize(sf::Vector2f(sf::Vector2i(width, height)));
-        glDepthMask(GL_FALSE);
-        window.draw(shape);
-        glDepthMask(GL_TRUE);
-        if (showingInstructions) {
-            window.draw(instructions);
-        } else {
-            // set positions incase resize
-            //titleSprite.setPosition(width / 2.0f - 500.0f, height / 5.0f);
-            //window.draw(titleSprite);
 
-            title.setPosition(sf::Vector2f(width / 2.0f - 530.0f, height * 0.05f));
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.1f);
 
-            window.draw(title);
-            if (menu == nullptr)
-                setVisible(true);
-            for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
-                menu[i]->draw(window, sf::Vector2f(width / 2.0f, height / (MAX_NUMBER_OF_ITEMS + 1)*(1.0f + i)));
-                //window.draw(menu[i]);
-            }
-        }
-    } else {
-        healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
-        float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
-        float y = static_cast<float>(HEALTH_BAR_HEIGHT);
-        healthBar.setSize(sf::Vector2f(x, y));
-        window.draw(healthBar);
+    if (showFPS) {
+        window.draw(fpsText);
     }
+
+    // if main menu is not being shown then draw game UI stuff
+    if (!visible) {
+        if (player->isDead) {
+            overlay.setSize(sf::Vector2f(sf::Vector2i(width, height)));
+            glDepthMask(GL_FALSE);
+            window.draw(overlay);
+            glDepthMask(GL_TRUE);
+
+            deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
+            window.draw(deadText);
+        } else {
+            healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
+            float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
+            float y = static_cast<float>(HEALTH_BAR_HEIGHT);
+            healthBar.setSize(sf::Vector2f(x, y));
+            window.draw(healthBar);
+        }
+        return;
+    }
+
+    overlay.setSize(sf::Vector2f(sf::Vector2i(width, height)));
+    glDepthMask(GL_FALSE);
+    window.draw(overlay);
+    glDepthMask(GL_TRUE);
+
+    if (showingInstructions) {
+        window.draw(instructions);
+    } else {
+        //titleSprite.setPosition(width / 2.0f - 500.0f, height / 5.0f);
+        //window.draw(titleSprite);
+
+        title.setPosition(sf::Vector2f(width / 2.0f - 530.0f, height * 0.05f));
+        window.draw(title);
+
+        if (menu == nullptr) {
+            setVisible(true);
+        }
+        for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++) {
+            menu[i]->draw(window, sf::Vector2f(width / 2.0f, height / (MAX_NUMBER_OF_ITEMS + 1)*(1.0f + i)));
+            //window.draw(menu[i]);
+        }
+    }
+
+    glDisable(GL_ALPHA_TEST);
 }
 
 int circularClamp(int n, int min, int max) {
@@ -107,7 +142,10 @@ void Menu::move(bool up) {
 }
 
 
-void Menu::update(bool& running) {
+bool Menu::update(GLfloat delta) {
+
+    updateFpsText(delta);
+
     justClosed = false;
     justOpened = false;
     if (Input::justPressed(sf::Keyboard::Escape)) {
@@ -115,7 +153,7 @@ void Menu::update(bool& running) {
             if (showingInstructions) {
                 showingInstructions = false;
             } else {
-                running = false;
+                return false;
             }
         } else {
             visible = true;
@@ -124,7 +162,7 @@ void Menu::update(bool& running) {
     }
 
     if (!visible) {
-        return;
+        return true;
     }
 
     if (Input::justPressed(sf::Keyboard::W) || Input::justPressed(sf::Keyboard::Up)) {
@@ -145,10 +183,10 @@ void Menu::update(bool& running) {
             showingInstructions = true;
             break;
         case 2:
-            running = false;
-            break;
+            return false;
         }
     }
+    return true;
 }
 
 void Menu::setVisible(bool visible) {
@@ -165,6 +203,24 @@ void Menu::setVisible(bool visible) {
         menu = nullptr;
     }
     this->visible = visible;
+}
+
+// calculates a buffers the fps
+void Menu::updateFpsText(float delta) {
+    if (delta < 0.005f) {
+        delta = 0.005f;
+    }
+    float fps = 1.0f / delta;
+    fpsValues.push(fps);
+    totalFpsQueueValue += fps;
+    while (fpsValues.size() > 30) {
+        totalFpsQueueValue -= fpsValues.front();
+        fpsValues.pop();
+    }
+    float avgFps = totalFpsQueueValue / fpsValues.size();
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << avgFps;
+    fpsText.setString(ss.str());
 }
 
 bool Menu::getVisible() {

@@ -16,7 +16,15 @@ bool tooClose(float minDist, glm::vec2 city, std::vector<glm::vec2> cities) {
 }
 
 CityGenerator::CityGenerator() {
-    buildingMesh = Graphics::registerMesh();
+    buildingMesh = new TIMesh(TIMesh::offsetCubeVertices, cubeElements, Resources::get().gridTex);
+}
+
+CityGenerator::~CityGenerator() {
+    delete buildingMesh;
+}
+
+void CityGenerator::render() {
+    buildingMesh->render();
 }
 
 // generate a random city
@@ -128,7 +136,7 @@ void CityGenerator::generate(bool square, bool colorByAngle, GLuint count, Physi
         colors.push_back(c);
     }
 
-    //Graphics::setColors(buildingMesh, colors);
-    //Graphics::setModels(buildingMesh, models);
+    buildingMesh->setColors(colors, false);
+    buildingMesh->setModels(models, false);
 
 }

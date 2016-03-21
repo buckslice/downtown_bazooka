@@ -19,7 +19,7 @@ public:
 
     Shader instanceShader;
     Shader instanceTexShader;
-    Shader terrainShader;
+    Shader defaultShader;
     Shader blurShader;
     Shader screenShader;
     Shader blendShader;

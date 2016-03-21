@@ -1,8 +1,11 @@
 #pragma once
 
+// this class basically holds all of the UI stuff for now
+
 #include "SFML/Graphics.hpp"
 #include "player.h"
 #include <string>
+#include <queue>
 
 #define MAX_NUMBER_OF_ITEMS 3
 #define DEFAULT_COLOR sf::Color(0,128,64)
@@ -58,8 +61,8 @@ public:
     Menu(Player* player);
     ~Menu();
 
-    void draw(sf::RenderWindow& window);
-    void update(bool& running);
+    void draw(sf::RenderWindow& window, bool showFPS);
+    bool update(GLfloat delta);
     void setVisible(bool visible);
     bool getVisible();
 
@@ -74,9 +77,17 @@ private:
     sf::Text title;
     sf::Text instructions;
     sf::RectangleShape healthBar;
+    sf::RectangleShape overlay;
 
     sf::Texture titleTexture;
     sf::Sprite titleSprite;
+
+    sf::Text fpsText;
+    sf::Text deadText;
+    std::queue<float> fpsValues;
+    float totalFpsQueueValue = 0.0f;
+
+    void updateFpsText(float delta);
 
     Player* player;
     int curSelection;

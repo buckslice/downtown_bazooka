@@ -49,7 +49,6 @@ void Resources::loadTextures(bool mipmapped) {
 }
 
 
-
 bool loadedShadersBefore = false;
 
 void Resources::buildShaders() {
@@ -64,13 +63,13 @@ void Resources::buildShaders() {
     glUniform1i(glGetUniformLocation(instanceTexShader.program, "tex"), 0);
 
     // terrainShader
-    success &= terrainShader.build("assets/shaders/colormesh.vert", "assets/shaders/default_textured.frag");
-    terrainShader.use();
-    glUniform1i(glGetUniformLocation(terrainShader.program, "tex"), 0);
+    success &= defaultShader.build("assets/shaders/default_textured.vert", "assets/shaders/default_textured.frag");
+    defaultShader.use();
+    glUniform1i(glGetUniformLocation(defaultShader.program, "tex"), 0);
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(defaultShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
     // blurShader and screenShader
     success &= blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
@@ -103,7 +102,7 @@ void Resources::deleteShaders() {
     }
     glDeleteProgram(instanceShader.program);
     glDeleteProgram(instanceTexShader.program);
-    glDeleteProgram(terrainShader.program);
+    glDeleteProgram(defaultShader.program);
     glDeleteProgram(blurShader.program);
     glDeleteProgram(screenShader.program);
     glDeleteProgram(blendShader.program);

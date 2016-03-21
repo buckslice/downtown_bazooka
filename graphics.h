@@ -5,6 +5,7 @@
 #include "glHelper.h"
 #include "camera.h"
 #include "mesh.h"
+#include "cityGenerator.h"
 #include "terrain.h"
 #include "pool.h"
 #include "skybox.h"
@@ -19,33 +20,27 @@ public:
 
     ~Graphics();
 
-    void renderScene(Camera& cam, Terrain& tg, bool toFrameBuffer);
+    void renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrainGen, bool toFrameBuffer);
 
     void resize(int width, int height);
-    //void renderUI();
+
     void finalProcessing(Camera& cam, bool blurring);
-
-    // should later add options for mesh type
-    static GLuint registerMesh();   // because i cant figure out how to give default argument to static function
-    static GLuint registerMesh(GLuint tex);
-
-    static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
-    static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
-
-    static void setMeshVisible(GLuint id, bool value);
-
-    void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
     static int registerTransform(bool solid = true);
     static Transform* getTransform(int id);
 
+    // TODO generic mesh registration and handling
+    static void registerMesh(Mesh<Vertex>* mesh);
+
+    static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
+    static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+
+    void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
+
+
 private:
     GLuint WIDTH;
     GLuint HEIGHT;
-
-    void uploadBoxes();
-
-    static bool isValidMeshID(GLuint id);
 
     void initGL(sf::RenderWindow& window);
     void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iters, Shader screen, Shader blur);
@@ -53,6 +48,7 @@ private:
 
     void buildBuffers();
     void destroyBuffers();
+    void uploadTransforms();
 
     void printGLErrors();
 
