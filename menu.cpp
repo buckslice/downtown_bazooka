@@ -2,6 +2,7 @@
 #include "input.h"
 #include <iostream>
 #include <iomanip>
+#include "audio.h"
 
 #define USESPRITES 1
 
@@ -135,6 +136,7 @@ int circularClamp(int n, int min, int max) {
 }
 
 void Menu::move(bool up) {
+	AudioInstance->playSound(SoundEffect::MENU_MOVE);
     menu[curSelection]->SetIsSelected(false);
     curSelection += up ? -1 : 1;
     curSelection = circularClamp(curSelection, 0, MAX_NUMBER_OF_ITEMS - 1);
@@ -176,10 +178,12 @@ bool Menu::update(GLfloat delta) {
     if (Input::justPressed(sf::Keyboard::Return) || Input::justPressed(sf::Keyboard::Space)) {
         switch (curSelection) {
         case 0:
+			AudioInstance->playSound(SoundEffect::MENU_SELECT);
             setVisible(false);
             justClosed = true;
             break;
         case 1:
+			AudioInstance->playSound(SoundEffect::MENU_SELECT);
             showingInstructions = true;
             break;
         case 2:

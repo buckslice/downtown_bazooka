@@ -7,7 +7,38 @@ Resources::Resources() {
     if (!font.loadFromFile("assets/fonts/OCRAEXT.ttf")) {
         std::cout << "ERROR::FONT::LOAD_FAILURE";
     }
-
+	// load music track	
+	if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
+		std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+	}
+	// load jump sound
+	if (!jumpSound.loadFromFile("assets/music/Jump.wav")) {
+		std::cout << "ERROR::JUMP_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load shoot sound
+	if (!shootSound.loadFromFile("assets/music/Shoot.wav")) {
+		std::cout << "ERROR::SHOOT_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load damage sound
+	if (!damageSound.loadFromFile("assets/music/Damage.wav")) {
+		std::cout << "ERROR::DAMAGE_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load item sound
+	if (!itemSound.loadFromFile("assets/music/Item.wav")) {
+		std::cout << "ERROR::ITEM_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load menu select sound
+	if (!menuSelectSound.loadFromFile("assets/music/MenuSelect.wav")) {
+		std::cout << "ERROR::MENU_SELECT_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load menu move sound
+	if (!menuMoveSound.loadFromFile("assets/music/MenuMove.wav")) {
+		std::cout << "ERROR::MENU_MOVE_SOUND_LOAD_FAILURE" << std::endl;
+	}
+	// load explosion sound
+	if (!explosionSound.loadFromFile("assets/music/Explosion.wav")) {
+		std::cout << "ERROR::EXPLOSION_SOUND_LOAD_FAILURE" << std::endl;
+	}
     loadTextures(true);
 
     std::vector<std::string> faces;

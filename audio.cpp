@@ -1,16 +1,13 @@
 #include "audio.h"
 
-
+Audio* AudioInstance; //extern Audio var from Audio.h
 
 Audio::Audio() {
-	// load music track	
-	if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
-		std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-	}
+	AudioInstance = this;
 	// set up music
-	mainTrack.setLoop(true);
-	mainTrack.setVolume(volume);
-	
+	Resources::get().mainTrack.setLoop(true);
+	Resources::get().mainTrack.setVolume(volume);
+	sound.setVolume(volume);
 }
 
 
@@ -19,7 +16,7 @@ Audio::~Audio() {
 
 void Audio::playMainTrack() {
 	if (!muted) {
-		mainTrack.play(); // ENSIFERUM
+		Resources::get().mainTrack.play(); // ENSIFERUM
 	}
 
 }
@@ -29,20 +26,48 @@ void Audio::playSound(SoundEffect effect) {
 		switch (effect) {
 		case JUMP:
 			// play jump sound
+			sound.setBuffer(Resources::get().jumpSound);
+			sound.play();
 			break;
 		case SHOOT:
 			// play shoot sound
+			sound.setBuffer(Resources::get().shootSound);
+			sound.play();
 			break;
 		case DAMAGE:
 			// play damage sound
+			sound.setBuffer(Resources::get().damageSound);
+			sound.play();
+			break;
+		case PICKUP:
+			// play item sound
+			sound.setBuffer(Resources::get().itemSound);
+			sound.play();
+			break;
+		case MENU_SELECT:
+			// play menu select sound
+			sound.setBuffer(Resources::get().menuSelectSound);
+			sound.play();
+			break;
+		case MENU_MOVE:
+			// play menu move sound
+			sound.setBuffer(Resources::get().menuMoveSound);
+			sound.play();
+			break;
+		case SHOT_EXPLOSION:
+			// play menu move sound
+			sound.setBuffer(Resources::get().explosionSound);
+			sound.play();
 			break;
 		default:
+			std::cout << "ERROR::AUDIO::PLAY_SOUND::FAILED TO PLAY SOUND" << std::endl;
 			break;
 		}
 	}
 }
 
 void Audio::update(GLfloat delta) {
+	// updates the volume of the sounds and music
 	if (muted) {
 		if (!changedOldVolume) {
 			oldVolume = volume;
@@ -64,8 +89,8 @@ void Audio::update(GLfloat delta) {
 		}
 		changedOldVolume = false;
 	}
-	mainTrack.setVolume(volume);
-
+	Resources::get().mainTrack.setVolume(volume);
+	sound.setVolume(volume);
 }
 
 void Audio::changeVolume(float delta) {

@@ -7,6 +7,7 @@
 #include "Particle.h"
 #include "resources.h"
 #include "cityGenerator.h"
+#include "audio.h"
 const int MAX_PROJECTILES = 200;
 const int MAX_PARTICLES = 5000;
 const int MAX_ENEMIES = 1100;

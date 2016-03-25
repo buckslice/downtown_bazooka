@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include "glHelper.h"
 #include "shader.h"
+#include <SFML/Audio.hpp>
 
 // follows meyers singleton pattern
 class Resources {
@@ -26,6 +27,14 @@ public:
     Shader skyboxShader;
 
     sf::Font font;
+	sf::Music mainTrack;
+	sf::SoundBuffer jumpSound;
+	sf::SoundBuffer shootSound;
+	sf::SoundBuffer damageSound;
+	sf::SoundBuffer itemSound;
+	sf::SoundBuffer menuSelectSound;
+	sf::SoundBuffer menuMoveSound;
+	sf::SoundBuffer explosionSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

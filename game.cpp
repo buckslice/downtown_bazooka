@@ -40,7 +40,7 @@ Game::Game(GLuint width, GLuint height)
     window->resetGLStates();
 
     audio = new Audio();
-    //audio->playMainTrack();
+    audio->playMainTrack();
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);

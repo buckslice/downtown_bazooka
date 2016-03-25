@@ -101,7 +101,8 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float
 
 
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
-    for (int i = 0; i < num; ++i) {
+	AudioInstance->playSound(SoundEffect::SHOT_EXPLOSION);
+	for (int i = 0; i < num; ++i) {
         SpawnParticle(pos, SPARK, mag * 5.0f, vel);
         SpawnParticle(pos, FIRE, mag*4, vel);
     }

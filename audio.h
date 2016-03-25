@@ -1,5 +1,5 @@
 #pragma once
-#include <SFML/Audio.hpp>
+#include "resources.h"
 #include <iostream>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -10,6 +10,10 @@ enum SoundEffect {
 	JUMP,
 	SHOOT,
 	DAMAGE,
+	PICKUP,
+	MENU_SELECT,
+	MENU_MOVE,
+	SHOT_EXPLOSION
 };
 class Audio {
 public:
@@ -24,10 +28,12 @@ public:
 
 	void changeVolume(float delta);
 private:
-	sf::Music mainTrack;
+	sf::Sound sound;
 	float volume = DEFAULT_VOLUME;
 	float oldVolume = DEFAULT_VOLUME;
 	bool changedOldVolume = false;
 	bool muted = false;
 };
 
+// Global variable for Audio 
+extern Audio* AudioInstance;

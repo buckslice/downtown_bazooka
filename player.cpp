@@ -1,6 +1,7 @@
 #include "player.h"
 #include "entityManager.h"
 #include "graphics.h"
+#include "audio.h"
 
 Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
     this->cam = cam;
@@ -159,11 +160,13 @@ void Player::update(GLfloat delta) {
 
 void Player::onCollision(CollisionData data) {
     if ((data.tag == ENEMY || data.tag == ENEMY_PROJECTILE) && invulnTime >= 0.5f) {
-        addHealth(-5);
+		AudioInstance->playSound(SoundEffect::DAMAGE);
+		addHealth(-5);
         invulnTime = 0.0f;
     }
 
     if (data.tag == ITEM) {
+		AudioInstance->playSound(SoundEffect::PICKUP);
         addHealth(10);
     }
 }
@@ -172,12 +175,14 @@ void Player::jump() {
     // check if grounded
     Collider& c = *getCollider();
     if (c.grounded && !flying) {
+		AudioInstance->playSound(SoundEffect::JUMP);
         c.vel.y = JUMPSPEED;
         c.grounded = false;
     }
 }
 
 void Player::shoot() {
+	AudioInstance->playSound(SoundEffect::SHOOT);
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
     EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f, true);
