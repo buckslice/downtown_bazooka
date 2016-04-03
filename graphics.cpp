@@ -36,11 +36,6 @@ Transform* Graphics::getTransform(int id) {
     return boxes->getData(id);
 }
 
-// testing
-Transform* sun;
-Transform* planet;
-Transform* moon;
-
 Graphics::Graphics(sf::RenderWindow& window) {
     WIDTH = window.getSize().x;
     HEIGHT = window.getSize().y;
@@ -126,37 +121,9 @@ Graphics::Graphics(sf::RenderWindow& window) {
     center->color = glm::vec3(0.0f, 0.0f, 0.0f);
     center->parentAll(xbox, xboxl, xboxr, zbox, zboxl, zboxr, xx1, xx2, zz1, zz2, zz3);
     center->setScale(glm::vec3(3.0f));
-
-
-    // now gonna make a cool "planet" demo lol
-    sun = getTransform(registerTransform(false));
-    sun->setScale(20.0f, 20.0f, 20.0f);
-    sun->color = glm::vec3(1.0f, 1.0f, 0.3f);
-    sun->setPos(100.0f, 150.0f, 100.0f);
-
-    planet = getTransform(registerTransform(false));
-    planet->setScale(glm::vec3(8.0f));
-    planet->setPos(50.0f, 0.0f, 0.0f);
-    planet->color = glm::vec3(0.0f, 0.6f, 0.4f);
-
-    sun->parentAll(planet);
-
-    moon = getTransform(registerTransform(false));
-    moon->setScale(glm::vec3(4.0f));
-    moon->setPos(0.0f, 15.0f, 0.0f);
-    moon->color = glm::vec3(0.4f);
-
-    planet->parentAll(moon);
 }
 
 void Graphics::uploadTransforms() {
-    // the direction from child to parent has to be perpendicular to the 
-    // axis of rotation of parent to have normal looking orbit
-    // also without seperate transforms each child is basically tidally locked to parent but whatever lol
-    sun->rotate(0.8f, glm::vec3(0.0f, 1.0f, 0.0f));
-    planet->rotate(2.0f, glm::vec3(1.0f, 0.0f, 1.0f));
-    moon->rotate(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-
     auto bx = boxes->getObjects();  // should make Pool class iterator
     for (size_t i = 0, len = bx.size(); i < len; ++i) {
         if (bx[i].id < 0 || !bx[i].data.shouldDraw()) { // iterator could do this check in ++ operator

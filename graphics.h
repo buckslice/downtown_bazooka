@@ -64,7 +64,6 @@ private:
 
     PIMesh* solidStream;
     TIMesh* gridStream;
-    TIMesh* buildingCube;
 
     Skybox* skybox;
 };
