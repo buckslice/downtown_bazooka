@@ -2,7 +2,7 @@
 #include "graphics.h"
 #include "entityManager.h"
 
-Enemy::Enemy() {
+Enemy::Enemy() : health(MAX_ENEMY_HEALTH){
     model = Graphics::getTransform(Graphics::registerTransform(false));
     model->setVisibility(VISIBLE);
 
@@ -10,6 +10,7 @@ Enemy::Enemy() {
     getTransform()->parentAll(model);
     getCollider()->type = FULL;
 	getCollider()->tag = ENEMY;
+	//getCollider()->entity = this;
     getCollider()->awake = false;
 
     jumpTimer = Mth::rand01() * 5.0f + 5.0f;
@@ -77,6 +78,6 @@ void Enemy::update(GLfloat delta) {
 
 void Enemy::onCollision(CollisionData data) {
     if (data.tag == PLAYER_PROJECTILE || data.tag == EXPLOSION) {
-		health -= 25.0f;
+		//health -= PlayerInstance->getDamage();
     }
 }

@@ -26,10 +26,7 @@ class Camera {
 public:
     Transform* transform;
 	CameraBehavior behavior;
-    glm::vec3 forward;
-    glm::vec3 up;
-    glm::vec3 right;
-    glm::vec3 worldUp;
+    glm::vec3 forward, up, right, worldUp;
     
 	Camera();
     Camera(GLfloat yaw, GLfloat pitch, bool firstPerson = true);
@@ -44,12 +41,7 @@ public:
     GLfloat getCamDist();
 
 private:
-    GLfloat yaw;
-    GLfloat pitch;
-
-    GLfloat mouseSensitivity;
-    GLfloat camDist;
-    GLfloat camDistTarget = DEFAULT_CAMDISTTARGET;
+    GLfloat yaw, pitch, mouseSensitivity, camDist, camDistTarget = DEFAULT_CAMDISTTARGET;
 
     void updateCameraVectors();
 };

@@ -92,7 +92,7 @@ void Menu::draw(sf::RenderWindow& window, bool showFPS) {
             window.draw(deadText);
         } else {
             healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
-            float x = static_cast<float>(width * player->getHealth() / MAX_HEALTH);
+            float x = static_cast<float>(width * player->getHealth() / player->getMaxHealth());
             float y = static_cast<float>(HEALTH_BAR_HEIGHT);
             healthBar.setSize(sf::Vector2f(x, y));
             window.draw(healthBar);

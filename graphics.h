@@ -39,8 +39,7 @@ public:
 
 
 private:
-    GLuint WIDTH;
-    GLuint HEIGHT;
+    GLuint WIDTH, HEIGHT;
 
     void initGL(sf::RenderWindow& window);
     void blurColorBuffer(GLuint sceneIn, GLuint frameOut, GLuint iters, Shader screen, Shader blur);
@@ -52,9 +51,7 @@ private:
 
     void printGLErrors();
 
-    FBO sceneBuffer;
-    FBO blurResult;
-    FBO blurBuffers[2];
+    FBO sceneBuffer, blurResult, blurBuffers[2];
     GLuint quadVAO;
 
     // debug stream
@@ -63,8 +60,8 @@ private:
     std::vector<glm::vec3>* dcolors;
 
     PIMesh* solidStream;
-    TIMesh* gridStream;
-    TIMesh* buildingCube;
+	TIMesh* gridStream;
+	TIMesh* buildingCube;
 
     Skybox* skybox;
 };

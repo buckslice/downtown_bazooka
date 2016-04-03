@@ -29,10 +29,8 @@ public:
 	void changeVolume(float delta);
 private:
 	sf::Sound sound;
-	float volume = DEFAULT_VOLUME;
-	float oldVolume = DEFAULT_VOLUME;
-	bool changedOldVolume = false;
-	bool muted = false;
+	float volume = DEFAULT_VOLUME, oldVolume = DEFAULT_VOLUME;
+	bool changedOldVolume = false, muted = false;
 };
 
 // Global variable for Audio 

@@ -19,10 +19,13 @@ enum ColliderTag {
     ENEMY,
     EXPLOSION,
     TERRAIN, 
-	ITEM
+	ITEM_HEAL,
+	ITEM_STAMINA,
+	ITEM_STRENGTH,
+	ITEM_AGILITY,
+	ITEM_DEXTERITY
 };
 
-// could add Entity* later if need be
 struct CollisionData {
     ColliderType type;
     ColliderTag tag;
@@ -37,8 +40,7 @@ public:
     ColliderType type;
 
     glm::vec3 vel;
-    bool grounded = false;
-    bool awake = true;
+    bool grounded = false, awake = true;
 
     float gravityMultiplier = 1.0f;
 
@@ -49,8 +51,7 @@ public:
     AABB getAABB();
 
 private:
-    glm::vec3 extmin; 
-    glm::vec3 extmax;
+    glm::vec3 extmin, extmax;
 
     glm::vec3 pos;
     friend class Physics;

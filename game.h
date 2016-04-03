@@ -49,8 +49,7 @@ private:
     const GLuint NUM_BUILDINGS = 1000; // 7500
     const GLuint NUM_ENEMIES = 1000;
 
-    GLuint WIDTH;
-    GLuint HEIGHT;
+    GLuint WIDTH, HEIGHT;
     sf::Vector2i center;
     sf::RenderWindow* window;
     Graphics* graphics;
@@ -69,25 +68,15 @@ private:
     std::vector<glm::vec3>* dcolors;
 
     // some utility clocks
-    sf::Clock frameTime;
-    sf::Clock gameTime;
+    sf::Clock frameTime, gameTime;
 
     void testMathUtils();
 
+	// for mouse input
     sf::Vector2i mouseMove;
     GLfloat mouseScroll;
 
     // state tracking flags
-    bool running;
-    bool lastFocused;
-    bool gameFocused;
-    bool clickedInside;
-    bool mouseVisible;
-    bool lastMouseVisible;
-    bool mipmapping;
-    bool blurring;
-    bool wireframe;
-    bool paused;
-    bool showFPS;
+	bool running, lastFocused, gameFocused, clickedInside, mouseVisible, lastMouseVisible, mipmapping, blurring, wireframe, paused, showFPS;
 };
 
