@@ -211,10 +211,10 @@ void Physics::update(float delta) {
                     ColliderData& other = dynamicObjects[closestIndex];
 
                     if (dobj.entity != nullptr) {
-                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag });
+                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag});
                     }
                     if (other.entity != nullptr) {
-                        other.entity->onCollision(CollisionData{ col.type, col.tag });
+                        other.entity->onCollision(CollisionData{ col.type, col.tag});
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER

@@ -94,9 +94,8 @@ public:
     bool solid = true;
 
 private:
-    glm::vec3 pos;
+	glm::vec3 pos, scale;
     glm::quat rot;
-    glm::vec3 scale;
 
     glm::mat4 model;           // local model matrix
     // may be worth caching parents matrix too like benny does

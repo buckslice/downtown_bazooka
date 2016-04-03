@@ -12,29 +12,13 @@ public:
         return instance;
     }
 
-    GLuint gridTex;
-    GLuint terrainTex;
-    GLuint solidTex;
+    GLuint gridTex, terrainTex, solidTex, skyboxTex;
 
-    GLuint skyboxTex;
-
-    Shader instanceShader;
-    Shader instanceTexShader;
-    Shader defaultShader;
-    Shader blurShader;
-    Shader screenShader;
-    Shader blendShader;
-    Shader skyboxShader;
+    Shader instanceShader, instanceTexShader, defaultShader, blurShader, screenShader, blendShader, skyboxShader;
 
     sf::Font font;
 	sf::Music mainTrack;
-	sf::SoundBuffer jumpSound;
-	sf::SoundBuffer shootSound;
-	sf::SoundBuffer damageSound;
-	sf::SoundBuffer itemSound;
-	sf::SoundBuffer menuSelectSound;
-	sf::SoundBuffer menuMoveSound;
-	sf::SoundBuffer explosionSound;
+	sf::SoundBuffer jumpSound, shootSound, damageSound, itemSound, menuSelectSound, menuMoveSound, explosionSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

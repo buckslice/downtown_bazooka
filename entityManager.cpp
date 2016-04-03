@@ -163,9 +163,7 @@ void EntityManager::SpawnItem() {
 	Item* i = items->getData(id);
 
 	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-	glm::vec3 color = glm::vec3(0.7f, 1.0f, 0.5f);
-	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), scale, color);
+	i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType) (int)Mth::rand0X(ItemType::COUNT));
 }
 
 // should make a sub class of entity / template this or some shit later

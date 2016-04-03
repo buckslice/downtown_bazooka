@@ -11,7 +11,6 @@ Item::Item() {
 	getTransform()->setVisibility(HIDDEN);
 	getTransform()->parentAll(model);
 	getCollider()->type = TRIGGER;
-	getCollider()->tag = ITEM;
 	getCollider()->awake = false;
 
 	Physics::setCollisionCallback(this);
@@ -33,15 +32,38 @@ void Item::onCollision(CollisionData data) {
 	}
 }
 
-void Item::init(int id, float rotSpeed, glm::vec3 pos, glm::vec3 scale, glm::vec3 color) {
+void Item::init(int id, float rotSpeed, glm::vec3 pos, ItemType type) {
 	Transform* t = getTransform();
 	t->setPos(pos);
 	t->setVisibility(HIDDEN_SELF);
 
 	Collider* c = getCollider();
 	c->awake = true;
-	c->tag = ITEM;
 
 	this->id = id;
 	this->rotSpeed = rotSpeed;
+	this->type = type;
+
+	switch (type) {
+	case HEAL:
+		model->color = glm::vec3(0.0, 1.0, 0.0); //green
+		c->tag = ITEM_HEAL;
+		break;
+	case STAMINA:
+		model->color = glm::vec3(1.0, 0.0, 0.0); //red
+		c->tag = ITEM_STAMINA;
+		break;
+	case STRENGTH:
+		model->color = glm::vec3(0.0, 1.0, 1.0); //cyan
+		c->tag = ITEM_STRENGTH;
+		break;
+	case AGILITY:
+		model->color = glm::vec3(1.0, 1.0, 0.0); //yellow
+		c->tag = ITEM_AGILITY;
+		break;
+	case DEXTERITY:
+		model->color = glm::vec3(1.0, 1.0, 1.0); //white
+		c->tag = ITEM_DEXTERITY;
+		break;
+	}
 }

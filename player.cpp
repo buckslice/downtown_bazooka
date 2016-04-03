@@ -2,10 +2,11 @@
 #include "entityManager.h"
 #include "graphics.h"
 #include "audio.h"
-
-Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH) {
+//Player* PlayerInstance;
+Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH), maxHealth(MAX_HEALTH), jumpSpeed(JUMPSPEED),
+shotsPerSecond(SHOTS_PER_SECOND), shootSpeed(SHOOT_SPEED){
     this->cam = cam;
-    timeSinceJump = 10.0f;
+	//PlayerInstance = this;
     getTransform()->setVisibility(Visibility::HIDDEN_SELF);
 
     Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
@@ -64,6 +65,14 @@ float Player::getHealth() {
     return health;
 }
 
+float Player::getMaxHealth() {
+	return maxHealth;
+}
+
+float Player::getDamage() {
+	return damage;
+}
+
 void Player::update(GLfloat delta) {
     isDead = health <= 0.0f;
     if (isDead) {
@@ -76,10 +85,6 @@ void Player::update(GLfloat delta) {
     // get movement
     glm::vec3 input = getMovementDir();
 
-    if (input != glm::vec3(0.0f)) {
-        input = glm::normalize(input);
-    }
-
     // toggle flying
     if (Input::justPressed(sf::Keyboard::Q)) {
         flying = !flying;
@@ -91,7 +96,11 @@ void Player::update(GLfloat delta) {
 
     // check shoot input
     if (Input::justPressed(sf::Keyboard::E)) {
-        shoot();
+		
+		if (timeSinceShot > 1 / shotsPerSecond) {
+			timeSinceShot = 0.0f;
+			shoot();
+		}
     }
 
     // jump if in time
@@ -100,6 +109,7 @@ void Player::update(GLfloat delta) {
         jump();
     }
     timeSinceJump += delta;
+	timeSinceShot += delta;
     invulnTime += delta;
 
     // cam forward in xz plane
@@ -165,10 +175,30 @@ void Player::onCollision(CollisionData data) {
         invulnTime = 0.0f;
     }
 
-    if (data.tag == ITEM) {
+	switch (data.tag) {
+	case ITEM_HEAL:
+		addHealth(10);
 		AudioInstance->playSound(SoundEffect::PICKUP);
-        addHealth(10);
-    }
+		break;
+	case ITEM_STAMINA:
+		maxHealth += 10.0f;
+		addHealth(10);
+		AudioInstance->playSound(SoundEffect::PICKUP);
+		break;
+	case ITEM_STRENGTH:
+		damage += 5.0f;
+		AudioInstance->playSound(SoundEffect::PICKUP);
+		break;
+	case ITEM_AGILITY:
+		speed += 5.0f;
+		AudioInstance->playSound(SoundEffect::PICKUP);
+		break;
+	case ITEM_DEXTERITY:
+		shootSpeed += 5.0f;
+		shotsPerSecond += 0.5f;
+		AudioInstance->playSound(SoundEffect::PICKUP);
+		break;
+	}
 }
 
 void Player::jump() {
@@ -176,7 +206,7 @@ void Player::jump() {
     Collider& c = *getCollider();
     if (c.grounded && !flying) {
 		AudioInstance->playSound(SoundEffect::JUMP);
-        c.vel.y = JUMPSPEED;
+        c.vel.y = jumpSpeed;
         c.grounded = false;
     }
 }
@@ -185,7 +215,7 @@ void Player::shoot() {
 	AudioInstance->playSound(SoundEffect::SHOOT);
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*40.0f, true);
+    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*shootSpeed, true);
 }
 
 void Player::addHealth(float amount) {
@@ -193,8 +223,8 @@ void Player::addHealth(float amount) {
     health = std::max(0.0f, std::min(health, MAX_HEALTH));
 }
 
+// calculate movement direction and return a normal vector pointing in that direction
 glm::vec3 Player::getMovementDir() {
-    // calculate movement direction
     glm::vec3 dir(0.0f, 0.0f, 0.0f);
     if (Input::pressed(sf::Keyboard::W) || Input::pressed(sf::Keyboard::Up)) {
         dir.z += 1.0f;
@@ -215,9 +245,9 @@ glm::vec3 Player::getMovementDir() {
         dir.y += 1.0f;
     }
 
-    float len = static_cast<float>(dir.length());
-    if (len > 1)
-        dir /= len;//normalize the movement vector so the player doesn't move faster diagonally
+	if (dir != glm::vec3(0.0f)) {
+		dir = glm::normalize(dir);
+	}
 
     return dir;
 }

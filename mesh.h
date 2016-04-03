@@ -129,10 +129,7 @@ public:
 template <class Vertex>
 class IMesh : public Mesh<Vertex> {
 public:
-    GLuint count;
-
-    GLuint colorBuffer;
-    GLuint modelBuffer;
+    GLuint count, colorBuffer, modelBuffer;
     bool built = false;
 
     IMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : Mesh<Vertex>(vertices, indices) {
@@ -251,7 +248,6 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    static std::vector<TVertex> cubeVertices;
-    static std::vector<TVertex> offsetCubeVertices;
+    static std::vector<TVertex> cubeVertices, offsetCubeVertices;
 
 };

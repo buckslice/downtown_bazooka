@@ -22,8 +22,7 @@ public:
     Transform* getTransform();
     Collider* getCollider();
 
-    int transform;
-    int collider;
+    int transform, collider;
 
 private:
 

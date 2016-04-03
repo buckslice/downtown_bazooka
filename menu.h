@@ -66,24 +66,20 @@ public:
     void setVisible(bool visible);
     bool getVisible();
 
-    bool justClosed = false;
-    bool justOpened = false;
+    bool justClosed = false, justOpened = false;
 
 private:
     void move(bool up);
 
     TextOption **menu;
 
-    sf::Text title;
-    sf::Text instructions;
-    sf::RectangleShape healthBar;
-    sf::RectangleShape overlay;
+    sf::Text title, instructions;
+    sf::RectangleShape healthBar, overlay;
 
     sf::Texture titleTexture;
     sf::Sprite titleSprite;
 
-    sf::Text fpsText;
-    sf::Text deadText;
+    sf::Text fpsText, deadText;
     std::queue<float> fpsValues;
     float totalFpsQueueValue = 0.0f;
 
@@ -91,8 +87,7 @@ private:
 
     Player* player;
     int curSelection;
-    bool visible = true;
-    bool showingInstructions = false;
+    bool visible = true, showingInstructions = false;
 
 };
 
