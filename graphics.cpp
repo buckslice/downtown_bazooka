@@ -240,8 +240,8 @@ void Graphics::renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrain
 
         // set and draw debug stream
         solidStream->visible = true;
-        solidStream->setModels(*dmodels, true);
-        solidStream->setColors(*dcolors, true);
+        solidStream->setModels(*dmodels, true, dstreamSize);
+        solidStream->setColors(*dcolors, true, dstreamSize);
 
         solidStream->render();
 

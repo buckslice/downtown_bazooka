@@ -58,7 +58,7 @@ void Player::spawn(glm::vec3 spawnPos, bool awake) {
     flying = false;
     health = MAX_HEALTH;
     getTransform()->setPos(spawnPos);
-    getCollider()->awake = awake;
+    getCollider()->enabled = awake;
 }
 
 float Player::getHealth() {
@@ -76,7 +76,7 @@ float Player::getDamage() {
 void Player::update(GLfloat delta) {
     isDead = health <= 0.0f;
     if (isDead) {
-        getCollider()->awake = false;
+        getCollider()->enabled = false;
         return;
     }
     bool childrenVisible = cam->getCamDist() > 1.0f;

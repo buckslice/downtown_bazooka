@@ -11,7 +11,7 @@ Enemy::Enemy() : health(MAX_ENEMY_HEALTH){
     getCollider()->type = FULL;
 	getCollider()->tag = ENEMY;
 	//getCollider()->entity = this;
-    getCollider()->awake = false;
+    getCollider()->enabled = false;
 
     jumpTimer = Mth::rand01() * 5.0f + 5.0f;
     shootTimer = Mth::rand01() * 5.0f + 5.0f;
@@ -34,7 +34,7 @@ void Enemy::init(int id, int player, glm::vec3 pos, glm::vec3 scale, glm::vec3 c
     c->setExtents(min, max);
     c->type = FULL;
 	c->tag = ENEMY;
-    c->awake = true;
+    c->enabled = true;
 }
 
 void Enemy::update(GLfloat delta) {
@@ -67,7 +67,7 @@ void Enemy::update(GLfloat delta) {
         dirToPlayer = glm::normalize(dirToPlayer) * speed;
     }
 	if (shootTimer < 0.0f && distsq <= SHOOT_VECINITY * SHOOT_VECINITY) {
-		EntityManagerInstance->SpawnProjectile(getTransform()->getWorldPos(), getCollider()->vel + shootDir*40.0f, false);
+		//EntityManagerInstance->SpawnProjectile(getTransform()->getWorldPos(), getCollider()->vel + shootDir*40.0f, false);
         shootTimer = Mth::rand01() * 10.0f + 5.0f;
 	}
 

@@ -129,7 +129,7 @@ public:
 template <class Vertex>
 class IMesh : public Mesh<Vertex> {
 public:
-    GLuint count, colorBuffer, modelBuffer;
+    GLuint instanceCount, colorBuffer, modelBuffer;
     bool built = false;
 
     IMesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : Mesh<Vertex>(vertices, indices) {
@@ -175,22 +175,28 @@ public:
     }
 
     // stream should be set if this function is getting called each frame
-    void setColors(std::vector<glm::vec3>& colors, bool stream) {
+    void setColors(std::vector<glm::vec3>& colors, bool stream, int count = 0) {
         if (colors.size() == 0 || !built) {
             return;
         }
+        if (count == 0) {
+            count = colors.size();
+        }
         glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::vec3), &colors[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void setModels(std::vector<glm::mat4>& models, bool stream) {
+    void setModels(std::vector<glm::mat4>& models, bool stream, int count = 0) {
         if (models.size() == 0 || !built) {
             visible = false;
             return;
         }
+        if (count == 0) {
+            count = models.size();
+        }
         visible = true;
-        count = models.size();
+        instanceCount = count;
         glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
         glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::mat4), &models[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -205,12 +211,12 @@ public:
     }
 
     void render() override {
-        if (count <= 0) {
+        if (instanceCount <= 0) {
             return;
         }
 
         glBindVertexArray(VAO);
-        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, count);
+        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, instanceCount);
         glBindVertexArray(0);
     }
 
@@ -232,7 +238,7 @@ public:
     }
 
     void render() override {
-        if (count <= 0) {
+        if (instanceCount <= 0) {
             return;
         }
 
@@ -241,7 +247,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
 
-        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, count);
+        glDrawElementsInstanced(GL_TRIANGLES, TRIS, GL_UNSIGNED_INT, 0, instanceCount);
 
         // unbind stuff
         glBindVertexArray(0);

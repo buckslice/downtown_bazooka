@@ -128,7 +128,8 @@ void EntityManager::SpawnEnemy() {
 
     Enemy* e = enemies->getData(id);
 
-    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    //glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
     bool elite = Mth::rand01() <= 0.02;
 
     glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
@@ -186,7 +187,7 @@ void EntityManager::ReturnPooledEntity(int id, Pool<Entity>* pool) {
         return;
     }
 
-    objs[id].data.getCollider()->awake = false;
+    objs[id].data.getCollider()->enabled = false;
     objs[id].data.getTransform()->setVisibility(HIDDEN);
     pool->ret(id);
 }

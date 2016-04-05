@@ -239,7 +239,7 @@ void Game::update(GLfloat delta) {
     terrainGen->update(pp);
 
     // detect and resolve collisions
-    physics->update(delta);
+    physics->update(delta, pp);
 
     //testMathUtils();
 

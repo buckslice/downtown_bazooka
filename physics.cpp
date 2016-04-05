@@ -10,15 +10,13 @@
 const int MAX_DYNAMICS = 10000;
 std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
 std::vector<int> Physics::freeDynamics;
-std::vector<AABB> Physics::aabbTree;
-std::vector<std::vector<int>> Physics::dynamicMatrix;
+Quadtree* Physics::collisionTree;
 
 Physics::Physics() {
     for (int i = MAX_DYNAMICS; i > 0; --i) {
         freeDynamics.push_back(i - 1);
     }
-
-    generateCollisionMatrix(glm::vec3(0.0f));
+    collisionTree = new Quadtree(0, getPhysicsArea(glm::vec3(0.0f), MATRIX_SIZE));
 }
 
 // if you want to add these back in later for science
@@ -26,64 +24,37 @@ Physics::Physics() {
 //int totalAABBChecks = 0;
 //int totalSweepTests = 0;
 
-void Physics::update(float delta) {
+void Physics::update(float delta, glm::vec3 center) {
     bool printedErrorThisFrame = false;
     int numberOver = 0;
 
-    // clear out all data from supermatrix
-    for (size_t i = 0, len = dynamicMatrix.size(); i < len; ++i) {
-        dynamicMatrix[i].clear();
-    }
+    delete collisionTree;
+    collisionTree = new Quadtree(0, getPhysicsArea(center, MATRIX_SIZE));
 
-    // build leaf list for each valid dynamic and add it to superMatrix
+    // insert all statics into tree
+    for (int sndx = 0, len = static_cast<int>(staticObjects.size()); sndx < len; ++sndx) {
+        collisionTree->insert(QuadtreeData{ staticObjects[sndx], sndx, false });
+    }
+    // insert all dynamics into tree (that are awake and not basic)
     for (int dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
         auto& dobj = dynamicObjects[dndx];
-        auto& dynamicLeafList = dynamicLeafLists[dndx];
-        dynamicLeafList.clear();
         auto& col = dobj.collider;
         // ensure dynamic object is active and awake
-        if (dobj.id < 0 || !col.awake) {
+        // if type is basic then dont insert into tree, just retrieve
+        if (dobj.id < 0 || !col.enabled || col.type == ColliderType::BASIC) {
             continue;
         }
-
-        // gets list of leafs this object is in (using swept AABB)
-        getLeafs(dynamicLeafList, AABB::getSwept(col.getAABB(), col.vel * delta));
-
-        // BASIC can continue from here because they aren't being collided against
-        if (col.type == ColliderType::BASIC) {
-            continue;
-        }
-
-        // add your dynamic objects index into the superMatrix 
-        // at every leaf you could possibly be in
-        for (size_t i = 0, len = dynamicLeafList.size(); i < len; ++i) {
-            dynamicMatrix[dynamicLeafList[i]].push_back(dndx);
-        }
+        col.awake = collisionTree->insert(QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dndx, true });
     }
 
-    //// add each static object into superMatrix
-    //std::vector<int> staticLeafList;
-    //for (int ondx = 0, len = static_cast<int>(staticObjects.size()); ondx < len; ++ondx) {
-    //    staticLeafList.clear();
-
-    //    // gets list of leafs this object is in 
-    //    getLeafs(staticLeafList, staticObjects[ondx]);
-
-    //    // add your static object list index into the super lookup matrix 
-    //    // at every leaf youre at
-    //    for (size_t i = 0, len = staticLeafList.size(); i < len; ++i) {
-    //        superMatrix[staticLeafList[i]].push_back(leafObject{ ondx, false });
-    //    }
-    //}
-
-
+    std::vector<QuadtreeData> returnData;
     // for each dynamic object check it against all objects in its leaf(s)
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
     for (size_t dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
         auto& dobj = dynamicObjects[dndx];
         Collider& col = dobj.collider;
-        if (dobj.id < 0 || !col.awake) {
+        if (dobj.id < 0 || !col.enabled || !col.awake) {
             col.vel = glm::vec3(0.0f);
             col.grounded = false;
             continue;
@@ -96,6 +67,9 @@ void Physics::update(float delta) {
         dynamicResolvedSet.clear();
 
         col.vel.y += GRAVITY * col.gravityMultiplier * delta;
+
+        returnData.clear();
+        collisionTree->retrieve(returnData, AABB::getSwept(col.getAABB(), col.vel * delta));
 
         // set remaining velocity to initial velocity of dynamic
         glm::vec3 rvel = col.vel;
@@ -123,52 +97,45 @@ void Physics::update(float delta) {
 
             // returns closest collision found
             bool fullTest = false;
-            // for each leaf this dynamic is in
-            std::vector<int>& leafList = dynamicLeafLists[dndx];
-            for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
-                int leaf = leafList[lndx];
-                // for each object in this leaf
-                if (col.type != ColliderType::BASIC) {
-                    std::vector<int>& leafObjects = dynamicMatrix[leaf];
-                    for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
-                        int index = leafObjects[ondx];    // other dynamic object
-                        if (dynamicResolvedSet.count(index) || dynamicCheckSet.count(index) ||
-                            dndx == index) {
-                            continue;
-                        }
 
-                        // pretend like they aren't moving since you are going first
-                        AABB otherAABB = dynamicObjects[index].collider.getAABB();
-
-                        // broadphase sweep bounds check
-                        if (!AABB::check(broadphase, otherAABB)) {
-                            // if failed any broadphase then dont check this static again since 
-                            // future resolutions will never exceed previous broadphases
-                            dynamicResolvedSet.insert(index);
-                            continue;
-                        }
-                        // this set just tracks if youve checked this object before during the current resolution attempt 
-                        // done purely to prevent duplicate checks over leaf borders (need to test if this is even worth it lol)
-                        dynamicCheckSet.insert(index);
-
-                        // narrow sweep bounds resolution
-                        // calculates exact time of collision
-                        // but still possible for no collision at this point
-                        glm::vec3 n;
-                        float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
-                        if (t < time) { // a collision occured
-                            time = t;
-                            norm = n;
-                            closestIndex = index;
-                            closestIsDynamic = true;
-                        }
-                        fullTest = true;    // this could maybe be in if above?
+            // for each object this dynamic could collide against
+            for (size_t indx = 0, len = returnData.size(); indx < len; ++indx) {
+                QuadtreeData& qtd = returnData[indx];
+                int index = qtd.index;
+                if (qtd.dynamic) {
+                    if (col.type == ColliderType::BASIC ||
+                        dynamicResolvedSet.count(index) || dynamicCheckSet.count(index) ||
+                        dndx == index) {
+                        continue;
                     }
-                }
+                    // pretend like they aren't moving since you are going first
+                    AABB otherAABB = dynamicObjects[index].collider.getAABB();
 
-                std::vector<int>& sleafObjects = staticMatrix[leaf];
-                for (size_t ondx = 0, olen = sleafObjects.size(); ondx < olen; ++ondx) {
-                    int index = sleafObjects[ondx];    // other static object
+                    // broadphase sweep bounds check
+                    if (!AABB::check(broadphase, otherAABB)) {
+                        // if failed any broadphase then dont check this static again since 
+                        // future resolutions will never exceed previous broadphases
+                        dynamicResolvedSet.insert(index);
+                        continue;
+                    }
+                    // this set just tracks if youve checked this object before during the current resolution attempt 
+                    // done purely to prevent duplicate checks over leaf borders (need to test if this is even worth it lol)
+                    dynamicCheckSet.insert(index);
+
+                    // narrow sweep bounds resolution
+                    // calculates exact time of collision
+                    // but still possible for no collision at this point
+                    glm::vec3 n;
+                    float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
+                    if (t < time) { // a collision occured
+                        time = t;
+                        norm = n;
+                        closestIndex = index;
+                        closestIsDynamic = true;
+                    }
+                    fullTest = true;    // could be placed in above if statement probably?
+
+                } else {    // static
                     if (staticResolvedSet.count(index) || staticCheckSet.count(index)) {
                         continue;
                     }
@@ -211,10 +178,10 @@ void Physics::update(float delta) {
                     ColliderData& other = dynamicObjects[closestIndex];
 
                     if (dobj.entity != nullptr) {
-                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag});
+                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag });
                     }
                     if (other.entity != nullptr) {
-                        other.entity->onCollision(CollisionData{ col.type, col.tag});
+                        other.entity->onCollision(CollisionData{ col.type, col.tag });
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER
@@ -276,114 +243,20 @@ void Physics::update(float delta) {
     //std::cout << numberOver << std::endl;
     //std::cout << "AABB checks: " << totalAABBChecks << " Sweep tests: " << totalSweepTests << std::endl;
     //std::cout << dynamicObjects.size() << std::endl;
-    //std::cout << getNumberOfIntersections() << std::endl;
-
-}
-
-int Physics::getNumberOfIntersections() {
-    int count = 0;
-    for (size_t dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
-        auto& dobj = dynamicObjects[dndx];
-        Collider& col = dobj.collider;
-        if (dobj.id < 0 || !col.awake) {
-            continue;
-        }
-        AABB mine = col.getAABB();
-        std::vector<int>& leafList = dynamicLeafLists[dndx];
-        for (size_t lndx = 0, llen = leafList.size(); lndx < llen; ++lndx) {
-            int leaf = leafList[lndx];
-            // for each object in this leaf
-            if (col.type != ColliderType::BASIC) {
-                std::vector<int>& leafObjects = dynamicMatrix[leaf];
-                for (size_t ondx = 0, olen = leafObjects.size(); ondx < olen; ++ondx) {
-                    int index = leafObjects[ondx];    // other dynamic object
-                    if (index == dndx) {
-                        continue;
-                    }
-
-                    AABB theirs = dynamicObjects[index].collider.getAABB();
-                    if (AABB::check(mine, theirs)) {
-                        count++;
-                    }
-                }
-            }
-
-            std::vector<int>& sleafObjects = staticMatrix[leaf];
-            for (size_t ondx = 0, olen = sleafObjects.size(); ondx < olen; ++ondx) {
-                int index = sleafObjects[ondx];    // other static object
-
-                if (AABB::check(mine, staticObjects[index])) {
-                    count++;
-                }
-
-            }
-        }
-    }
-
-    return count;
-}
-
-
-// should only calculate this if player moves far away enough from it
-// like 100.0 units away then recalculate centered on player!!!
-// for now just do every 2 seconds or something
-void Physics::generateCollisionMatrix(glm::vec3 center) {
-    center.y = 0.0f;
-    float size = MATRIX_SIZE;
-    AABB collisionArea(glm::vec3(-size, 0.0, -size) + center, glm::vec3(size, 10000.0f, size) + center);
-    aabbTree.clear();
-    aabbTree.push_back(collisionArea);  // start with full collision area
-    int startIndex = 0;
-    for (int s = 0; s < SPLIT_COUNT; s++) {
-        int len = aabbTree.size();
-        for (int i = startIndex; i < len; i++) {
-            AABB cur = aabbTree[i];
-
-            float hx = cur.min.x + (cur.max.x - cur.min.x) / 2.0f;
-            float hz = cur.min.z + (cur.max.z - cur.min.z) / 2.0f;
-
-            // bl tl tr br
-            aabbTree.push_back(AABB(cur.min, glm::vec3(hx, cur.max.y, hz)));
-            aabbTree.push_back(AABB(glm::vec3(cur.min.x, cur.min.y, hz), glm::vec3(hx, cur.max.y, cur.max.z)));
-            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, hz), cur.max));
-            aabbTree.push_back(AABB(glm::vec3(hx, cur.min.y, cur.min.z), glm::vec3(cur.max.x, cur.max.y, hz)));
-
-        }
-
-        // increment next start index based on how much we added this split
-        startIndex += (int)pow(4, s);
-    }
-
-    // stores lists of static objects
-    // its same size as aabbTree even though it should only just be leaves but whatever
-    // doesn't save that much space and complicates the indexing
-    staticMatrix.resize(aabbTree.size());
-    dynamicMatrix.resize(aabbTree.size());
-    dynamicLeafLists.resize(MAX_DYNAMICS);
-
-    // prints the length of a leafs x/z edge in the tree
-    //std::cout << "leaf size: " << size / pow(2, SPLIT_COUNT) << std::endl;
 }
 
 void Physics::setCollisionCallback(Entity* entity) {
     dynamicObjects[entity->collider].entity = entity;
 }
 
-// add static to statics list and then 
-// insert it into supermatrix
+// add aabb to static object list
 void Physics::addStatic(AABB obj) {
     // push new object onto statics list and get index
     staticObjects.push_back(obj);
     int ondx = staticObjects.size() - 1;
-
-    std::vector<int> leafsThisObjectIsIn;
-    getLeafs(leafsThisObjectIsIn, obj);
-
-    // add your static object list index into the super lookup matrix 
-    // at every leaf youre at
-    for (size_t i = 0, len = leafsThisObjectIsIn.size(); i < len; ++i) {
-        staticMatrix[leafsThisObjectIsIn[i]].push_back(ondx);
-    }
+    // inserts right away so can checkStatic without having
+    // to wait until next frame for tree to be built
+    collisionTree->insert(QuadtreeData{ obj, ondx, false });
 }
 
 void Physics::addStatics(const std::vector<AABB>& objs) {
@@ -392,13 +265,14 @@ void Physics::addStatics(const std::vector<AABB>& objs) {
     }
 }
 
+// checks static against other statics in the matrix
+// returns true if collides with any
 bool Physics::checkStatic(AABB obj) {
-    std::vector<int> indices;
-    getLeafs(indices, obj);
-
-    for (size_t i = 0, ilen = indices.size(); i < ilen; ++i) {
-        for (size_t j = 0, jlen = staticMatrix[indices[i]].size(); j < jlen; ++j) {
-            if (AABB::check(obj, staticObjects[staticMatrix[indices[i]][j]])) {
+    std::vector<QuadtreeData> returnData;
+    collisionTree->retrieve(returnData, obj);
+    for (size_t i = 0, len = returnData.size(); i < len; ++i) {
+        if (!returnData[i].dynamic) {
+            if (AABB::check(obj, returnData[i].box)) {
                 return true;
             }
         }
@@ -408,8 +282,6 @@ bool Physics::checkStatic(AABB obj) {
 
 void Physics::clearStatics() {
     staticObjects.clear();
-    staticMatrix.clear();
-    staticMatrix.resize(aabbTree.size());
 }
 
 int Physics::registerDynamic(int transform) {
@@ -424,23 +296,25 @@ int Physics::registerDynamic(int transform) {
     return index;
 }
 
-void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
-    std::vector<int> indices;
-    getLeafs(indices, aabb);
+AABB Physics::getPhysicsArea(glm::vec3 center, float size) {
+    center.y = 0.0f;
+    return AABB(glm::vec3(-size, -10.0, -size) + center, glm::vec3(size, 1000.0f, size) + center);
+}
 
-    for (size_t i = 0, ilen = indices.size(); i < ilen; ++i) {
-        for (size_t j = 0, jlen = dynamicMatrix[indices[i]].size(); j < jlen; ++j) {
-            ColliderData& cd = dynamicObjects[dynamicMatrix[indices[i]][j]];
+void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
+    std::vector<QuadtreeData> returnData;
+    collisionTree->retrieve(returnData, aabb);
+
+    for (size_t i = 0, len = returnData.size(); i < len; ++i) {
+        QuadtreeData& qtd = returnData[i];
+        if (qtd.dynamic) {
+            ColliderData& cd = dynamicObjects[qtd.index];
             if (cd.entity != nullptr && AABB::check(aabb, cd.collider.getAABB())) {
                 cd.entity->onCollision(data);
             }
         }
     }
-
 }
-
-//void Physics::returnDynamic(int id) {
-//}
 
 Collider* Physics::getCollider(int index) {
     assert(index >= 0 && index < MAX_DYNAMICS);
@@ -456,59 +330,163 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
     for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
         models[count] = staticObjects[i].getModelMatrix();
         colors[count] = glm::vec3(1.0f, 1.0f, 0.0f);
-        if (++count >= max) {
-            return count - 1;
-        }
+        ++count;
     }
 
     for (size_t i = 0; i < MAX_DYNAMICS; ++i) {
         auto& pobj = dynamicObjects[i];
         if (pobj.id < 0) {
             continue;
+        } else if (!pobj.collider.enabled) {
+            colors[count] = glm::vec3(0.7f);
         } else if (!pobj.collider.awake) {
             colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
         } else {
             colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
         }
         models[count] = pobj.collider.getAABB().getModelMatrix();
-        if (++count >= max) {
-            return count - 1;
-        }
+        ++count;
     }
+
+    collisionTree->getModel(count, models, colors);
 
     return count;
 }
 
+Quadtree::Quadtree(int level, AABB bounds) {
+    this->level = level;
+    this->bounds = bounds;
+}
 
-// this should never be called directly so its hidden down here super sketchily
-// so things cant see it, except the one function that calls it below #prostrats 
-// should probably just make another class lol
-// also took all the variables out of function call for #maxperfomance
-int htreesize = 0;
-std::vector<AABB> *htree;
-std::vector<int>* hnodes;
-AABB hswept;
-void checkLeaves(int node) {
-    if (AABB::check((*htree)[node], hswept)) {
-        // check if you are leaf node
-        if (node * 4 + 1 >= htreesize) {
-            hnodes->push_back(node);
-        } else {
-            // exlore children
-            checkLeaves(node * 4 + 1);
-            checkLeaves(node * 4 + 2);
-            checkLeaves(node * 4 + 3);
-            checkLeaves(node * 4 + 4);
+Quadtree::~Quadtree() {
+    data.clear();
+    if (hasChildren) {
+        for (int i = 0; i < 4; i++) {
+            delete nodes[i];
         }
     }
 }
 
-// searches tree and returns a list of leaf indices AABB collides with
-void Physics::getLeafs(std::vector<int>& locs, AABB aabb) {
-    htreesize = static_cast<int>(aabbTree.size());
-    htree = &aabbTree;
-    hnodes = &locs;
-    hswept = aabb;
-    checkLeaves(0);
+//---------> X axis
+//| ---------
+//| | 0 | 1 |
+//| ---------
+//| | 3 | 2 |
+//| ---------
+//V Z axis
+
+void Quadtree::split() {
+    // find x and z at mid point of bounds aabb
+    float mx = bounds.min.x + (bounds.max.x - bounds.min.x) / 2.0f;
+    float mz = bounds.min.z + (bounds.max.z - bounds.min.z) / 2.0f;
+
+    // tl tr bl br
+    nodes[0] = new Quadtree(level + 1,
+        AABB(bounds.min, glm::vec3(mx, bounds.max.y, mz)));
+    nodes[1] = new Quadtree(level + 1,
+        AABB(glm::vec3(mx, bounds.min.y, bounds.min.z), glm::vec3(bounds.max.x, bounds.max.y, mz)));
+    nodes[2] = new Quadtree(level + 1,
+        AABB(glm::vec3(mx, bounds.min.y, mz), bounds.max));
+    nodes[3] = new Quadtree(level + 1,
+        AABB(glm::vec3(bounds.min.x, bounds.min.y, mz), glm::vec3(mx, bounds.max.y, bounds.max.z)));
+
+    hasChildren = true;
 }
 
+bool Quadtree::insert(QuadtreeData qtd) {
+    if (!AABB::check(bounds, qtd.box)) {
+        return false;
+    }
+    insertRecursive(qtd);
+    return true;
+}
+
+void Quadtree::insertRecursive(QuadtreeData qtd) {
+    if (!hasChildren) {
+        // if no children then insert into this leaf
+        data.push_back(qtd);
+
+        // split this node if has too many objects
+        if (static_cast<int>(data.size()) > MAX_OBJECTS && level < MAX_LEVELS) {
+            split();
+
+            while (data.size() > 0) {
+                insertRecursive(data.back());
+                data.pop_back();
+            }
+        }
+        return;
+    }
+
+    AABB& b = qtd.box;
+    // find x and z at mid point of bounds aabb
+    float mx = bounds.min.x + (bounds.max.x - bounds.min.x) / 2.0f;
+    float mz = bounds.min.z + (bounds.max.z - bounds.min.z) / 2.0f;
+    if (b.min.z < mz) {
+        if (b.min.x < mx) {
+            nodes[0]->insertRecursive(qtd);
+        }
+        if (b.max.x >= mx) {
+            nodes[1]->insertRecursive(qtd);
+        }
+    }
+    if (b.max.z >= mz) {
+        if (b.min.x < mx) {
+            nodes[3]->insertRecursive(qtd);
+        }
+        if (b.max.x >= mx) {
+            nodes[2]->insertRecursive(qtd);
+        }
+    }
+}
+
+void Quadtree::retrieve(std::vector<QuadtreeData>& returnData, AABB b) {
+    if (!hasChildren) {
+        // add this nodes data to end of return data
+        returnData.insert(returnData.end(), data.begin(), data.end());
+        return;
+    }
+    // find x and z at mid point of bounds aabb
+    float mx = bounds.min.x + (bounds.max.x - bounds.min.x) / 2.0f;
+    float mz = bounds.min.z + (bounds.max.z - bounds.min.z) / 2.0f;
+    if (b.min.z < mz) {
+        if (b.min.x < mx) {
+            nodes[0]->retrieve(returnData, b);
+        }
+        if (b.max.x >= mx) {
+            nodes[1]->retrieve(returnData, b);
+        }
+    }
+    if (b.max.z >= mz) {
+        if (b.min.x < mx) {
+            nodes[3]->retrieve(returnData, b);
+        }
+        if (b.max.x >= mx) {
+            nodes[2]->retrieve(returnData, b);
+        }
+    }
+}
+
+void Quadtree::getModel(int& count, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+    if (hasChildren) {
+        for (int i = 0; i < 4; ++i) {
+            nodes[i]->getModel(count, models, colors);
+        }
+    }
+    AABB mbounds = bounds;
+    mbounds.min.y = 0.0f;
+    mbounds.max.y = 0.1f;
+    models[count] = mbounds.getModelMatrix();
+    colors[count] = glm::vec3(0.0f, 0.0f, 1.0f);
+    ++count;
+}
+
+int Quadtree::getNodeCount() {
+    int c = 1;
+    if (hasChildren) {
+        for (int i = 0; i < 4; ++i) {
+            c += nodes[i]->getNodeCount();
+        }
+    }
+    return c;
+}

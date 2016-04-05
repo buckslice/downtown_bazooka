@@ -11,7 +11,7 @@ Item::Item() {
 	getTransform()->setVisibility(HIDDEN);
 	getTransform()->parentAll(model);
 	getCollider()->type = TRIGGER;
-	getCollider()->awake = false;
+	getCollider()->enabled = false;
 
 	Physics::setCollisionCallback(this);
 }
@@ -38,7 +38,7 @@ void Item::init(int id, float rotSpeed, glm::vec3 pos, ItemType type) {
 	t->setVisibility(HIDDEN_SELF);
 
 	Collider* c = getCollider();
-	c->awake = true;
+	c->enabled = true;
 
 	this->id = id;
 	this->rotSpeed = rotSpeed;

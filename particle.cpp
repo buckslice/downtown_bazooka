@@ -11,7 +11,7 @@ void Particle::activate() {
     t->solid = true;
 
     Collider* c = getCollider();
-    c->awake = true;
+    c->enabled = true;
 
     float gravmult;
     switch (type) {
@@ -37,10 +37,10 @@ void Particle::activate() {
 
 void Particle::update(GLfloat dt) {
     Collider* c = getCollider();
-    if (!c->awake) {
+    if (!c->enabled) {
         return;
     } else if ((curlife -= dt) <= 0) {
-        c->awake = false;
+        c->enabled = false;
         getTransform()->setVisibility(HIDDEN);
         return;
     }

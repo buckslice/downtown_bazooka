@@ -4,7 +4,7 @@
 
 Projectile::Projectile() {
     Collider* c = getCollider();
-    c->awake = false;
+    c->enabled = false;
     c->type = TRIGGER;
     c->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
 
@@ -25,7 +25,7 @@ void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel) {
     t->setVisibility(VISIBLE);
 
     c->vel = vel;
-    c->awake = true;
+    c->enabled = true;
 
     this->id = id;
     timer = 2.0f;

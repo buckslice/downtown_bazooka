@@ -40,7 +40,7 @@ public:
     ColliderType type;
 
     glm::vec3 vel;
-    bool grounded = false, awake = true;
+    bool grounded = false, enabled = true, awake = true;
 
     float gravityMultiplier = 1.0f;
 
