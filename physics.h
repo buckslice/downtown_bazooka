@@ -14,6 +14,7 @@ struct ColliderData {
     Entity* entity = nullptr;
     int id = -1;
 };
+
 class Quadtree;
 class Physics {
 public:

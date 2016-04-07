@@ -178,10 +178,10 @@ void Physics::update(float delta, glm::vec3 center) {
                     ColliderData& other = dynamicObjects[closestIndex];
 
                     if (dobj.entity != nullptr) {
-                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag });
+                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag, other.entity });
                     }
                     if (other.entity != nullptr) {
-                        other.entity->onCollision(CollisionData{ col.type, col.tag });
+                        other.entity->onCollision(CollisionData{ col.type, col.tag, dobj.entity });
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER
@@ -338,6 +338,10 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
         if (pobj.id < 0) {
             continue;
         } else if (!pobj.collider.enabled) {
+            // ignore drawing deactivated particles to avoid cluttering
+            if (pobj.collider.type == ColliderType::BASIC) {
+                continue;
+            }
             colors[count] = glm::vec3(0.7f);
         } else if (!pobj.collider.awake) {
             colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);

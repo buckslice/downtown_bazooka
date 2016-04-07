@@ -8,13 +8,7 @@
 #include "input.h"
 #include "projectile.h"
 
-const float MAX_HEALTH = 100.0f;
 const int HEALTH_BAR_HEIGHT = 20;
-
-const GLfloat SPEED = 15.0f;
-const GLfloat JUMPSPEED = 25.0f;
-const GLfloat SHOTS_PER_SECOND = 1.0f;
-const GLfloat SHOOT_SPEED = 25.0f;
 
 //extern Player* PlayerInstance; // extern singleton for the player class
 
@@ -34,16 +28,23 @@ public:
     void update(GLfloat delta) override;
     void onCollision(CollisionData data) override;
 
-    void jump();
-
-    void shoot();
-
     void addHealth(float amount);
 
 private:
+    void jump();
+    void shoot();
+
     Camera* cam;
-	float health, maxHealth, damage, jumpSpeed, shotsPerSecond, shootSpeed,
-		invulnTime = 0.0f, speed, timeSinceJump = -1.0f, timeSinceShot = -1.0f;
+    float speed = 15.0f;
+    float maxHealth = 100.0f;
+    float health = maxHealth;
+    float damage = 10.0f;
+    float jumpSpeed = 25.0f;
+    float shotsPerSecond = 1.0f;
+    float shootSpeed = 25.0f;
+    float invulnTime = 0.0f;
+    float timeSinceJump = -1.0f;
+    float timeSinceShot = -1.0f;
 
     glm::quat currRot, targRot;
 

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include "aabb.h"
 
-enum ColliderType {
+enum class ColliderType {
     BASIC,          // collides with statics, invisible to other types
     TRIGGER,        // collides with statics, checks TRIGGERs and FULLs without colliding
     FULL            // collides with statics, checks TRIGGERs and FULLs, collides against FULLs
@@ -11,7 +11,7 @@ enum ColliderType {
 // to be used in collision callbacks
 // maybe just make collision callback except a simplified collider struct
 // with a enum tag and position and stuff maybe
-enum ColliderTag {
+enum class Tag {
     DEFAULT,
     PLAYER,
     PLAYER_PROJECTILE,
@@ -19,16 +19,7 @@ enum ColliderTag {
     ENEMY,
     EXPLOSION,
     TERRAIN, 
-	ITEM_HEAL,
-	ITEM_STAMINA,
-	ITEM_STRENGTH,
-	ITEM_AGILITY,
-	ITEM_DEXTERITY
-};
-
-struct CollisionData {
-    ColliderType type;
-    ColliderTag tag;
+	ITEM	
 };
 
 // Colliders represent dynamic physics objects
@@ -36,7 +27,7 @@ class Collider {
 public:
     int transform;  // id of transform this collider is changing position of
 
-    ColliderTag tag;
+    Tag tag;
     ColliderType type;
 
     glm::vec3 vel;

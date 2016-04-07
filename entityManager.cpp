@@ -16,7 +16,7 @@ EntityManager::EntityManager(Player* player) : player(player) {
     // should switch this from pool ?
     projectiles = new Pool<Projectile>(MAX_PROJECTILES);
     enemies = new Pool<Enemy>(MAX_ENEMIES);
-	items = new Pool<Item>(MAX_ITEMS);
+    items = new Pool<Item>(MAX_ITEMS);
 
 }
 
@@ -39,9 +39,9 @@ void EntityManager::returnAllObjects() {
     for (size_t i = 0, len = enemies->getSize(); i < len; ++i) {
         ReturnEnemy(i);
     }
-	for (size_t i = 0, len = items->getSize(); i < len; ++i) {
-		ReturnItem(i);
-	}
+    for (size_t i = 0, len = items->getSize(); i < len; ++i) {
+        ReturnItem(i);
+    }
 }
 
 void EntityManager::update(float delta) {
@@ -56,14 +56,14 @@ void EntityManager::update(float delta) {
         eobjs[i].data.update(delta);
     }
 
-	// update items
-	auto& iobjs = items->getObjects();
-	for (size_t i = 0, len = iobjs.size(); i < len; ++i) {
-		if (iobjs[i].id < 0) {
-			continue;
-		}
-		iobjs[i].data.update(delta);
-	}
+    // update items
+    auto& iobjs = items->getObjects();
+    for (size_t i = 0, len = iobjs.size(); i < len; ++i) {
+        if (iobjs[i].id < 0) {
+            continue;
+        }
+        iobjs[i].data.update(delta);
+    }
 
     // update projectiles
     auto& pobjs = projectiles->getObjects();
@@ -79,6 +79,10 @@ void EntityManager::update(float delta) {
         particles[i].update(delta);
     }
 
+}
+
+float EntityManager::getPlayerDamage() {
+    return player->getDamage();
 }
 
 // particles
@@ -101,10 +105,10 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float
 
 
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
-	AudioInstance->playSound(SoundEffect::SHOT_EXPLOSION);
-	for (int i = 0; i < num; ++i) {
+    AudioInstance->playSound(Resources::get().explosionSound);
+    for (int i = 0; i < num; ++i) {
         SpawnParticle(pos, SPARK, mag * 5.0f, vel);
-        SpawnParticle(pos, FIRE, mag*4, vel);
+        SpawnParticle(pos, FIRE, mag * 4, vel);
     }
 }
 
@@ -114,9 +118,9 @@ void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer
     if (id < 0) {  // happens if pool is empty
         return;
     }
-	Projectile* p = projectiles->getData(id);
-	p->getCollider()->tag = forPlayer ? PLAYER_PROJECTILE : ENEMY_PROJECTILE;
-	p->type = forPlayer ? ROCKET : LASER;
+    Projectile* p = projectiles->getData(id);
+    p->getCollider()->tag = forPlayer ? Tag::PLAYER_PROJECTILE : Tag::ENEMY_PROJECTILE;
+    p->type = forPlayer ? ProjectileType::ROCKET : ProjectileType::LASER;
     p->init(id, pos, vel);
 }
 
@@ -130,41 +134,22 @@ void EntityManager::SpawnEnemy() {
 
     //glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
     glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
-    bool elite = Mth::rand01() <= 0.02;
-
-    glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
-    glm::vec3 variance = Mth::randInsideUnitCube();
-    variance.x = variance.z = abs(variance.x);
-    scale += variance * .25f;
-
-    glm::vec3 color;
-    if (elite) {
-        scale *= Mth::rand01() + 2.0f;
-        color = glm::vec3(0.8f, 1.0f, 0.6f);
-        e->speed = Mth::rand01() * 5.0f + 10.0f;
-        e->jumpVel = Mth::rand01() * 10.0f + 30.0f;
-		e->health *= 3.0f;
-    } else {
-        color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
-        e->speed = Mth::rand01() * 5.0f + 5.0f;
-        e->jumpVel = Mth::rand01() * 10.0f + 20.0f;
-    }
-
-    e->init(id, player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), scale, color);
+    EnemyType et = Mth::rand01() < 0.02f ? EnemyType::ELITE : EnemyType::BASIC;
+    e->init(id, player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), et);
 
 }
 
 
 void EntityManager::SpawnItem() {
-	int id = items->get();
-	if (id < 0) {
-		return;
-	}
+    int id = items->get();
+    if (id < 0) {
+        return;
+    }
 
-	Item* i = items->getData(id);
+    Item* i = items->getData(id);
 
-	glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-	i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType) (int)Mth::rand0X(ItemType::COUNT));
+    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType)(int)Mth::rand0X((int)ItemType::COUNT));
 }
 
 // should make a sub class of entity / template this or some shit later
@@ -177,7 +162,7 @@ void EntityManager::ReturnEnemy(int id) {
 }
 
 void EntityManager::ReturnItem(int id) {
-	ReturnPooledEntity(id, items);
+    ReturnPooledEntity(id, items);
 }
 
 template <class Entity>

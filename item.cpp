@@ -10,7 +10,7 @@ Item::Item() {
 	model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));
 	getTransform()->setVisibility(HIDDEN);
 	getTransform()->parentAll(model);
-	getCollider()->type = TRIGGER;
+	getCollider()->type = ColliderType::TRIGGER;
 	getCollider()->enabled = false;
 
 	Physics::setCollisionCallback(this);
@@ -27,7 +27,7 @@ void Item::update(GLfloat delta) {
 }
 
 void Item::onCollision(CollisionData data) {
-	if (data.tag == PLAYER) {
+	if (data.tag == Tag::PLAYER) {
 		EntityManagerInstance->ReturnItem(id);
 	}
 }
@@ -44,26 +44,22 @@ void Item::init(int id, float rotSpeed, glm::vec3 pos, ItemType type) {
 	this->rotSpeed = rotSpeed;
 	this->type = type;
 
+    c->tag = Tag::ITEM;
 	switch (type) {
-	case HEAL:
+    case ItemType::HEAL:
 		model->color = glm::vec3(0.0, 1.0, 0.0); //green
-		c->tag = ITEM_HEAL;
 		break;
-	case STAMINA:
+	case ItemType::STAMINA:
 		model->color = glm::vec3(1.0, 0.0, 0.0); //red
-		c->tag = ITEM_STAMINA;
 		break;
-	case STRENGTH:
+	case ItemType::STRENGTH:
 		model->color = glm::vec3(0.0, 1.0, 1.0); //cyan
-		c->tag = ITEM_STRENGTH;
 		break;
-	case AGILITY:
+	case ItemType::AGILITY:
 		model->color = glm::vec3(1.0, 1.0, 0.0); //yellow
-		c->tag = ITEM_AGILITY;
 		break;
-	case DEXTERITY:
+	case ItemType::DEXTERITY:
 		model->color = glm::vec3(1.0, 1.0, 1.0); //white
-		c->tag = ITEM_DEXTERITY;
 		break;
 	}
 }

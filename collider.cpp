@@ -1,8 +1,8 @@
 #include "collider.h"
 
 Collider::Collider() {
-    type = BASIC;
-	tag = DEFAULT;
+    type = ColliderType::BASIC;
+	tag = Tag::DEFAULT;
     setExtents(glm::vec3(-0.5f, 0.0f, -0.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 }
 

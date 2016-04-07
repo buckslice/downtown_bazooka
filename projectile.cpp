@@ -5,7 +5,7 @@
 Projectile::Projectile() {
     Collider* c = getCollider();
     c->enabled = false;
-    c->type = TRIGGER;
+    c->type = ColliderType::TRIGGER;
     c->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
 
     getTransform()->setVisibility(HIDDEN);
@@ -38,7 +38,7 @@ void Projectile::update(GLfloat delta) {
         return;
     }
     switch (type) {
-    case ROCKET:
+    case ProjectileType::ROCKET:
         EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), FIRE, 3.0f);
         break;
     case ProjectileType::LASER:
@@ -54,19 +54,19 @@ void Projectile::update(GLfloat delta) {
 
 void Projectile::onDeath() {
     EntityManagerInstance->ReturnProjectile(id);
-    if (getCollider()->tag == PLAYER_PROJECTILE) {
+    if (getCollider()->tag == Tag::PLAYER_PROJECTILE) {
         EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(), 100, 16.0f, getCollider()->vel);
         glm::vec3 p = getTransform()->getWorldPos();
         glm::vec3 s = glm::vec3(20.0f) / 2.0f;
-        Physics::sendOverlapEvent(AABB(p - s, p + s), CollisionData{ BASIC, EXPLOSION });
+        Physics::sendOverlapEvent(AABB(p - s, p + s), CollisionData{ ColliderType::BASIC, Tag::EXPLOSION });
     }
 }
 
 void Projectile::onCollision(CollisionData data) {
-    ColliderTag tag = getCollider()->tag;
-    if (data.tag == PLAYER && tag != PLAYER_PROJECTILE) {
+    Tag tag = getCollider()->tag;
+    if (data.tag == Tag::PLAYER && tag != Tag::PLAYER_PROJECTILE) {
         onDeath();
-    } else if (data.tag == ENEMY && tag != ENEMY_PROJECTILE) {
+    } else if (data.tag == Tag::ENEMY && tag != Tag::ENEMY_PROJECTILE) {
         onDeath();
     }
 }

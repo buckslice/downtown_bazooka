@@ -3,10 +3,9 @@
 #include "graphics.h"
 #include "audio.h"
 //Player* PlayerInstance;
-Player::Player(Camera* cam) : speed(SPEED), health(MAX_HEALTH), maxHealth(MAX_HEALTH), jumpSpeed(JUMPSPEED),
-shotsPerSecond(SHOTS_PER_SECOND), shootSpeed(SHOOT_SPEED){
+Player::Player(Camera* cam) {
     this->cam = cam;
-	//PlayerInstance = this;
+    //PlayerInstance = this;
     getTransform()->setVisibility(Visibility::HIDDEN_SELF);
 
     Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
@@ -48,15 +47,15 @@ shotsPerSecond(SHOTS_PER_SECOND), shootSpeed(SHOOT_SPEED){
     glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
     glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
     c->setExtents(min, max);
-    c->tag = PLAYER;
-    c->type = FULL;
+    c->tag = Tag::PLAYER;
+    c->type = ColliderType::FULL;
 
     Physics::setCollisionCallback(this);
 }
 
 void Player::spawn(glm::vec3 spawnPos, bool awake) {
     flying = false;
-    health = MAX_HEALTH;
+    health = maxHealth;
     getTransform()->setPos(spawnPos);
     getCollider()->enabled = awake;
 }
@@ -66,11 +65,11 @@ float Player::getHealth() {
 }
 
 float Player::getMaxHealth() {
-	return maxHealth;
+    return maxHealth;
 }
 
 float Player::getDamage() {
-	return damage;
+    return damage;
 }
 
 void Player::update(GLfloat delta) {
@@ -96,11 +95,11 @@ void Player::update(GLfloat delta) {
 
     // check shoot input
     if (Input::justPressed(sf::Keyboard::E)) {
-		
-		if (timeSinceShot > 1 / shotsPerSecond) {
-			timeSinceShot = 0.0f;
-			shoot();
-		}
+
+        if (timeSinceShot > 1 / shotsPerSecond) {
+            timeSinceShot = 0.0f;
+            shoot();
+        }
     }
 
     // jump if in time
@@ -109,7 +108,7 @@ void Player::update(GLfloat delta) {
         jump();
     }
     timeSinceJump += delta;
-	timeSinceShot += delta;
+    timeSinceShot += delta;
     invulnTime += delta;
 
     // cam forward in xz plane
@@ -169,50 +168,51 @@ void Player::update(GLfloat delta) {
 }
 
 void Player::onCollision(CollisionData data) {
-    if ((data.tag == ENEMY || data.tag == ENEMY_PROJECTILE) && invulnTime >= 0.5f) {
-		AudioInstance->playSound(SoundEffect::DAMAGE);
-		addHealth(-5);
+    if ((data.tag == Tag::ENEMY || data.tag == Tag::ENEMY_PROJECTILE) && invulnTime >= 0.5f) {
+        AudioInstance->playSound(Resources::get().damageSound);
+        addHealth(-5);
         invulnTime = 0.0f;
     }
 
-	switch (data.tag) {
-	case ITEM_HEAL:
-		addHealth(10);
-		AudioInstance->playSound(SoundEffect::PICKUP);
-		break;
-	case ITEM_STAMINA:
-		maxHealth += 10.0f;
-		addHealth(10);
-		AudioInstance->playSound(SoundEffect::PICKUP);
-		break;
-	case ITEM_STRENGTH:
-		damage += 5.0f;
-		AudioInstance->playSound(SoundEffect::PICKUP);
-		break;
-	case ITEM_AGILITY:
-		speed += 5.0f;
-		AudioInstance->playSound(SoundEffect::PICKUP);
-		break;
-	case ITEM_DEXTERITY:
-		shootSpeed += 5.0f;
-		shotsPerSecond += 0.5f;
-		AudioInstance->playSound(SoundEffect::PICKUP);
-		break;
-	}
+    if (data.tag == Tag::ITEM) {
+        AudioInstance->playSound(Resources::get().itemSound);
+
+        Item* i = dynamic_cast<Item*>(data.entity);
+        switch (i->type) {
+        case ItemType::HEAL:
+            addHealth(10);
+            break;
+        case ItemType::STAMINA:
+            maxHealth += 10.0f;
+            addHealth(10);
+            break;
+        case ItemType::STRENGTH:
+            damage += 5.0f;
+            break;
+        case ItemType::AGILITY:
+            speed += 5.0f;
+            break;
+        case ItemType::DEXTERITY:
+            shootSpeed += 5.0f;
+            shotsPerSecond += 0.5f;
+            break;
+        }
+    }
+
 }
 
 void Player::jump() {
     // check if grounded
     Collider& c = *getCollider();
     if (c.grounded && !flying) {
-		AudioInstance->playSound(SoundEffect::JUMP);
+        AudioInstance->playSound(Resources::get().jumpSound);
         c.vel.y = jumpSpeed;
         c.grounded = false;
     }
 }
 
 void Player::shoot() {
-	AudioInstance->playSound(SoundEffect::SHOOT);
+    AudioInstance->playSound(Resources::get().shootSound);
     glm::vec3 shootPos = getTransform()->getWorldPos();
     shootPos.y += 1.8f;
     EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*shootSpeed, true);
@@ -220,7 +220,7 @@ void Player::shoot() {
 
 void Player::addHealth(float amount) {
     health += amount;
-    health = std::max(0.0f, std::min(health, MAX_HEALTH));
+    health = std::max(0.0f, std::min(health, maxHealth));
 }
 
 // calculate movement direction and return a normal vector pointing in that direction
@@ -245,9 +245,9 @@ glm::vec3 Player::getMovementDir() {
         dir.y += 1.0f;
     }
 
-	if (dir != glm::vec3(0.0f)) {
-		dir = glm::normalize(dir);
-	}
+    if (dir != glm::vec3(0.0f)) {
+        dir = glm::normalize(dir);
+    }
 
     return dir;
 }

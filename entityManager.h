@@ -50,6 +50,8 @@ public:
 	void SpawnItem();
 	void ReturnItem(int id);
 
+    float getPlayerDamage();
+
 private:
     // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;

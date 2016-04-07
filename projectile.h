@@ -1,6 +1,6 @@
 #pragma once
 #include "entity.h"
-enum ProjectileType {
+enum class ProjectileType {
 	ROCKET,
 	LASER
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
-enum ItemType {
+
+enum class ItemType {
 	HEAL, // heals for a portion of the player's health
 	STAMINA, // permanently increases the player's maximum health
 	STRENGTH, // permanently increases the amount of damage each of the player's shots does
@@ -8,6 +9,7 @@ enum ItemType {
 	DEXTERITY, // permanently increases the amount of shots the player can fire per second
 	COUNT // just as a count for the number of elements in this enum
 };
+
 class Item : public Entity {
 public:
 	Item();
