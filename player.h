@@ -43,7 +43,7 @@ private:
     float shotsPerSecond = 1.0f;
     float shootSpeed = 25.0f;
     float invulnTime = 0.0f;
-    float timeSinceJump = -1.0f;
+    float timeSinceHitJump = -1.0f;
     float timeSinceShot = -1.0f;
 
     glm::quat currRot, targRot;

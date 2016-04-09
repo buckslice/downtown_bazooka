@@ -333,11 +333,6 @@ inline double chebyshev(double dx, double dy, double dz) {
 static double at[3];
 // pointer to distance function
 double(*distance_function)(double, double, double);
-// used to make sure mean value of F[0] is 1.0
-// easy way to scale cellular features
-//const double DENSITY_ADJUSTMENT = 0.398150;
-const double DENSITY_ADJUSTMENT = 0.85;
-//const double DENSITY_ADJUSTMENT = 1.0;
 
 void Noise::worley(float x, float y, float z,
     size_t max_order, double* F, uint32_t* ID, DIST_FUNC dfunc, float frequency) {
@@ -349,9 +344,9 @@ void Noise::worley(float x, float y, float z,
         distance_function = &chebyshev;
     }
 
-    at[0] = x * frequency * DENSITY_ADJUSTMENT;
-    at[1] = y * frequency * DENSITY_ADJUSTMENT;
-    at[2] = z * frequency * DENSITY_ADJUSTMENT;
+    at[0] = x * frequency;
+    at[1] = y * frequency;
+    at[2] = z * frequency;
 
     double x2, y2, z2, mx2, my2, mz2;
     int32_t int_at[3];
@@ -411,7 +406,7 @@ void Noise::worley(float x, float y, float z,
 
     // We're done! Convert to right size scale
     for (i = 0; i < max_order; i++) {
-        F[i] = sqrt(F[i]) * (1.0 / DENSITY_ADJUSTMENT);
+        F[i] = sqrt(F[i]);
     }
 }
 

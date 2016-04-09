@@ -1,8 +1,9 @@
 #include "terrain.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include "physics.h"
 #include "input.h"
+#include "graphics.h"
 
 // just public here in the class so chunk can see
 glm::vec2 seed;
@@ -16,26 +17,21 @@ bool Terrain::toggleDebugColors() {
     return debugColors;
 }
 
-float minh, maxh;
 CTVertex Chunk::genPoint(float x, float y) {
     const int max = 2;
     double f[max];
     uint32_t id[max];
-    Noise::worley(x, y, 0.0f, max, f, id, Noise::MANHATTAN, 0.005f);
+    //Noise::worley(x, y, 0.0f, max, f, id, Noise::MANHATTAN, 0.00425f);
 
     float h = static_cast<float>(f[1] - f[0]);
-
-    //minh = std::min(minh, h);
-    //maxh = std::max(maxh, h);
-
-    h = Noise::fractal_worley_3D(x + seed.x, y + seed.y, 0.0f, Noise::MANHATTAN, 2, 0.005f);
+    h = Noise::fractal_worley_3D(x + seed.x, y + seed.y, 0.0f, Noise::MANHATTAN, 2, 0.00425f);
 
     h -= .025f;
     h = Mth::clamp(h, 0.0f, 1.0f);
 
     // reduce noise height near center
     float sqrdist = x*x + y*y;
-    float cityLimit = 1000.0f;;
+    float cityLimit = 1000.0f;
     float range = 100.0f;
     if (sqrdist < cityLimit * cityLimit) {  // inside city
         h = 0.0f;
@@ -57,7 +53,7 @@ CTVertex Chunk::genPoint(float x, float y) {
         int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
         glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.2f;
         if (h < 0.01f) {
-            color = glm::vec3(Noise::ridged_2D(x + seed.x, y + seed.y, 2, 0.05f));
+            color = glm::vec3(Noise::ridged_2D(x + seed.x, y + seed.y, 2, 0.0425f));
             color += glm::vec3(0.02f, 0.02f, 0.25f);
             color.r = Mth::clamp(color.r, 0.0f, 0.5f);
             color.g = Mth::clamp(color.g, 0.0f, 0.5f);
@@ -73,6 +69,7 @@ CTVertex Chunk::genPoint(float x, float y) {
     float scale = 100.0f;
     h *= scale;
 
+
     return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
 }
 
@@ -80,19 +77,27 @@ CTVertex Chunk::genTest(float x, float y) {
     const int max = 3;
     double f[max];
     uint32_t id[max];
-    Noise::worley(x, y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.0075f);
-
-    float h = static_cast<float>(f[1] - f[0]);
+    Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.0025f);
     //float h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 3, 0.0075f);
 
+    float h = static_cast<float>(f[1] - f[0]);
+
+    ////float h = static_cast<float>(f[2]-f[1]);
+    ////h = Mth::smootherstep(0.0f, 0.05f, h);
+
+    //float h = static_cast<float>(1.0f - f[0]);
+    ////h = Mth::smootherstep(0.6f, 1.0f, h);
+
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f);
+    //glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f);
+    glm::vec3 rand = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 100) / 255.0f, (id[idc] % 255) / 255.0f);
     h = Mth::clamp(h, 0.0f, 1.0f);
     glm::vec3 color = glm::vec3(rand);
     //glm::vec3 color = glm::vec3(h);
 
     h *= 100.0f;
     return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
+
 }
 
 void Chunk::generate() {
@@ -103,26 +108,22 @@ void Chunk::generate() {
     // used for texture coordinates
     bool bot = true;
 
-    //minh = 1000.0f;
-    //maxh = -1000.0f;
-
     // debug color
     glm::vec3 debugColor = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
 
-    // TODO: get generation code to work from YAML files or something
-    // so dont have to recompile to see changes!!!
     for (int y = 0; y < NUM_TILES + 1; y++) {
         bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
             float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
-            CTVertex cv = genPoint(xo, yo);
+            //CTVertex cv = genPoint(xo, yo);
+            CTVertex cv = genTest(xo, yo);
             if (debugColors) {
                 cv.color = debugColor;
             }
 
-            // texcoords are mirrored to work with XTREME!!! vertex sharing,
+            // texcoords are mirrored for max vertex sharing,
             // limitation is that textures have to be symmetric
             cv.texcoord = glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f);
 
@@ -147,6 +148,76 @@ void Chunk::generate() {
     }
     //std::cout << tris.size() << std::endl;
     mesh = new StandardMesh(verts, tris, Resources::get().terrainTex);
+
+    // try to randomly generate buildings depending on nearby cities
+    float cx = pos.first * CHUNK_SIZE;
+    float cz = pos.second * CHUNK_SIZE;
+    float hc = CHUNK_SIZE / 2.0f;
+    float sx, sy, sz;
+
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
+    rng.seed(rngseed); // use a seeded random generator for this chunk based on its chunk coords
+
+    const int max = 3;
+    double f[max];
+    uint32_t id[max];
+
+    for (GLuint i = 0; i < 15; ++i) {    // try to build this many buildings
+        for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current buildings
+            std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
+            float x = unix(rng);
+            std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
+            float z = uniz(rng);
+            std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
+
+            Noise::worley(x + seed.x, z + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
+            float b = static_cast<float>(1.0f - f[0]);
+            b = Mth::cblend(b, 0.6f, 0.95f, Mth::cubic);
+            if (b < 0.001f) {
+                if (zeroToOne(rng) > .25f) {
+                    break;
+                }
+            }
+            sx = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
+            sy = zeroToOne(rng) * 10.0f + b * 100.0f + 5.0f;
+            sz = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
+            float h = getHeight(x, z);
+            AABB box(glm::vec3(x - sx / 2.0, h, z - sz / 2.0), glm::vec3(x + sx / 2.0, sy + h, z + sz / 2.0));
+
+            if (!Physics::checkStatic(box)) {
+                buildingIndices.push_back(Physics::addStatic(box));
+                buildings.push_back(box.getModelMatrix());
+
+                glm::vec3 c;
+                if (sy < LOW_HEIGHT) {
+                    if (zeroToOne(rng) <= 0.05f) {
+                        c = glm::vec3(0.0f, 1.0f, 0.25f);    // green
+                    } else {
+                        float n = Noise::ridged_2D(x, z, 3, .001f);
+                        if (n < 0.25f) {
+                            c = glm::vec3(0.0f, zeroToOne(rng)* 0.5f, 1.0f);	// blueish
+                        } else {
+                            c = glm::vec3(0.0f, 1.0f, 1.0f);    // teal
+                        }
+                    }
+                } else if (sy < HIGH_HEIGHT) {
+                    float t = Mth::blend(sy, LOW_HEIGHT, HIGH_HEIGHT);
+                    c = Mth::lerp(glm::vec3(0.3f, 0.0f, 1.0f), glm::vec3(1.0f, 0.4f, 0.0f), t);
+
+                    //c = glm::vec3(Mth::rand01() * .25f + .5f, 0.0, 1.0f);	// purp
+                } else {
+                    c = glm::vec3(1.0f, zeroToOne(rng) * .2f + .3f, 0.0f);	// orange
+                }
+                buildingColors.push_back(c);
+                //buildingColors.push_back(glm::vec3( // random color
+                //    zeroToOne(rng), zeroToOne(rng), zeroToOne(rng)));
+                break;
+            }
+        }
+    }
+
 }
 
 Chunk::Chunk(point pos) {
@@ -156,6 +227,11 @@ Chunk::Chunk(point pos) {
 
 Chunk::~Chunk() {
     delete mesh;
+
+    // delete statics objects out of physics
+    for (size_t i = 0, len = buildingIndices.size(); i < len; ++i) {
+        Physics::removeStatic(buildingIndices[i]);
+    }
 }
 
 
@@ -278,6 +354,7 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->render();
+        Graphics::addToStream(false, chunks[i]->buildings, chunks[i]->buildingColors);
     }
 
 }

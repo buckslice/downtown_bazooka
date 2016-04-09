@@ -8,8 +8,12 @@
 
 // declared like this so can be accessed from static methods
 const int MAX_DYNAMICS = 10000;
+const int MAX_STATICS = 10000;
+
 std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
 std::vector<int> Physics::freeDynamics;
+Pool<AABB> Physics::staticPool(MAX_STATICS);
+
 Quadtree* Physics::collisionTree;
 
 Physics::Physics() {
@@ -31,9 +35,14 @@ void Physics::update(float delta, glm::vec3 center) {
     delete collisionTree;
     collisionTree = new Quadtree(0, getPhysicsArea(center, MATRIX_SIZE));
 
+    auto& staticObjects = staticPool.getObjects();
     // insert all statics into tree
     for (int sndx = 0, len = static_cast<int>(staticObjects.size()); sndx < len; ++sndx) {
-        collisionTree->insert(QuadtreeData{ staticObjects[sndx], sndx, false });
+        auto& sobj = staticObjects[sndx];
+        if (sobj.id < 0) {
+            continue;
+        }
+        collisionTree->insert(QuadtreeData{ sobj.data, sndx, false });
     }
     // insert all dynamics into tree (that are awake and not basic)
     for (int dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
@@ -41,7 +50,13 @@ void Physics::update(float delta, glm::vec3 center) {
         auto& col = dobj.collider;
         // ensure dynamic object is active and awake
         // if type is basic then dont insert into tree, just retrieve
-        if (dobj.id < 0 || !col.enabled || col.type == ColliderType::BASIC) {
+        if (dobj.id < 0 || !col.enabled) {
+            continue;
+        }
+        // update collider position from transform
+        col.pos = Graphics::getTransform(col.transform)->getPos();
+
+        if (col.type == ColliderType::BASIC) {
             continue;
         }
         col.awake = collisionTree->insert(QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dndx, true });
@@ -59,9 +74,6 @@ void Physics::update(float delta, glm::vec3 center) {
             col.grounded = false;
             continue;
         }
-
-        // current dynamic position
-        col.pos = Graphics::getTransform(col.transform)->getPos();
 
         staticResolvedSet.clear();
         dynamicResolvedSet.clear();
@@ -142,7 +154,7 @@ void Physics::update(float delta, glm::vec3 center) {
 
                     // pretent like they aren't moving since you are going first
                     // cant collide two swept AABBs
-                    AABB& otherAABB = staticObjects[index];
+                    AABB& otherAABB = staticObjects[index].data;
 
                     // broadphase sweep bounds check
                     if (!AABB::check(broadphase, otherAABB)) {
@@ -250,19 +262,14 @@ void Physics::setCollisionCallback(Entity* entity) {
 }
 
 // add aabb to static object list
-void Physics::addStatic(AABB obj) {
+int Physics::addStatic(AABB obj) {
     // push new object onto statics list and get index
-    staticObjects.push_back(obj);
-    int ondx = staticObjects.size() - 1;
+    int ondx = staticPool.get();
+    *staticPool.getData(ondx) = obj;
     // inserts right away so can checkStatic without having
     // to wait until next frame for tree to be built
     collisionTree->insert(QuadtreeData{ obj, ondx, false });
-}
-
-void Physics::addStatics(const std::vector<AABB>& objs) {
-    for (size_t i = 0, len = objs.size(); i < len; ++i) {
-        addStatic(objs[i]);
-    }
+    return ondx;
 }
 
 // checks static against other statics in the matrix
@@ -280,8 +287,8 @@ bool Physics::checkStatic(AABB obj) {
     return false;
 }
 
-void Physics::clearStatics() {
-    staticObjects.clear();
+void Physics::removeStatic(int index) {
+    staticPool.ret(index);
 }
 
 int Physics::registerDynamic(int transform) {
@@ -298,7 +305,7 @@ int Physics::registerDynamic(int transform) {
 
 AABB Physics::getPhysicsArea(glm::vec3 center, float size) {
     center.y = 0.0f;
-    return AABB(glm::vec3(-size, -10.0, -size) + center, glm::vec3(size, 1000.0f, size) + center);
+    return AABB(glm::vec3(-size, -10.0, -size) + center, glm::vec3(size, 10000.0f, size) + center);
 }
 
 void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
@@ -327,8 +334,13 @@ Collider* Physics::getCollider(int index) {
 int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
     int count = 0;
     int max = models.size();
+    auto& staticObjects = staticPool.getObjects();
     for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
-        models[count] = staticObjects[i].getModelMatrix();
+        auto& sobj = staticObjects[i];
+        if (sobj.id < 0) {
+            continue;
+        }
+        models[count] = sobj.data.getModelMatrix();
         colors[count] = glm::vec3(1.0f, 1.0f, 0.0f);
         ++count;
     }

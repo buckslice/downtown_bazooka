@@ -90,7 +90,7 @@ void Player::update(GLfloat delta) {
     }
     // check jump input
     if (Input::justPressed(sf::Keyboard::Space)) {
-        timeSinceJump = 0.0f;
+        timeSinceHitJump = 0.0f;
     }
 
     // check shoot input
@@ -104,10 +104,10 @@ void Player::update(GLfloat delta) {
 
     // jump if in time
     float jumpLenience = 0.2f;
-    if (timeSinceJump < jumpLenience) {
+    if (timeSinceHitJump < jumpLenience) {
         jump();
     }
-    timeSinceJump += delta;
+    timeSinceHitJump += delta;
     timeSinceShot += delta;
     invulnTime += delta;
 
@@ -175,7 +175,7 @@ void Player::onCollision(CollisionData data) {
     }
 
     if (data.tag == Tag::ITEM) {
-        AudioInstance->playSound(Resources::get().itemSound);
+        AudioInstance->playSound(Resources::get().itemGetSound);
 
         Item* i = dynamic_cast<Item*>(data.entity);
         switch (i->type) {
@@ -208,6 +208,7 @@ void Player::jump() {
         AudioInstance->playSound(Resources::get().jumpSound);
         c.vel.y = jumpSpeed;
         c.grounded = false;
+        timeSinceHitJump = 1000.0f;
     }
 }
 

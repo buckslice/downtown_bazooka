@@ -26,17 +26,12 @@ public:
     // center dictates the center of the collision area
     void update(float delta, glm::vec3 center);
 
-    // adds a static to the matrix
-    void addStatic(AABB obj);
-
-    // adds multiple statics to the matrix
-    void addStatics(const std::vector<AABB>& objs);
+    // adds a static to the matrix (returns index)
+    static int addStatic(AABB obj);
 
     // checks to see if static collides with any in the matrix
-    bool checkStatic(AABB obj);
-
-    // clear static object list
-    void clearStatics();
+    static bool checkStatic(AABB obj);
+    static void removeStatic(int index);
 
     // clear dynamic object list
     //void clearDynamics();
@@ -60,14 +55,13 @@ public:
 
     Terrain* terrainGen;   // ref to terrain for collision detection
 private:
-    const int SPLIT_COUNT = 7;
-    const float MATRIX_SIZE = 1000.0f;
+    const float MATRIX_SIZE = 1500.0f;
 
     // pool of dynamic objects
     static std::vector<ColliderData> dynamicObjects;
     static std::vector<int> freeDynamics;
     // list of static objects
-    std::vector<AABB> staticObjects;
+    static Pool<AABB> staticPool;
 
     static Quadtree* collisionTree;
 

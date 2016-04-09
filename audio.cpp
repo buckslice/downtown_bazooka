@@ -4,21 +4,10 @@ Audio* AudioInstance; //extern Audio var from Audio.h
 
 Audio::Audio() {
     AudioInstance = this;
-    // set up music
-    Resources::get().mainTrack.setLoop(true);
-    Resources::get().mainTrack.setVolume(volume);
-
     sounds.resize(10);
 }
 
-
 Audio::~Audio() {
-}
-
-void Audio::playMainTrack() {
-    if (!muted) {
-        Resources::get().mainTrack.play();
-    }
 }
 
 int Audio::getNextFreeSound() {
@@ -65,14 +54,14 @@ void Audio::update(GLfloat delta) {
         changedOldVolume = false;
     }
     Resources::get().mainTrack.setVolume(volume);
+    Resources::get().menuTrack.setVolume(volume);
 }
 
 void Audio::changeVolume(float delta) {
     volume += delta;
-    if (volume > 100.0f) {
-        volume = 100.0f;
-    }
     if (volume < 0.0f) {
         volume = 0.0f;
+    } else if (volume > 100.0f) {
+        volume = 100.0f;
     }
 }

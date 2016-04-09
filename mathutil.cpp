@@ -8,11 +8,11 @@ std::random_device rd;       // random device used to seed the generator
 std::mt19937 Mth::rng(rd());
 
 float Mth::rand01() {
-	// RS: below function returns number [0,1) - very rarely returns 1.0 - (10 bits of randomness)
-	return std::generate_canonical<float, 10>(rng); 
+    // RS: below function returns number [0,1) - very rarely returns 1.0 - (10 bits of randomness)
+    return std::generate_canonical<float, 10>(rng);
 }
 float Mth::rand0X(float X) {
-	std::uniform_real_distribution<> uni(0.0f, X);
+    std::uniform_real_distribution<> uni(0.0f, X);
     return static_cast <float> (uni(rng));
 }
 float Mth::randUnit() {
@@ -61,29 +61,29 @@ float Mth::saturate(float n) {
     return std::max(0.0f, std::min(n, 1.0f));
 }
 
-float Mth::quadratic(float value) {
-    return value*value;
+float Mth::quadratic(float x) {
+    return x*x;
+}
+float Mth::cubic(float x) {
+    return x*x*x;
+}
+float Mth::cubicSCurve(float x) {
+    return x * x * (3.0f - 2.0f * x);
+}
+float Mth::smootherStep(float x) {
+    return x*x*x*(x*(x * 6 - 15) + 10);
 }
 
-float Mth::cubicSCurve(float value) {
-    return value * value * (3.0f - 2.0f * value);
+float Mth::blend(float x, float low, float high, std::function<float(float)> f) {
+    return f((x - low) / (high - low));
+}
+float Mth::cblend(float x, float low, float high, std::function<float(float)> f) {
+    return f(std::max(0.0f, std::min((x - low) / (high - low), 1.0f)));
 }
 
-float Mth::cubic(float value) {
-    return value*value*value;
-}
-
-// returns a value from 0-1 that you can scale stuff by
-float Mth::blend(float d, float low, float high, std::function<float(float)> f) {
-    return f((d - low) / (high - low));
-}
-
-// linear blend
 float Mth::blend(float d, float low, float high) {
     return (d - low) / (high - low);
 }
-
-// clamped linear blend
 float Mth::cblend(float d, float low, float high) {
     return std::max(0.0f, std::min((d - low) / (high - low), 1.0f));
 }

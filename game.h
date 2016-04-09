@@ -55,13 +55,12 @@ private:
     Graphics* graphics;
     Physics* physics;
     Input input;
-    CityGenerator* cityGen;
-    Terrain* terrainGen;
+    Terrain* terrain;
     Camera cam;
     Player* player;
     EntityManager* entityManager;
     Menu* menu;
-	Audio* audio;
+    Audio* audio;
 
     // debug rendering stuff
     std::vector<glm::mat4>* dmodels;
@@ -72,11 +71,21 @@ private:
 
     void testMathUtils();
 
-	// for mouse input
+    // for mouse input
     sf::Vector2i mouseMove;
     GLfloat mouseScroll;
 
     // state tracking flags
-	bool running, lastFocused, gameFocused, clickedInside, mouseVisible, lastMouseVisible, mipmapping, blurring, wireframe, paused, showFPS;
+    bool running = true;
+    bool lastFocused = false;
+    bool gameFocused = false;
+    bool clickedInside = true;
+    bool mouseVisible = false;
+    bool lastMouseVisible = false;
+    bool mipmapping = true;
+    bool blurring = true;
+    bool wireframe = false;
+    bool paused = false;
+    bool showFPS = false;;
 };
 

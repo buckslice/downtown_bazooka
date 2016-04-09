@@ -16,7 +16,7 @@ const GLfloat NEAR_PLANE = 0.1f;
 const GLfloat FAR_PLANE = 2000.0f;
 
 const float DEFAULT_CAMDISTTARGET = 10.0f;
-enum CameraBehavior {
+enum class CameraMode{
 	NORMAL,
 	AUTOSPIN,
 	DEATH
@@ -25,7 +25,7 @@ class Camera {
 
 public:
     Transform* transform;
-	CameraBehavior behavior;
+	CameraMode behavior;
     glm::vec3 forward, up, right, worldUp;
     
 	Camera();

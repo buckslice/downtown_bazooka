@@ -5,12 +5,14 @@
 #include "mathutil.h"
 #include "resources.h"
 #include "noise.h"
+#include "aabb.h"
 
 const int NUM_TILES = 20;
 const float TILE_SIZE = 5.0f;
 const float CHUNK_SIZE = NUM_TILES*TILE_SIZE;
 const int CHUNK_RAD = 15;
-const float DIST = CHUNK_RAD * CHUNK_SIZE + 10.0f;
+//const float DIST = CHUNK_RAD * CHUNK_SIZE + 10.0f;
+const float DIST = 1450.0f;
 
 // hash function for pairs
 // should figure out how to get it working for sf::Vector2i
@@ -44,6 +46,10 @@ public:
     std::pair<int, int> pos;
     StandardMesh* mesh;
 
+    std::vector<glm::mat4> buildings;
+    std::vector<glm::vec3> buildingColors;
+    std::vector<int> buildingIndices;
+
 private:
     std::vector<CTVertex> verts; // save these for collision detection
 
@@ -73,12 +79,13 @@ public:
 
     bool toggleDebugColors();
 
-
 private:
     // list of chunk objects
     std::vector<Chunk*> chunks;
     // map from chunks coords to vector index
     std::unordered_map<point, size_t> coordsByIndices;
+
+    std::vector<glm::vec3> cityCenters;
 
     point worldToChunk(float x, float z);
 };

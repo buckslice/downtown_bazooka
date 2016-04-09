@@ -1,11 +1,7 @@
 #include "game.h"
 
 Game::Game(GLuint width, GLuint height)
-    : WIDTH{ width }, HEIGHT{ height },
-    running{ true }, lastFocused{ false }, gameFocused{ false },
-    clickedInside{ true }, mouseVisible{ false }, lastMouseVisible{ false },
-    mipmapping{ true }, blurring{ true }, wireframe{ false },
-    paused{ false }, showFPS{ false } {
+    : WIDTH{ width }, HEIGHT{ height } {
 
     center.x = WIDTH / 2;
     center.y = HEIGHT / 2;
@@ -21,12 +17,8 @@ Game::Game(GLuint width, GLuint height)
     graphics = new Graphics(*window);
     Resources::get();   // makes sure to load resources
     physics = new Physics();
-    cityGen = new CityGenerator();
-    terrainGen = new Terrain();
-    physics->terrainGen = terrainGen;
-
-    // generate a random city
-    cityGen->generate(false, true, NUM_BUILDINGS, *physics);
+    terrain = new Terrain();
+    physics->terrainGen = terrain;
 
     // init camera
     player = new Player(&cam);
@@ -40,7 +32,7 @@ Game::Game(GLuint width, GLuint height)
     window->resetGLStates();
 
     audio = new Audio();
-    audio->playMainTrack();
+    Resources::get().menuTrack.play();
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
@@ -159,26 +151,14 @@ void Game::toggleOptions() {
     }
     // toggle terrain color debug
     if (Input::justPressed(sf::Keyboard::Num4)) {
-        terrainGen->deleteChunks();
-        std::cout << "TERRAIN DEBUG " << (terrainGen->toggleDebugColors() ? "ON" : "OFF") << std::endl;
+        terrain->deleteChunks();
+        std::cout << "TERRAIN DEBUG " << (terrain->toggleDebugColors() ? "ON" : "OFF") << std::endl;
     }
     // randomize world seed
     if (Input::justPressed(sf::Keyboard::Num5)) {
-        terrainGen->deleteChunks();
-        terrainGen->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
+        terrain->deleteChunks();
+        terrain->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
         std::cout << "RANDOMIZED WORLD SEED" << std::endl;
-    }
-    // rebuild color wheel city
-    if (Input::justPressed(sf::Keyboard::Num6)) {
-        physics->clearStatics();
-        cityGen->generate(false, true, NUM_BUILDINGS, *physics);
-        std::cout << ("BUILT COLOR WHEEL CITY") << std::endl;
-    }
-    // rebuild regular city
-    if (Input::justPressed(sf::Keyboard::Num7)) {
-        physics->clearStatics();
-        cityGen->generate(false, false, NUM_BUILDINGS, *physics);
-        std::cout << ("BUILT NORMAL CITY") << std::endl;
     }
     // recompile shaders if prompted
     if (Input::justPressed(sf::Keyboard::Num0)) {
@@ -207,10 +187,14 @@ void Game::update(GLfloat delta) {
     if (menu->justClosed) {
         entityManager->init(NUM_ENEMIES);
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), true);
+        //Resources::get().menuTrack.stop();
+        //Resources::get().mainTrack.play();
     }
     if (menu->justOpened) {
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
         entityManager->returnAllObjects();
+        //Resources::get().menuTrack.play();
+        //Resources::get().mainTrack.stop();
     }
 
     // update audio
@@ -218,12 +202,12 @@ void Game::update(GLfloat delta) {
 
     // update camera
     if (player->isDead) {
-        cam.behavior = DEATH;
+        cam.behavior = CameraMode::DEATH;
     } else if (menu->getVisible()) {
-        cam.behavior = AUTOSPIN;
+        cam.behavior = CameraMode::AUTOSPIN;
         player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
     } else {
-        cam.behavior = NORMAL;
+        cam.behavior = CameraMode::NORMAL;
     }
     cam.updateCameraDistance(mouseScroll);
     cam.update(mouseMove.x, mouseMove.y, delta);
@@ -236,7 +220,7 @@ void Game::update(GLfloat delta) {
 
     glm::vec3 pp = player->getTransform()->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
-    terrainGen->update(pp);
+    terrain->update(pp);
 
     // detect and resolve collisions
     physics->update(delta, pp);
@@ -254,7 +238,7 @@ void Game::render() {
     }
 
     // render main game scene
-    graphics->renderScene(cam, *cityGen, *terrainGen, blurring);
+    graphics->renderScene(cam, *terrain, blurring);
 
     // reset states to begin SFML 2D rendering
     window->resetGLStates();
@@ -303,8 +287,7 @@ Game::~Game() {
     delete window;
     delete graphics;
     delete physics;
-    delete cityGen;
-    delete terrainGen;
+    delete terrain;
     delete player;
     delete entityManager;
     delete menu;

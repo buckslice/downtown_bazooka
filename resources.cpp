@@ -7,47 +7,29 @@ Resources::Resources() {
     if (!font.loadFromFile("assets/fonts/OCRAEXT.ttf")) {
         std::cout << "ERROR::FONT::LOAD_FAILURE";
     }
-	// load music track	
-	if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
-		std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-	}
-	// load jump sound
-	if (!jumpSound.loadFromFile("assets/music/Jump.wav")) {
-		std::cout << "ERROR::JUMP_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load shoot sound
-	if (!shootSound.loadFromFile("assets/music/Shoot.wav")) {
-		std::cout << "ERROR::SHOOT_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load damage sound
-	if (!damageSound.loadFromFile("assets/music/Damage.wav")) {
-		std::cout << "ERROR::DAMAGE_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load item sound
-	if (!itemSound.loadFromFile("assets/music/Item.wav")) {
-		std::cout << "ERROR::ITEM_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load menu select sound
-	if (!menuSelectSound.loadFromFile("assets/music/MenuSelect.wav")) {
-		std::cout << "ERROR::MENU_SELECT_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load menu move sound
-	if (!menuMoveSound.loadFromFile("assets/music/MenuMove.wav")) {
-		std::cout << "ERROR::MENU_MOVE_SOUND_LOAD_FAILURE" << std::endl;
-	}
-	// load explosion sound
-	if (!explosionSound.loadFromFile("assets/music/Explosion.wav")) {
-		std::cout << "ERROR::EXPLOSION_SOUND_LOAD_FAILURE" << std::endl;
-	}
+
+    std::vector<std::pair<sf::SoundBuffer*, std::string>> soundPaths = {
+        { &jumpSound, "jump.wav" },
+        { &shootSound, "shoot.wav" },
+        { &damageSound, "damage.wav" },
+        { &itemGetSound, "item_get.wav" },
+        { &menuSelectSound, "menu_select.wav" },
+        { &menuMoveSound, "menu_move.wav"},
+        { &explosionSound, "explosion.wav"}
+    };
+    loadAudio(soundPaths);
+
     loadTextures(true);
 
-    std::vector<std::string> faces;
-    faces.push_back("assets/images/skybox/nightsky_rt.tga");
-    faces.push_back("assets/images/skybox/nightsky_lf.tga");
-    faces.push_back("assets/images/skybox/nightsky_up.tga");
-    faces.push_back("assets/images/skybox/nightsky_dn.tga");
-    faces.push_back("assets/images/skybox/nightsky_bk.tga");
-    faces.push_back("assets/images/skybox/nightsky_ft.tga");
+    // load cubemap for skybox
+    std::vector<std::string> faces{
+        "assets/images/skybox/nightsky_rt.tga",
+        "assets/images/skybox/nightsky_lf.tga",
+        "assets/images/skybox/nightsky_up.tga",
+        "assets/images/skybox/nightsky_dn.tga",
+        "assets/images/skybox/nightsky_bk.tga",
+        "assets/images/skybox/nightsky_ft.tga"
+    };
     skyboxTex = GLHelper::loadCubeMap(faces);
 
     buildShaders();
@@ -77,6 +59,22 @@ void Resources::loadTextures(bool mipmapped) {
     solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
 
     loadedTexturesBefore = true;
+}
+
+void Resources::loadAudio(std::vector<std::pair<sf::SoundBuffer*, std::string>>& soundPaths) {
+    // load music track	
+    if (!menuTrack.openFromFile("assets/music/expl1.ogg") || !mainTrack.openFromFile("assets/music/DOWN_WE_GO_2.ogg")) {
+        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+    }
+    mainTrack.setLoop(true);
+    menuTrack.setLoop(true);
+
+    for (size_t i = 0; i < soundPaths.size(); ++i) {
+        std::string path = "assets/sounds/" + soundPaths[i].second;
+        if (!soundPaths[i].first->loadFromFile(path)) {
+            std::cout << "ERROR::SOUND_LOAD_FAILURE::INVALID_PATH: \"" << path << "\"" << std::endl;
+        }
+    }
 }
 
 

@@ -9,7 +9,8 @@ struct obj {
 
     T data;
     int id; // index in the obj table (-1 if not being used)
-};
+};  // should instead just require pool to need an object with an int id
+// so ColliderData should be a child of this obj struct and then could use a pool for it (fix later)
 
 // can also declare it like this
 // template <class T, int N>

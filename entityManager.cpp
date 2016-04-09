@@ -22,6 +22,7 @@ EntityManager::EntityManager(Player* player) : player(player) {
 
 void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
+    return;
     for (int i = 0; i < numberOfDudes; i++) {
         SpawnEnemy();
     }

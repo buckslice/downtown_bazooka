@@ -12,16 +12,35 @@ public:
         return instance;
     }
 
-    GLuint gridTex, terrainTex, solidTex, skyboxTex;
+    GLuint gridTex;
+    GLuint terrainTex;
+    GLuint solidTex;
+    GLuint skyboxTex;
 
-    Shader instanceShader, instanceTexShader, defaultShader, blurShader, screenShader, blendShader, skyboxShader;
+    Shader instanceShader;
+    Shader instanceTexShader;
+    Shader defaultShader;
+    Shader blurShader;
+    Shader screenShader;
+    Shader blendShader;
+    Shader skyboxShader;
 
     sf::Font font;
-	sf::Music mainTrack;
-	sf::SoundBuffer jumpSound, shootSound, damageSound, itemSound, menuSelectSound, menuMoveSound, explosionSound;
+
+    sf::Music mainTrack;
+    sf::Music menuTrack;
+
+    sf::SoundBuffer jumpSound;
+    sf::SoundBuffer shootSound;
+    sf::SoundBuffer damageSound;
+    sf::SoundBuffer itemGetSound;
+    sf::SoundBuffer menuSelectSound;
+    sf::SoundBuffer menuMoveSound;
+    sf::SoundBuffer explosionSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);
+    void loadAudio(std::vector<std::pair<sf::SoundBuffer*, std::string>>& soundPaths);
 
     // singleton: delete copy constructor and assignment operator
     Resources(Resources const&) = delete;

@@ -49,14 +49,14 @@ void Camera::updateCameraVectors() {
 
 void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
 	switch (behavior) {
-	case AUTOSPIN:
+    case CameraMode::AUTOSPIN:
 		pitch = 0.0f;
 		yaw += 5.0f * delta;
 		camDist = 0.0f;
 		camDistTarget = DEFAULT_CAMDISTTARGET;
 		updateCameraVectors();
 		return;
-	case NORMAL:
+	case CameraMode::NORMAL:
 		// update yaw and pitch from mouse deltas
 		yaw += mdx * mouseSensitivity;
 		if (yaw > 360.0f) {
@@ -68,7 +68,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
 		pitch -= mdy * mouseSensitivity;
 		pitch = glm::clamp(pitch, -89.0f, 89.0f);
 		break;
-	case DEATH:
+	case CameraMode::DEATH:
 		pitch = -90.0f;
 		camDistTarget += 4.0f * delta;
 		yaw += 5.0f * delta;

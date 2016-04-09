@@ -20,7 +20,7 @@ public:
 
     ~Graphics();
 
-    void renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrainGen, bool toFrameBuffer);
+    void renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer);
 
     void resize(int width, int height);
 

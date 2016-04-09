@@ -37,8 +37,6 @@ Menu::Menu(Player* player) {
         "3    : toggle physics debug\n"
         "4    : toggle terrain debug\n"
         "5    : randomize world seed\n"
-        "6    : gen colorwheel\n"
-        "7    : gen normal\n"
         "0    : recompile shaders");
 
     instructions.setScale(sf::Vector2f(1.5f, 1.5f));

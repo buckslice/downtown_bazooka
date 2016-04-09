@@ -4,14 +4,13 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include "input.h"
+
 const float DEFAULT_VOLUME = 20.0f;
 
 class Audio {
 public:
     Audio();
     ~Audio();
-
-    void playMainTrack();
 
     void playSound(sf::SoundBuffer& sb);
 
@@ -23,7 +22,7 @@ private:
 
     int getNextFreeSound();
 
-    float volume = DEFAULT_VOLUME;
+    float volume = DEFAULT_VOLUME;      // master game volume
     float oldVolume = DEFAULT_VOLUME;
     bool changedOldVolume = false;
     bool muted = false;

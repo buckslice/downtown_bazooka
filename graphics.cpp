@@ -214,7 +214,7 @@ void Graphics::renderQuad() {
 }
 
 // renders main scene (optionally to the scene buffer if blurring)
-void Graphics::renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrainGen, bool toFrameBuffer) {
+void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     Resources& r = Resources::get();
     if (toFrameBuffer) {
         glBindFramebuffer(GL_FRAMEBUFFER, sceneBuffer.frame);
@@ -264,6 +264,9 @@ void Graphics::renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrain
         solidStream->render();
     }
 
+    // draw terrain
+    terrain.render(view, proj);
+
     // draw textured cube instances
     r.instanceTexShader.use();
     glUniformMatrix4fv(glGetUniformLocation(r.instanceTexShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
@@ -276,10 +279,7 @@ void Graphics::renderScene(Camera& cam, CityGenerator& cityGen, Terrain& terrain
     }
 
     // draw city (uses same shader as gridStream)
-    cityGen.render();
-
-    // draw terrain
-    terrainGen.render(view, proj);
+    //cityGen.render();
 
     // clear stream vectors
 	smodels.clear();

@@ -46,7 +46,7 @@ public:
     // max_order specifies size of arrays
     // F and ID are arrays that get filled with requested features and ids
     // dfunc specifies which distance function to use
-    // common combinations: F[0], F[1]-F[0], F[2]-F[0], F[0]*F[1]
+    // common combinations: F[0], F[1]-F[0], F[2]-F[0], F[0]*F[1], 1-F[x]
     // coloring can be based of IDs of each feature 
     // output range is from [0-1]
     static void worley(float x, float y, float z, 

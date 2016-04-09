@@ -18,6 +18,7 @@ extern const float DEGREESTORADS;   // multiply by this to convert degrees to ra
 class Mth {
 private:
     static std::mt19937 rng;        // generator uses a random device
+    static std::mt19937 rngVector;
 public:
     // returns random float between 0 and 1 - [0,1)
     static float rand01();
@@ -44,7 +45,7 @@ public:
     static glm::vec2 randomPointInCircle(float radius);
 
     // returns n clamped between min and max
-    // could make clamp use a template instead:
+    // TODO make clamp use a template instead:
     // template<typename T>
     // static T clamp(T t, T min, T max);
     static float clamp(float n, float min, float max);
@@ -53,23 +54,24 @@ public:
     // clamps value between 0 and 1
     static float saturate(float n);
 
+    // BLENDING FUNCTIONS
     // returns value^2
-    static float quadratic(float value);
-
-    // https://en.wikipedia.org/wiki/Sigmoid_function
-    static float cubicSCurve(float value);
-
+    static float quadratic(float x);
     // returns value^3
-    static float cubic(float value);
+    static float cubic(float x);
+    // look up "sigmoid function" or "smoothstep" on wikipedia for more info for these two
+    static float cubicSCurve(float x);  // aka smoothstep
+    static float smootherStep(float x);
 
-    // returns a value from 0-1 that you can scale stuff by
-    static float blend(float d, float low, float high, std::function<float(float)> f);
-
-    // linear blend
-    static float blend(float d, float low, float high);
-
-    // clamped linear blend
-    static float cblend(float d, float low, float high);
+    // blend and clamped blend functions
+    // if x < low   returns 0.0f
+    // if x > high  returns 1.0f;
+    // otherwise returns a blend based on the function provided
+    static float blend(float x, float low, float high, std::function<float(float)> f);
+    static float cblend(float x, float low, float high, std::function<float(float)> f);
+    // linear versions (no need for blend functions)
+    static float blend(float x, float low, float high);
+    static float cblend(float x, float low, float high);
 
     // linear interpolates between two vectors
     static glm::vec3 lerp(const glm::vec3& a, const glm::vec3& b, float t);
