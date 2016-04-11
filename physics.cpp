@@ -8,7 +8,7 @@
 
 // declared like this so can be accessed from static methods
 const int MAX_DYNAMICS = 10000;
-const int MAX_STATICS = 10000;
+const int MAX_STATICS = 15000;
 
 std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
 std::vector<int> Physics::freeDynamics;
@@ -29,6 +29,8 @@ Physics::Physics() {
 //int totalSweepTests = 0;
 
 void Physics::update(float delta, glm::vec3 center) {
+    //std::cout << staticPool.getFreeList().size() << std::endl;
+
     bool printedErrorThisFrame = false;
     int numberOver = 0;
 
@@ -265,6 +267,10 @@ void Physics::setCollisionCallback(Entity* entity) {
 int Physics::addStatic(AABB obj) {
     // push new object onto statics list and get index
     int ondx = staticPool.get();
+    if (ondx < 0) {
+        std::cout << "NO FREE STATIC COLLIDERS" << std::endl;
+        return -1;
+    }
     *staticPool.getData(ondx) = obj;
     // inserts right away so can checkStatic without having
     // to wait until next frame for tree to be built
@@ -288,6 +294,9 @@ bool Physics::checkStatic(AABB obj) {
 }
 
 void Physics::removeStatic(int index) {
+    if (index < 0) {
+        return;
+    }
     staticPool.ret(index);
 }
 
@@ -331,22 +340,20 @@ Collider* Physics::getCollider(int index) {
     return &dynamicObjects[index].collider;
 }
 
-int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
-    int count = 0;
-    int max = models.size();
+void Physics::streamColliderModels() {
     auto& staticObjects = staticPool.getObjects();
     for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
         auto& sobj = staticObjects[i];
         if (sobj.id < 0) {
             continue;
         }
-        models[count] = sobj.data.getModelMatrix();
-        colors[count] = glm::vec3(1.0f, 1.0f, 0.0f);
-        ++count;
+        // yellow for static colliders
+        Graphics::addToStream(Shape::CUBE_SOLID, sobj.data.getModelMatrix(), glm::vec3(1.0f, 1.0f, 0.0f));
     }
 
     for (size_t i = 0; i < MAX_DYNAMICS; ++i) {
         auto& pobj = dynamicObjects[i];
+        glm::vec3 color;
         if (pobj.id < 0) {
             continue;
         } else if (!pobj.collider.enabled) {
@@ -354,19 +361,18 @@ int Physics::getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::
             if (pobj.collider.type == ColliderType::BASIC) {
                 continue;
             }
-            colors[count] = glm::vec3(0.7f);
+            color = glm::vec3(0.7f);        // grey for disabled colliders
         } else if (!pobj.collider.awake) {
-            colors[count] = glm::vec3(0.0f, 1.0f, 1.0f);
+            color = glm::vec3(0.0f, 1.0f, 1.0f);    // teal for sleeping colliders
         } else {
-            colors[count] = glm::vec3(1.0f, 0.0f, 0.0f);
+            color = glm::vec3(1.0f, 0.0f, 0.0f);    // red for active dynamic colliders
         }
-        models[count] = pobj.collider.getAABB().getModelMatrix();
-        ++count;
+        Graphics::addToStream(Shape::CUBE_SOLID, pobj.collider.getAABB().getModelMatrix(), color);
     }
 
-    collisionTree->getModel(count, models, colors);
+    // white for quadtree
+    collisionTree->streamModel(glm::vec3(1.0f));
 
-    return count;
 }
 
 Quadtree::Quadtree(int level, AABB bounds) {
@@ -383,6 +389,7 @@ Quadtree::~Quadtree() {
     }
 }
 
+// QUADTREE LAYOUT
 //---------> X axis
 //| ---------
 //| | 0 | 1 |
@@ -483,18 +490,16 @@ void Quadtree::retrieve(std::vector<QuadtreeData>& returnData, AABB b) {
     }
 }
 
-void Quadtree::getModel(int& count, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+void Quadtree::streamModel(glm::vec3 color) {
     if (hasChildren) {
         for (int i = 0; i < 4; ++i) {
-            nodes[i]->getModel(count, models, colors);
+            nodes[i]->streamModel(color);
         }
     }
     AABB mbounds = bounds;
     mbounds.min.y = 0.0f;
     mbounds.max.y = 0.1f;
-    models[count] = mbounds.getModelMatrix();
-    colors[count] = glm::vec3(0.0f, 0.0f, 1.0f);
-    ++count;
+    Graphics::addToStream(Shape::CUBE_SOLID, mbounds.getModelMatrix(), color);
 }
 
 int Quadtree::getNodeCount() {

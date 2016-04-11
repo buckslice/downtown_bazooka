@@ -42,16 +42,9 @@ public:
     ~Chunk();
 
     float getHeight(float x, float z);
+    void render();
 
     point pos;
-    StandardMesh* mesh;
-
-    std::vector<glm::mat4> buildingModels;
-    std::vector<glm::vec3> buildingColors;
-    std::vector<glm::mat4> treeModels;
-    std::vector<glm::vec3> treeColors;
-
-    std::vector<int> staticIndices;
 
 private:
     std::vector<CTVertex> verts; // save these for collision detection
@@ -60,6 +53,17 @@ private:
     void generateStructures();
 
     CTVertex genPoint(float xo, float yo);
+
+    // delete statics objects out of physics
+    void clearStatics();
+
+    StandardMesh* mesh;
+    std::vector<glm::mat4> buildingModels;
+    std::vector<glm::vec3> buildingColors;
+    std::vector<glm::mat4> treeModels;
+    std::vector<glm::vec3> treeColors;
+
+    std::vector<int> staticIndices;
 };
 
 class Terrain {

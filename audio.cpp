@@ -5,6 +5,8 @@ Audio* AudioInstance; //extern Audio var from Audio.h
 Audio::Audio() {
     AudioInstance = this;
     sounds.resize(10);
+    Resources::get().mainTrack.setVolume(volume);
+    Resources::get().menuTrack.setVolume(volume);
 }
 
 Audio::~Audio() {

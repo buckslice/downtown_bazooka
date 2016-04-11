@@ -62,10 +62,6 @@ private:
     Menu* menu;
     Audio* audio;
 
-    // debug rendering stuff
-    std::vector<glm::mat4>* dmodels;
-    std::vector<glm::vec3>* dcolors;
-
     // some utility clocks
     sf::Clock frameTime, gameTime;
 

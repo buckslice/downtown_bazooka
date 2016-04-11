@@ -39,10 +39,6 @@ Game::Game(GLuint width, GLuint height)
     window->setMouseCursorVisible(false);
     window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be more accurate
 
-    const GLuint MAX_DEBUG = 20000;
-    dmodels = new std::vector<glm::mat4>(MAX_DEBUG);
-    dcolors = new std::vector<glm::vec3>(MAX_DEBUG);
-
 }
 
 void Game::start() {
@@ -231,10 +227,10 @@ void Game::update(GLfloat delta) {
 
 void Game::render() {
     if (wireframe) {    // maybe later make it only add in colliders near player
-        int curDebugLen = physics->getColliderModels(*dmodels, *dcolors);
-        graphics->setDebugStream(curDebugLen, dmodels, dcolors);
+        Graphics::DEBUG = true;
+        physics->streamColliderModels();
     } else {
-        graphics->setDebugStream(0, dmodels, dcolors);
+        Graphics::DEBUG = false;
     }
 
     // render main game scene
@@ -292,7 +288,4 @@ Game::~Game() {
     delete entityManager;
     delete menu;
     delete audio;
-
-    delete dmodels;
-    delete dcolors;
 }

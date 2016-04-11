@@ -18,6 +18,7 @@ static std::vector<glm::vec3> gcolors;
 static std::vector<glm::mat4> pmodels;
 static std::vector<glm::vec3> pcolors;
 
+bool Graphics::DEBUG = false;
 
 // if you dont have this then breakpoints dont work! lol
 Graphics::Graphics() {
@@ -131,8 +132,8 @@ void Graphics::uploadTransforms() {
         }
         Transform& t = bx[i].data;
         // if debug rendering then set color to pink to show these are just the models (no collider info)
-        glm::vec3 color = dstreamSize > 0 ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
-        Graphics::addToStream(t.shape, t.getModelMatrix(), color);
+        glm::vec3 color = DEBUG ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
+        Graphics::addToStream(DEBUG ? Shape::CUBE_SOLID : t.shape, t.getModelMatrix(), color);
     }
 
 }
@@ -235,14 +236,8 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-    if (dstreamSize > 0) {
+    if (DEBUG) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        // set and draw debug stream
-        solidStream->setModels(*dmodels, true, dstreamSize);
-        solidStream->setColors(*dcolors, true, dstreamSize);
-        solidStream->render();
-
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
@@ -267,7 +262,6 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     gridStream->setColors(gcolors, true);
     gridStream->render();
 
-    Graphics::addToStream(Shape::PYRAMID, glm::mat4(), glm::vec3(1.0f));
     pyrStream->setModels(pmodels, true);
     pyrStream->setColors(pcolors, true);
     pyrStream->render();
@@ -436,12 +430,6 @@ void Graphics::addToStream(Shape shape, std::vector<glm::mat4>& models, std::vec
         pcolors.insert(pcolors.end(), colors.begin(), colors.end());
         return;
     }
-}
-
-void Graphics::setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors) {
-    dstreamSize = size;
-    this->dmodels = models;
-    this->dcolors = colors;
 }
 
 // no way to delete meshes currently but can just set

@@ -34,9 +34,7 @@ public:
     static void addToStream(Shape shape, glm::mat4& model, glm::vec3& color);
     static void addToStream(Shape shape, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
-    void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
-
-
+    static bool DEBUG;
 private:
     GLuint WIDTH, HEIGHT;
 
@@ -52,11 +50,6 @@ private:
 
     FBO sceneBuffer, blurResult, blurBuffers[2];
     GLuint quadVAO;
-
-    // debug stream
-    GLuint dstreamSize;
-    std::vector<glm::mat4>* dmodels;
-    std::vector<glm::vec3>* dcolors;
 
     PIMesh* solidStream;
 	TIMesh* gridStream;

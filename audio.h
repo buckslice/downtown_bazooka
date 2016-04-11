@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "input.h"
 
-const float DEFAULT_VOLUME = 20.0f;
+const float DEFAULT_VOLUME = 5.0f;
 
 class Audio {
 public:

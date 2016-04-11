@@ -25,18 +25,18 @@ CTVertex Chunk::genPoint(float x, float y) {
     //float h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 3, 0.0075f);
 
     float h = static_cast<float>(f[1] - f[0]);
+    h = Mth::clamp(h, 0.0f, 1.0f);
 
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-                    //glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f);
-    glm::vec3 rand = glm::vec3((id[idc] % 40) / 255.0f, (id[idc] % 80) / 255.0f, (id[idc] % 255) / 255.0f);
-    h = Mth::clamp(h, 0.0f, 1.0f);
+    glm::vec3 rand = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 50) / 255.0f, (id[idc] % 127) / 255.0f);
+    rand = glm::clamp(rand, glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(0.2f, 0.2f, 0.5f));
     glm::vec3 color = glm::vec3(rand);
 
     Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
     float b = static_cast<float>(1.0f - f[0]);
     b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
 
-    return CTVertex{ glm::vec3(x, (h+b)*100.0f, y), color, glm::vec2() };
+    return CTVertex{ glm::vec3(x, (h + b)*100.0f, y), color, glm::vec2() };
 }
 
 void Chunk::generateTerrain() {
@@ -112,7 +112,8 @@ void Chunk::generateStructures() {
     uint32_t id[max];
 
     bool generateTrees = false;
-    for (GLuint i = 0; i < 15; ++i) {    // try to build this many buildings
+    bool breakOuter = false;    // i was gonna use a goto but this is less gross kinda?
+    for (GLuint i = 0; i < 20 && !breakOuter; ++i) {    // try to build this many buildings
         for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current building
             x = unix(rng);    // random x position in chunk
             z = uniz(rng);    // random y position in chunk
@@ -120,11 +121,14 @@ void Chunk::generateStructures() {
             // calculate noise that represents city centers
             Noise::worley(x + seed.x, z + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
             float b = static_cast<float>(1.0f - f[0]);
-            //b = Mth::cblend(b, 0.6f, 0.95f, Mth::cubic);
             b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
             // if not in a city then have a lower chance to spawn building
-            if (b < 0.001f && zeroToOne(rng) > 0.25f) {
+            if (b < 0.001f) {
                 generateTrees = true;
+                clearStatics();
+                buildingModels.clear();
+                buildingColors.clear();
+                breakOuter = true;
                 break;
             }
             // calculate scale of building
@@ -151,7 +155,7 @@ void Chunk::generateStructures() {
                 box = AABB(glm::vec3(x0, lowestHeight, z0), glm::vec3(x1, sy + lowestHeight, z1));
                 staticIndices.push_back(Physics::addStatic(box));
 
-                // calculate model and color
+                // calculate color
                 glm::vec3 c;
                 if (sy < LOW_HEIGHT) {
                     if (zeroToOne(rng) <= 0.05f) {
@@ -174,36 +178,43 @@ void Chunk::generateStructures() {
                 }
                 buildingModels.push_back(box.getModelMatrix());
                 buildingColors.push_back(c);
-                //buildingColors.push_back(glm::vec3( // random color
-                //    zeroToOne(rng), zeroToOne(rng), zeroToOne(rng)));
+
                 break;
             }
         }
     }
 
-    if (generateTrees) {
-        for (GLuint i = 0; i < 20; ++i) {
-            x = unix(rng);    // random x position in chunk
-            z = uniz(rng);    // random y position in chunk
+    if (!generateTrees) {
+        return;
+    }
+    for (GLuint i = 0; i < 20; ++i) {
+        x = unix(rng);    // random x position in chunk
+        z = uniz(rng);    // random y position in chunk
 
-            float n = Noise::fractal_2D(x + seed.x, z + seed.y, 3, 0.001f);
-            if (n > 0.0f) {
-                continue;
-            }
-
-            sx = zeroToOne(rng) * 8.0f + 8.0f;
-            sy = zeroToOne(rng) * 10.0f + 20.0f;
-            sz = zeroToOne(rng) * 8.0f + 8.0f;
-
-            float h = getHeight(x, z);
-            glm::vec3 euler = glm::vec3(0.0f, zeroToOne(rng)*360.0f, 0.0f);
-            glm::quat q = glm::quat(euler*DEGREESTORADS);
-            glm::mat4 model = Mth::getModelMatrix(glm::vec3(x, h + sy * 0.333f, z), glm::vec3(sx, sy, sz), q);
-            treeModels.push_back(model);
-
-            HSBColor c(0.2f * zeroToOne(rng) + 0.25f, 1.0f, 0.5f * zeroToOne(rng) + 0.3f);
-            treeColors.push_back(c.toRGB());
+        float n = Noise::fractal_2D(x + seed.x, z + seed.y, 3, 0.001f);
+        if (n > 0.0f) {
+            continue;
         }
+        float h = getHeight(x, z);
+        sx = zeroToOne(rng) * 8.0f + 8.0f;
+        sy = zeroToOne(rng) * 10.0f + 20.0f;
+
+        AABB trunk(glm::vec3(x - 1.0f, h - 1.0f, z - 1.0f), glm::vec3(x + 1.0f, h + sy / 2.2f, z + 1.0f));
+        if (Physics::checkStatic(trunk)) {  // if trunk isnt blocked then build whole tree
+            continue;
+        }
+        staticIndices.push_back(Physics::addStatic(trunk));
+        buildingModels.push_back(trunk.getModelMatrix());
+        HSBColor trunkColor(0.0833f, 0.4f * zeroToOne(rng) + 0.6f, 0.4f);
+        buildingColors.push_back(trunkColor.toRGB());
+
+        glm::vec3 euler = glm::vec3(0.0f, zeroToOne(rng)*360.0f, 0.0f);
+        glm::quat q = glm::quat(euler*DEGREESTORADS);
+        glm::mat4 model = Mth::getModelMatrix(glm::vec3(x, h + sy * 0.4f, z), glm::vec3(sx, sy, sx), q);
+        treeModels.push_back(model);
+
+        HSBColor leafColor(0.2f * zeroToOne(rng) + 0.25f, 1.0f, 0.5f * zeroToOne(rng) + 0.3f);
+        treeColors.push_back(leafColor.toRGB());
     }
 }
 
@@ -215,10 +226,25 @@ Chunk::Chunk(point pos) {
 
 Chunk::~Chunk() {
     delete mesh;
+    clearStatics();
+}
 
-    // delete statics objects out of physics
+void Chunk::clearStatics() {
     for (size_t i = 0, len = staticIndices.size(); i < len; ++i) {
         Physics::removeStatic(staticIndices[i]);
+    }
+    staticIndices.clear();
+}
+
+void Chunk::render() {
+    mesh->render();
+    if (!Graphics::DEBUG) {
+        Graphics::addToStream(Shape::CUBE_GRID, buildingModels, buildingColors);
+        Graphics::addToStream(Shape::PYRAMID, treeModels, treeColors);
+    } else {
+        for (size_t i = 0, len = treeModels.size(); i < len; ++i) {
+            Graphics::addToStream(Shape::PYRAMID, treeModels[i], glm::vec3(1.0f, 0.0f, 1.0f));
+        }
     }
 }
 
@@ -274,8 +300,12 @@ void Terrain::update(glm::vec3 pl) {
     point pcc = worldToChunk(pl.x, pl.z);
     //std::cout << pcc.first << " " << pcc.second << " " << pl.x << " " << pl.z << std::endl;
 
-    int numBuiltThisFrame = 0;
-    int maxBuiltPerFrame = 10;
+    std::vector<point> newPoints;
+    std::vector<float> distances;
+
+    size_t newChunksPerFrame = 10;
+
+    // find closest chunks to build this frame
     for (int y = -CHUNK_RAD; y <= CHUNK_RAD; y++) {
         for (int x = -CHUNK_RAD; x <= CHUNK_RAD; x++) {
             point ccc = point{ pcc.first + x, pcc.second + y };
@@ -283,28 +313,43 @@ void Terrain::update(glm::vec3 pl) {
             if (coordsByIndices.count(ccc)) {
                 continue;
             }
-
             // chunk center in worldspace
             float cx = ccc.first*CHUNK_SIZE;
             float cz = ccc.second*CHUNK_SIZE;
-
-            // if close enough then spawn new chunk
+            // calculate square distance
             float sqrdist = (pl.x - cx)*(pl.x - cx) + (pl.z - cz)*(pl.z - cz);
-            if (sqrdist < DIST * DIST) {
-                coordsByIndices[ccc] = chunks.size();
-                chunks.push_back(new Chunk(ccc));
-                if (++numBuiltThisFrame >= maxBuiltPerFrame) {
-                    goto outer;
+            if (sqrdist > DIST*DIST) {
+                continue;
+            }
+
+            // insertion sort
+            size_t len = distances.size();
+            if (len < newChunksPerFrame) {
+                distances.push_back(sqrdist);
+                newPoints.push_back(ccc);
+            } else {
+                for (size_t i = 0; i < len; ++i) {
+                    if (sqrdist < distances[i]) {
+                        distances.insert(distances.begin() + i, sqrdist);
+                        newPoints.insert(newPoints.begin() + i, ccc);
+                        distances.pop_back();
+                        newPoints.pop_back();
+                        break;
+                    }
                 }
             }
         }
     }
-outer:  // jump here if built max this frame
 
-// delete chunks no longer nearby player
-// dont need to check every frame
-    if (frames < 10) {
-        frames++;
+    // build new chunks
+    for (size_t i = 0; i < newPoints.size(); ++i) {
+        coordsByIndices[newPoints[i]] = chunks.size();
+        chunks.push_back(new Chunk(newPoints[i]));
+    }
+
+    // delete chunks no longer nearby player
+    // dont need to check every frame
+    if (++frames < 10) {
         return;
     }
     frames = 0;
@@ -341,9 +386,7 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
 
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
-        chunks[i]->mesh->render();
-        Graphics::addToStream(Shape::CUBE_GRID, chunks[i]->buildingModels, chunks[i]->buildingColors);
-        Graphics::addToStream(Shape::PYRAMID, chunks[i]->treeModels, chunks[i]->treeColors);
+        chunks[i]->render();
     }
 
 }

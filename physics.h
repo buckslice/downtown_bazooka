@@ -50,8 +50,7 @@ public:
 
     static void sendOverlapEvent(AABB aabb, CollisionData data);
 
-    // fills vectors with model matrices and colors representing all physics colliders
-    int getColliderModels(std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+    void streamColliderModels();
 
     Terrain* terrainGen;   // ref to terrain for collision detection
 private:
@@ -101,7 +100,7 @@ public:
 
     void retrieve(std::vector<QuadtreeData>& returnData, AABB box);
 
-    void getModel(int& count, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+    void streamModel(glm::vec3 color);
 
     int getNodeCount();
 
