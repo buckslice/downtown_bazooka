@@ -10,7 +10,6 @@
 #include "pool.h"
 #include "skybox.h"
 
-
 const GLuint BLUR_DOWNSAMPLE = 2;
 
 class Graphics {
@@ -26,14 +25,14 @@ public:
 
     void finalProcessing(Camera& cam, bool blurring);
 
-    static int registerTransform(bool solid = true);
+    static int registerTransform(Shape shape = Shape::CUBE_GRID);
     static Transform* getTransform(int id);
 
     // TODO generic mesh registration and handling
     static void registerMesh(Mesh<Vertex>* mesh);
 
-    static void addToStream(bool solid, glm::mat4& model, glm::vec3& color);
-    static void addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
+    static void addToStream(Shape shape, glm::mat4& model, glm::vec3& color);
+    static void addToStream(Shape shape, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);
 
     void setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors);
 
@@ -61,6 +60,7 @@ private:
 
     PIMesh* solidStream;
 	TIMesh* gridStream;
+    TIMesh* pyrStream;
 	TIMesh* buildingCube;
 
     Skybox* skybox;

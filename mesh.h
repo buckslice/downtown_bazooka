@@ -12,6 +12,7 @@
 #include "shader.h"
 
 extern std::vector<GLuint> cubeElements;
+extern std::vector<GLuint> pyramidElements;
 
 struct Vertex {
     Vertex(glm::vec3 position) :
@@ -45,7 +46,6 @@ public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
     const GLuint TRIS;
-    bool visible = false;
 
     virtual void render() = 0;
 
@@ -109,7 +109,6 @@ public:
     }
 
     void render() override {
-        // check visibility (or do in base?)
         // set bindings
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -189,13 +188,12 @@ public:
 
     void setModels(std::vector<glm::mat4>& models, bool stream, int count = 0) {
         if (models.size() == 0 || !built) {
-            visible = false;
+            instanceCount = 0;
             return;
         }
         if (count == 0) {
             count = models.size();
         }
-        visible = true;
         instanceCount = count;
         glBindBuffer(GL_ARRAY_BUFFER, modelBuffer);
         glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::mat4), &models[0], stream ? GL_STREAM_DRAW : GL_STATIC_DRAW);
@@ -254,6 +252,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    static std::vector<TVertex> cubeVertices, offsetCubeVertices;
+    static std::vector<TVertex> cubeVertices;
+    static std::vector<TVertex> offsetCubeVertices;
+    static std::vector<TVertex> pyramidVertices;    // triangular pyramid
 
 };

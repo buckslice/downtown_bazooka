@@ -43,21 +43,23 @@ public:
 
     float getHeight(float x, float z);
 
-    std::pair<int, int> pos;
+    point pos;
     StandardMesh* mesh;
 
-    std::vector<glm::mat4> buildings;
+    std::vector<glm::mat4> buildingModels;
     std::vector<glm::vec3> buildingColors;
-    std::vector<int> buildingIndices;
+    std::vector<glm::mat4> treeModels;
+    std::vector<glm::vec3> treeColors;
+
+    std::vector<int> staticIndices;
 
 private:
     std::vector<CTVertex> verts; // save these for collision detection
 
-    void generate();
+    void generateTerrain();
+    void generateStructures();
 
     CTVertex genPoint(float xo, float yo);
-    CTVertex genTest(float xo, float yo);
-
 };
 
 class Terrain {
@@ -84,8 +86,6 @@ private:
     std::vector<Chunk*> chunks;
     // map from chunks coords to vector index
     std::unordered_map<point, size_t> coordsByIndices;
-
-    std::vector<glm::vec3> cityCenters;
 
     point worldToChunk(float x, float z);
 };

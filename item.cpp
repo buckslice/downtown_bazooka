@@ -4,7 +4,7 @@
 
 
 Item::Item() {
-	model = Graphics::getTransform(Graphics::registerTransform(false));
+	model = Graphics::getTransform(Graphics::registerTransform());
 	model->setVisibility(VISIBLE);
 	model->setPos(0.0f, 1.0f, 0.0f);
 	model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));

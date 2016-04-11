@@ -71,6 +71,31 @@ std::vector<TVertex> TIMesh::offsetCubeVertices = {
 
 };
 
+//GLfloat ed = 0.577350f;
+GLfloat ed = 0.288675f;
+glm::vec3 l = glm::vec3(-0.5f, -ed, -ed);
+glm::vec3 u = glm::vec3(0.0f, ed * 2.0f, 0.0f);
+glm::vec3 r = glm::vec3(0.5f, -ed, -ed);
+glm::vec3 f = glm::vec3(0.0f, -ed, ed * 2.0f);
+
+std::vector<TVertex> TIMesh::pyramidVertices = {
+    TVertex{ l, glm::vec2(0.0f, 0.0f)},
+    TVertex{ u, glm::vec2(0.5f, 1.0f)},
+    TVertex{ r, glm::vec2(1.0f, 0.0f)},
+
+    TVertex{ f, glm::vec2(0.0f, 0.0f) },
+    TVertex{ u, glm::vec2(0.5f, 1.0f) },
+    TVertex{ l, glm::vec2(1.0f, 0.0f) },
+
+    TVertex{ r, glm::vec2(0.0f, 0.0f) },
+    TVertex{ u, glm::vec2(0.5f, 1.0f) },
+    TVertex{ f, glm::vec2(1.0f, 0.0f) },
+
+    TVertex{ l, glm::vec2(0.0f, 0.0f) },
+    TVertex{ r, glm::vec2(0.5f, 1.0f) },
+    TVertex{ f, glm::vec2(1.0f, 0.0f) },
+};
+
 std::vector<TVertex> quadVerts{
     TVertex { glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec2(0.0f, 1.0f) },
     TVertex { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(0.0f, 0.0f) },
@@ -78,6 +103,9 @@ std::vector<TVertex> quadVerts{
     TVertex { glm::vec3(1.0f, -1.0f, 0.0f), glm::vec2(1.0f, 0.0f) }
 };
 
+std::vector<GLuint> pyramidElements = {
+    0,1,2,3,4,5,6,7,8,9,10,11
+};
 
 std::vector<GLuint> cubeElements = {
     0,1,2,

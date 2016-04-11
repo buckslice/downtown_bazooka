@@ -49,6 +49,13 @@ glm::vec2 Mth::randomPointInCircle(float radius) {
     return glm::vec2(r * cos(t), r * sin(t)) * radius;
 }
 
+glm::mat4 Mth::getModelMatrix(glm::vec3 pos, glm::vec3 scale, glm::quat rot) {
+    glm::mat4 model = glm::mat4();
+    model = glm::translate(model, pos);
+    model *= glm::toMat4(rot);
+    return glm::scale(model, scale);
+}
+
 float Mth::clamp(float n, float min, float max) {
     return std::max(min, std::min(n, max));
 }

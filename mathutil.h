@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <functional>
 #include <algorithm>
@@ -43,6 +44,10 @@ public:
 
     // returns random vector2 somewhere inside a circle with given radius
     static glm::vec2 randomPointInCircle(float radius);
+
+    // calculates a model matrix
+    static glm::mat4 getModelMatrix(
+        glm::vec3 pos = glm::vec3(), glm::vec3 scale = glm::vec3(), glm::quat rot = glm::quat());
 
     // returns n clamped between min and max
     // TODO make clamp use a template instead:

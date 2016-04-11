@@ -277,7 +277,7 @@ void Game::testMathUtils() {
         model = glm::scale(model, scale);
 
         HSBColor color(Mth::rand01(), 1.0f, 1.0f);
-        Graphics::addToStream(true, model, color.toRGB());
+        Graphics::addToStream(Shape::CUBE_SOLID , model, color.toRGB());
         //Graphics::addToStream(true, model, glm::vec3(1.0f));
     }
 }

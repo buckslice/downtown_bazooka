@@ -15,6 +15,7 @@ public:
     GLuint gridTex;
     GLuint terrainTex;
     GLuint solidTex;
+    GLuint triangleTex;
     GLuint skyboxTex;
 
     Shader instanceShader;

@@ -2,43 +2,42 @@
 #include "entityManager.h"
 #include "graphics.h"
 #include "audio.h"
-//Player* PlayerInstance;
+
 Player::Player(Camera* cam) {
     this->cam = cam;
-    //PlayerInstance = this;
     getTransform()->setVisibility(Visibility::HIDDEN_SELF);
 
-    Transform* model = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* model = Graphics::getTransform(Graphics::registerTransform());
     model->setPos(0.0f, 1.5f, 0.0f);
     model->setScale(1.0f, 1.2f, 1.0f);
 
-    Transform* face = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* face = Graphics::getTransform(Graphics::registerTransform());
     face->setPos(0.0f, 1.8f, 0.4f);
     face->setScale(0.8f, 0.4f, 0.9f);
 
-    Transform* lleg = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* lleg = Graphics::getTransform(Graphics::registerTransform());
     lleg->setPos(0.35f, 0.5f, 0.0f);
     lleg->setScale(0.25f, 1.0f, 0.25f);
 
-    Transform* rleg = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* rleg = Graphics::getTransform(Graphics::registerTransform());
     rleg->setPos(-0.35f, 0.5f, 0.0f);
     rleg->setScale(0.25f, 1.0f, 0.25f);
 
-    Transform* larm = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* larm = Graphics::getTransform(Graphics::registerTransform());
     larm->setPos(0.5f, 1.5f, 0.0f);
     larm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* rarm = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* rarm = Graphics::getTransform(Graphics::registerTransform());
     rarm->setPos(-0.5f, 1.5f, 0.0f);
     rarm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform(false));
+    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform());
     bazooka->setPos(0.8f, 1.8f, 0.2f);
     bazooka->setScale(0.5f, 0.5f, 2.0f);
 
-    getTransform()->color = glm::vec3(0.2f, 1.0f, 0.7f);
+    getTransform()->color = glm::vec3(0.0f, 1.0f, 0.4f);
     getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm, bazooka);
-    bazooka->color = glm::vec3(0.1f, 0.1f, 0.5f);
+    bazooka->color = glm::vec3(0.25f, 0.0f, 0.5f);
 
     currRot = targRot = glm::quat();
 

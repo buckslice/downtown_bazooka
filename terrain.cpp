@@ -5,7 +5,7 @@
 #include "input.h"
 #include "graphics.h"
 
-// just public here in the class so chunk can see
+// public variables for both terrain and chunk
 glm::vec2 seed;
 bool debugColors = false;
 
@@ -21,86 +21,25 @@ CTVertex Chunk::genPoint(float x, float y) {
     const int max = 2;
     double f[max];
     uint32_t id[max];
-    //Noise::worley(x, y, 0.0f, max, f, id, Noise::MANHATTAN, 0.00425f);
-
-    float h = static_cast<float>(f[1] - f[0]);
-    h = Noise::fractal_worley_3D(x + seed.x, y + seed.y, 0.0f, Noise::MANHATTAN, 2, 0.00425f);
-
-    h -= .025f;
-    h = Mth::clamp(h, 0.0f, 1.0f);
-
-    // reduce noise height near center
-    float sqrdist = x*x + y*y;
-    float cityLimit = 1000.0f;
-    float range = 100.0f;
-    if (sqrdist < cityLimit * cityLimit) {  // inside city
-        h = 0.0f;
-    } else {
-        // add general mountain noise (should later just increase worley octaves
-        //h += Noise::ridged_2D(x + seed.x, y + seed.y, 2, 0.008f) * 0.3f * h;
-        if (sqrdist < (cityLimit + range)*(cityLimit + range)) { // between city and mountains
-            float d = glm::distance(glm::vec2(0.0f), glm::vec2(x, y));
-            float b = Mth::blend(d, cityLimit, cityLimit + range, Mth::cubic);
-            h *= b;
-        }
-    }
-    h = Mth::clamp(h, 0.0f, 1.0f);
-    // to make it look blocky
-    //h = floorf(h / 4.0f) * 4;
-
-    glm::vec3 color;
-    if (!debugColors) {
-        int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-        glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f)*0.2f;
-        if (h < 0.01f) {
-            color = glm::vec3(Noise::ridged_2D(x + seed.x, y + seed.y, 2, 0.0425f));
-            color += glm::vec3(0.02f, 0.02f, 0.25f);
-            color.r = Mth::clamp(color.r, 0.0f, 0.5f);
-            color.g = Mth::clamp(color.g, 0.0f, 0.5f);
-            color.b = Mth::clamp(color.b, 0.15f, 1.0f);
-        } else {
-            float r = Mth::cblend(h, 0.4f, 0.6f)*0.9f;
-            float g = Mth::cblend(h, 0.2f, 0.5f);
-            float b = Mth::cblend(h, 0.0f, 0.3f) * .85f + 0.15f;
-            color = glm::vec3(r, g, b);
-        }
-        color += rand;
-    }
-    float scale = 100.0f;
-    h *= scale;
-
-
-    return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
-}
-
-CTVertex Chunk::genTest(float x, float y) {
-    const int max = 3;
-    double f[max];
-    uint32_t id[max];
-    Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.0025f);
+    Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.003f);
     //float h = Noise::fractal_worley_3D(x, y, 0.0f, Noise::MANHATTAN, 3, 0.0075f);
 
     float h = static_cast<float>(f[1] - f[0]);
 
-    ////float h = static_cast<float>(f[2]-f[1]);
-    ////h = Mth::smootherstep(0.0f, 0.05f, h);
-
-    //float h = static_cast<float>(1.0f - f[0]);
-    ////h = Mth::smootherstep(0.6f, 1.0f, h);
-
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    //glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f);
-    glm::vec3 rand = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 100) / 255.0f, (id[idc] % 255) / 255.0f);
+                    //glm::vec3 rand = glm::vec3((id[idc] % 255) / 255.0f, (id[idc] % 155) / 255.0f, (id[idc] & 100) / 255.0f);
+    glm::vec3 rand = glm::vec3((id[idc] % 40) / 255.0f, (id[idc] % 80) / 255.0f, (id[idc] % 255) / 255.0f);
     h = Mth::clamp(h, 0.0f, 1.0f);
     glm::vec3 color = glm::vec3(rand);
-    //glm::vec3 color = glm::vec3(h);
 
-    h *= 100.0f;
-    return CTVertex{ glm::vec3(x, h, y), color, glm::vec2() };
+    Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
+    float b = static_cast<float>(1.0f - f[0]);
+    b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
 
+    return CTVertex{ glm::vec3(x, (h+b)*100.0f, y), color, glm::vec2() };
 }
 
-void Chunk::generate() {
+void Chunk::generateTerrain() {
     std::vector<GLuint> tris;
     tris.reserve(NUM_TILES*NUM_TILES * 6);
     verts.reserve((NUM_TILES + 1)*(NUM_TILES + 1));
@@ -111,14 +50,14 @@ void Chunk::generate() {
     // debug color
     glm::vec3 debugColor = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
 
+    // calculate vertex for each point
     for (int y = 0; y < NUM_TILES + 1; y++) {
         bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
             float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
-            //CTVertex cv = genPoint(xo, yo);
-            CTVertex cv = genTest(xo, yo);
+            CTVertex cv = genPoint(xo, yo);
             if (debugColors) {
                 cv.color = debugColor;
             }
@@ -132,9 +71,8 @@ void Chunk::generate() {
         }
         bot = !bot;
     }
-    //std::cout << verts.size() << std::endl;
-    //std::cout << minh << " " << maxh << std::endl;
 
+    // calculate triangles
     for (int i = 0, len = (NUM_TILES + 1)*NUM_TILES - 1; i < len; ++i) {
         if ((i + 1) % (NUM_TILES + 1) == 0) {
             continue;
@@ -146,50 +84,74 @@ void Chunk::generate() {
         tris.push_back(i + 1);
         tris.push_back(i);
     }
-    //std::cout << tris.size() << std::endl;
     mesh = new StandardMesh(verts, tris, Resources::get().terrainTex);
+}
 
-    // try to randomly generate buildings depending on nearby cities
+// randomly generate trees and buildings in cities
+void Chunk::generateStructures() {
     float cx = pos.first * CHUNK_SIZE;
     float cz = pos.second * CHUNK_SIZE;
     float hc = CHUNK_SIZE / 2.0f;
-    float sx, sy, sz;
+    float x, z, sx, sy, sz, x0, z0, x1, z1;
 
+    // use a seeded random generator for this chunk based on its chunk coords
+    // this way the building positions and shapes will be the same each time
     std::random_device rd;
     std::mt19937 rng(rd());
     int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
-    rng.seed(rngseed); // use a seeded random generator for this chunk based on its chunk coords
+    rng.seed(rngseed);
 
+    // generators for this chunk
+    std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
+    std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
+    std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
+
+    // return variables for worley noise
     const int max = 3;
     double f[max];
     uint32_t id[max];
 
+    bool generateTrees = false;
     for (GLuint i = 0; i < 15; ++i) {    // try to build this many buildings
-        for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current buildings
-            std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
-            float x = unix(rng);
-            std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
-            float z = uniz(rng);
-            std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
+        for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current building
+            x = unix(rng);    // random x position in chunk
+            z = uniz(rng);    // random y position in chunk
 
+            // calculate noise that represents city centers
             Noise::worley(x + seed.x, z + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
             float b = static_cast<float>(1.0f - f[0]);
-            b = Mth::cblend(b, 0.6f, 0.95f, Mth::cubic);
-            if (b < 0.001f) {
-                if (zeroToOne(rng) > .25f) {
-                    break;
-                }
+            //b = Mth::cblend(b, 0.6f, 0.95f, Mth::cubic);
+            b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
+            // if not in a city then have a lower chance to spawn building
+            if (b < 0.001f && zeroToOne(rng) > 0.25f) {
+                generateTrees = true;
+                break;
             }
+            // calculate scale of building
             sx = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
             sy = zeroToOne(rng) * 10.0f + b * 100.0f + 5.0f;
             sz = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
-            float h = getHeight(x, z);
-            AABB box(glm::vec3(x - sx / 2.0, h, z - sz / 2.0), glm::vec3(x + sx / 2.0, sy + h, z + sz / 2.0));
+
+            // calculate building corners
+            x0 = x - sx / 2.0f;
+            z0 = z - sz / 2.0f;
+            x1 = x + sx / 2.0f;
+            z1 = z + sz / 2.0f;
+
+            // make box with incorrect height but just to see if spot is available
+            // since pretty much all the blocking happens on the x and z
+            AABB box(glm::vec3(x0, 0.0f, z0), glm::vec3(x1, sy + 1000.0f, z1));
 
             if (!Physics::checkStatic(box)) {
-                buildingIndices.push_back(Physics::addStatic(box));
-                buildings.push_back(box.getModelMatrix());
+                // now calculate height at each corner and get lowest for accurate box
+                float lowestHeight = glm::min(getHeight(x0, z0),
+                    glm::min(getHeight(x1, z0), glm::min(getHeight(x1, z1), getHeight(x0, z1))));
 
+                // add to physics matrix
+                box = AABB(glm::vec3(x0, lowestHeight, z0), glm::vec3(x1, sy + lowestHeight, z1));
+                staticIndices.push_back(Physics::addStatic(box));
+
+                // calculate model and color
                 glm::vec3 c;
                 if (sy < LOW_HEIGHT) {
                     if (zeroToOne(rng) <= 0.05f) {
@@ -210,6 +172,7 @@ void Chunk::generate() {
                 } else {
                     c = glm::vec3(1.0f, zeroToOne(rng) * .2f + .3f, 0.0f);	// orange
                 }
+                buildingModels.push_back(box.getModelMatrix());
                 buildingColors.push_back(c);
                 //buildingColors.push_back(glm::vec3( // random color
                 //    zeroToOne(rng), zeroToOne(rng), zeroToOne(rng)));
@@ -218,19 +181,44 @@ void Chunk::generate() {
         }
     }
 
+    if (generateTrees) {
+        for (GLuint i = 0; i < 20; ++i) {
+            x = unix(rng);    // random x position in chunk
+            z = uniz(rng);    // random y position in chunk
+
+            float n = Noise::fractal_2D(x + seed.x, z + seed.y, 3, 0.001f);
+            if (n > 0.0f) {
+                continue;
+            }
+
+            sx = zeroToOne(rng) * 8.0f + 8.0f;
+            sy = zeroToOne(rng) * 10.0f + 20.0f;
+            sz = zeroToOne(rng) * 8.0f + 8.0f;
+
+            float h = getHeight(x, z);
+            glm::vec3 euler = glm::vec3(0.0f, zeroToOne(rng)*360.0f, 0.0f);
+            glm::quat q = glm::quat(euler*DEGREESTORADS);
+            glm::mat4 model = Mth::getModelMatrix(glm::vec3(x, h + sy * 0.333f, z), glm::vec3(sx, sy, sz), q);
+            treeModels.push_back(model);
+
+            HSBColor c(0.2f * zeroToOne(rng) + 0.25f, 1.0f, 0.5f * zeroToOne(rng) + 0.3f);
+            treeColors.push_back(c.toRGB());
+        }
+    }
 }
 
 Chunk::Chunk(point pos) {
     this->pos = pos;
-    generate();
+    generateTerrain();
+    generateStructures();
 }
 
 Chunk::~Chunk() {
     delete mesh;
 
     // delete statics objects out of physics
-    for (size_t i = 0, len = buildingIndices.size(); i < len; ++i) {
-        Physics::removeStatic(buildingIndices[i]);
+    for (size_t i = 0, len = staticIndices.size(); i < len; ++i) {
+        Physics::removeStatic(staticIndices[i]);
     }
 }
 
@@ -354,7 +342,8 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->mesh->render();
-        Graphics::addToStream(false, chunks[i]->buildings, chunks[i]->buildingColors);
+        Graphics::addToStream(Shape::CUBE_GRID, chunks[i]->buildingModels, chunks[i]->buildingColors);
+        Graphics::addToStream(Shape::PYRAMID, chunks[i]->treeModels, chunks[i]->treeColors);
     }
 
 }

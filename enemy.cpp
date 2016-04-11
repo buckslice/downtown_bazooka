@@ -3,7 +3,7 @@
 #include "entityManager.h"
 
 Enemy::Enemy() {
-    model = Graphics::getTransform(Graphics::registerTransform(false));
+    model = Graphics::getTransform(Graphics::registerTransform());
     model->setVisibility(VISIBLE);
 
     getTransform()->setVisibility(HIDDEN);

@@ -8,11 +8,6 @@
 #include "mathutil.h"
 #include "glm/ext.hpp"
 
-// so can declare at bottom of file
-extern std::vector<Vertex> cubeVertices;
-extern std::vector<Vertex> offsetCubeVertices;
-extern std::vector<GLuint> cubeElements;
-
 static Pool<Transform>* boxes;
 //static std::vector<Mesh<Vertex>*> meshes;
 
@@ -20,14 +15,17 @@ static std::vector<glm::mat4> smodels;
 static std::vector<glm::vec3> scolors;
 static std::vector<glm::mat4> gmodels;
 static std::vector<glm::vec3> gcolors;
+static std::vector<glm::mat4> pmodels;
+static std::vector<glm::vec3> pcolors;
+
 
 // if you dont have this then breakpoints dont work! lol
 Graphics::Graphics() {
 }
 
-int Graphics::registerTransform(bool solid) {
+int Graphics::registerTransform(Shape shape) {
     int i = boxes->get();
-    getTransform(i)->reset()->solid = solid;
+    getTransform(i)->reset()->shape = shape;
     //std::cout << boxes->getFreeList().size() << std::endl;
     return i;
 }
@@ -43,25 +41,27 @@ Graphics::Graphics(sf::RenderWindow& window) {
     initGL(window);
 
     solidStream = new PIMesh(PIMesh::cubeVertices, cubeElements);
+    //gridStream = new TIMesh(TIMesh::pyramidVertices, pyramidElements, Resources::get().triangleTex);
     gridStream = new TIMesh(TIMesh::cubeVertices, cubeElements, Resources::get().gridTex);
+    pyrStream = new TIMesh(TIMesh::pyramidVertices, pyramidElements, Resources::get().triangleTex);
 
     skybox = new Skybox();
 
     boxes = new Pool<Transform>(10000);
 
     // testing out new transforms by setting up some arrows for the axes
-    Transform* xbox = getTransform(registerTransform(false));
-    Transform* xboxl = getTransform(registerTransform(false));
-    Transform* xboxr = getTransform(registerTransform(false));
-    Transform* xx1 = getTransform(registerTransform(false));
-    Transform* xx2 = getTransform(registerTransform(false));
+    Transform* xbox = getTransform(registerTransform());
+    Transform* xboxl = getTransform(registerTransform());
+    Transform* xboxr = getTransform(registerTransform());
+    Transform* xx1 = getTransform(registerTransform());
+    Transform* xx2 = getTransform(registerTransform());
 
-    Transform* zbox = getTransform(registerTransform(false));
-    Transform* zboxl = getTransform(registerTransform(false));
-    Transform* zboxr = getTransform(registerTransform(false));
-    Transform* zz1 = getTransform(registerTransform(false));
-    Transform* zz2 = getTransform(registerTransform(false));
-    Transform* zz3 = getTransform(registerTransform(false));
+    Transform* zbox = getTransform(registerTransform());
+    Transform* zboxl = getTransform(registerTransform());
+    Transform* zboxr = getTransform(registerTransform());
+    Transform* zz1 = getTransform(registerTransform());
+    Transform* zz2 = getTransform(registerTransform());
+    Transform* zz3 = getTransform(registerTransform());
 
     glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
     xbox->setPos(10.0f, 0.0f, 0.0f);
@@ -113,7 +113,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     zz2->color = red;
     zz3->color = red;
 
-    Transform* center = getTransform(registerTransform(false));
+    Transform* center = getTransform(registerTransform());
     center->setPos(0.0f, 400.0f, 0.0f);
 
     // TODO figure out zclipping issues with this system
@@ -132,7 +132,7 @@ void Graphics::uploadTransforms() {
         Transform& t = bx[i].data;
         // if debug rendering then set color to pink to show these are just the models (no collider info)
         glm::vec3 color = dstreamSize > 0 ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
-        Graphics::addToStream(t.solid, t.getModelMatrix(), color);
+        Graphics::addToStream(t.shape, t.getModelMatrix(), color);
     }
 
 }
@@ -239,19 +239,12 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         // set and draw debug stream
-        solidStream->visible = true;
         solidStream->setModels(*dmodels, true, dstreamSize);
         solidStream->setColors(*dcolors, true, dstreamSize);
-
         solidStream->render();
 
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        //for (size_t i = 0, len = meshes.size(); i < len; ++i) {
-        //    if (meshes[i]->visible) {
-        //        meshes[i]->render();
-        //    }
-        //}
     }
 
     // upload boxes to corresponding streams
@@ -260,9 +253,7 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     // set and draw normal streams
     solidStream->setModels(smodels, true);
     solidStream->setColors(scolors, true);
-    if (solidStream->visible) {
-        solidStream->render();
-    }
+    solidStream->render();
 
     // draw terrain
     terrain.render(view, proj);
@@ -274,18 +265,20 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
 
     gridStream->setModels(gmodels, true);
     gridStream->setColors(gcolors, true);
-    if (gridStream->visible) {
-        gridStream->render();
-    }
+    gridStream->render();
 
-    // draw city (uses same shader as gridStream)
-    //cityGen.render();
+    Graphics::addToStream(Shape::PYRAMID, glm::mat4(), glm::vec3(1.0f));
+    pyrStream->setModels(pmodels, true);
+    pyrStream->setColors(pcolors, true);
+    pyrStream->render();
 
     // clear stream vectors
-	smodels.clear();
+    smodels.clear();
     scolors.clear();
     gmodels.clear();
     gcolors.clear();
+    pmodels.clear();
+    pcolors.clear();
 
     // clear states
     glBindVertexArray(0);
@@ -400,34 +393,49 @@ void Graphics::printGLErrors() {
     }
 }
 
-void Graphics::addToStream(bool solid, glm::mat4& model, glm::vec3& color) {
-    if (solid) {
+void Graphics::addToStream(Shape shape, glm::mat4& model, glm::vec3& color) {
+    switch (shape) {
+    case Shape::CUBE_SOLID:
         smodels.push_back(model);
         scolors.push_back(color);
-    } else {
+        return;
+    case Shape::CUBE_GRID:
         gmodels.push_back(model);
         gcolors.push_back(color);
+        return;
+    case Shape::PYRAMID:
+        pmodels.push_back(model);
+        pcolors.push_back(color);
+        return;
     }
 }
 
-void Graphics::addToStream(bool solid, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
+void Graphics::addToStream(Shape shape, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors) {
     int len = models.size();
     if (len == 0 || len != colors.size()) {
         return;
     }
 
-    if (solid) {
+    switch (shape) {
+    case Shape::CUBE_SOLID:
         smodels.reserve(smodels.size() + len);
         smodels.insert(smodels.end(), models.begin(), models.end());
         scolors.reserve(scolors.size() + len);
         scolors.insert(scolors.end(), colors.begin(), colors.end());
-    } else {
+        return;
+    case Shape::CUBE_GRID:
         gmodels.reserve(gmodels.size() + len);
         gmodels.insert(gmodels.end(), models.begin(), models.end());
         gcolors.reserve(gcolors.size() + len);
         gcolors.insert(gcolors.end(), colors.begin(), colors.end());
+        return;
+    case Shape::PYRAMID:
+        pmodels.reserve(pmodels.size() + len);
+        pmodels.insert(pmodels.end(), models.begin(), models.end());
+        pcolors.reserve(pcolors.size() + len);
+        pcolors.insert(pcolors.end(), colors.begin(), colors.end());
+        return;
     }
-
 }
 
 void Graphics::setDebugStream(GLuint size, std::vector<glm::mat4>* models, std::vector<glm::vec3>* colors) {

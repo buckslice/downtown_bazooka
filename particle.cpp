@@ -8,7 +8,7 @@ Particle::Particle() : Entity() {
 void Particle::activate() {
     Transform* t = getTransform();
     t->setVisibility(VISIBLE);
-    t->solid = true;
+    t->shape = Shape::CUBE_SOLID;
 
     Collider* c = getCollider();
     c->enabled = true;

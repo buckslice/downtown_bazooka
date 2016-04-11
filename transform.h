@@ -13,6 +13,12 @@ enum Visibility {
     HIDDEN           // hide yourself and your children
 };
 
+enum class Shape {
+    CUBE_SOLID,
+    CUBE_GRID,
+    PYRAMID
+};
+
 class Transform {
 public:
     Transform();
@@ -90,8 +96,7 @@ public:
     Transform* reset();
 
     glm::vec3 color;
-    // maybe when you register you specify solid or not and it gets put on different list
-    bool solid = true;
+    Shape shape = Shape::CUBE_SOLID;
 
 private:
 	glm::vec3 pos, scale;

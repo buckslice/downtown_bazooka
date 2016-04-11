@@ -50,6 +50,7 @@ void Resources::deleteTextures() {
     glDeleteTextures(1, &gridTex);
     glDeleteTextures(1, &terrainTex);
     glDeleteTextures(1, &solidTex);
+    glDeleteTextures(1, &triangleTex);
 }
 
 void Resources::loadTextures(bool mipmapped) {
@@ -57,6 +58,7 @@ void Resources::loadTextures(bool mipmapped) {
     gridTex = GLHelper::loadTexture("assets/images/grid.png", mipmapped);
     terrainTex = GLHelper::loadTexture("assets/images/grid2.png", mipmapped);
     solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
+    triangleTex = GLHelper::loadTexture("assets/images/triangle.png", mipmapped);
 
     loadedTexturesBefore = true;
 }
