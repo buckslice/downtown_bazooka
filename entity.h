@@ -27,11 +27,11 @@ public:
     // may override this if you want
     virtual void onCollision(CollisionData data) {}
 
-    Transform* getTransform();
-    Collider* getCollider();
+    Transform* transform;
+    Collider* collider;
 
-    int transform, collider;
-
+    // delete copy constructor so pools dont get messed up
+    //Entity(const Entity& other) = delete;
 private:
 
 };

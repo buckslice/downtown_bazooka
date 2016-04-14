@@ -22,9 +22,8 @@ Game::Game(GLuint width, GLuint height)
 
     // init camera
     player = new Player(&cam);
-    auto pt = player->getTransform();
     cam.transform->setPos(glm::vec3(0.0f, 1.8f, 0.0f));
-    pt->parentAll(cam.transform);
+    player->transform->parentAll(cam.transform);
 
     entityManager = new EntityManager(player);
 
@@ -214,7 +213,7 @@ void Game::update(GLfloat delta) {
 
     entityManager->update(delta);
 
-    glm::vec3 pp = player->getTransform()->getWorldPos();
+    glm::vec3 pp = player->transform->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
     terrain->update(pp);
 

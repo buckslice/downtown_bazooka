@@ -112,7 +112,7 @@ void Chunk::generateStructures() {
     uint32_t id[max];
 
     bool generateTrees = false;
-    bool breakOuter = false;    // i was gonna use a goto but this is less gross kinda?
+    bool breakOuter = false;
     for (GLuint i = 0; i < 20 && !breakOuter; ++i) {    // try to build this many buildings
         for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current building
             x = unix(rng);    // random x position in chunk
@@ -122,7 +122,8 @@ void Chunk::generateStructures() {
             Noise::worley(x + seed.x, z + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
             float b = static_cast<float>(1.0f - f[0]);
             b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
-            // if not in a city then have a lower chance to spawn building
+            // if any random point not in city then delete all buildings of chunk
+            // and have chance to spawn trees
             if (b < 0.001f) {
                 generateTrees = true;
                 clearStatics();
@@ -216,6 +217,10 @@ void Chunk::generateStructures() {
         HSBColor leafColor(0.2f * zeroToOne(rng) + 0.25f, 1.0f, 0.5f * zeroToOne(rng) + 0.3f);
         treeColors.push_back(leafColor.toRGB());
     }
+}
+
+void Chunk::spawnEntities() {
+
 }
 
 Chunk::Chunk(point pos) {

@@ -2,147 +2,119 @@
 #include <vector>
 #include <cassert>
 
+//http://www.codeproject.com/Articles/746630/O-Object-Pool-in-Cplusplus
+// class that pools memory
+// TODO: try redoing to be a little more like https://sites.google.com/site/initupdatedraw/home
+// ie: add indices and bit shifting to calculate stuff rather than pointer arithmetic
+// could also try making this pool resizable like in original link
 template <class T>
-struct obj {
-    obj() : id(-1) {}   // should init all objs to -1
-    obj(int id) : id(id) {}
-
-    T data;
-    int id; // index in the obj table (-1 if not being used)
-};  // should instead just require pool to need an object with an int id
-// so ColliderData should be a child of this obj struct and then could use a pool for it (fix later)
-
-// can also declare it like this
-// template <class T, int N>
-// to hardcode the size in during compile time
-// seems pretty neat
-
-// class that pools things
-// if you use the return function of this class make sure things are being referenced
-// by the int lookups (and check if >= 0 before using) rather than pointers
-template <class T>
-class Pool {
+class MemPool {
 public:
-    Pool();
-    Pool(int max_size);
+    struct Item {
+        T data;
+        bool free;
+    };
 
-    // get new obj, return int index to save and look up later
-    int get();
+    explicit MemPool(size_t max_size) :
+        max_size(max_size),
+        nextFree(nullptr),
+        count(0) {
+        if (max_size > 64000) { // cap at arbitrary 64K
+            max_size = 64000;
+        }
+        // operator new to allocate a whole block of memory for this pool
+        memory = (char*)::operator new(max_size * itemSize);
+    }
 
-    // get ptr to obj in pool
-    obj<T>* getObj(int id);
+    ~MemPool() {
+        ::operator delete(memory);  // deallocate whole memory block
+    }
 
-    // get ptr to data in pool
-    T* getData(int id);
+    T* alloc() {
+        if (nextFree) { // if nextFree is not null
+            Item* ret = nextFree;   // get pointer to item at nextFree
+            nextFree = *((Item**)nextFree); // assign nextFree to be whatever was in this free spot
+            new(ret) Item();    // placement new 
+            return &ret->data;
+        }
 
-    // returns obj back to pool
-    void ret(int id);
+        if (count >= max_size) {
+            return nullptr; // later allocate new memory block
+        }
+        // else increment count and allocate
+        Item* ret = new(memory + itemSize * count) Item();
+        ++count;
+        return &ret->data;
+    }
 
-    // returns all objects in pool
-    void returnAll();
+    void free(T* data) {
+        data->~T(); //call destructor on data
 
-    // get internal object list from pool (make sure you declare as reference)
-    std::vector<obj<T>>& getObjects();
-    std::vector<size_t>& getFreeList();
+                    // cast data as a pointer to a pointer
+                    // and store the current location of nextFree in its place
+        *((Item**)data) = nextFree;
+        nextFree = (Item*)data; // make nextFree point to this item
+        nextFree->free = true;
+    }
 
-    // returns max size
-    size_t getSize() {
-        return objs.size();
+    void free(int index) {
+        free((T*)(memory + index*itemSize));
+    }
+
+    void freeAll() {
+        // call destructors on all allocated data
+        for (T* t = nullptr; next(t);) {
+            t->~T();
+        }
+        // reset count and nextFree
+        count = 0;
+        nextFree = nullptr;
+    }
+
+    // this is pretty much an iterator
+    // call like so to iterate over all allocated elements:
+    // for(T* t = nullptr; pool.next(t);){}
+    bool next(T*& data) {   // reference to a pointer
+        char* address = (char*)data;
+        if (!data) {    // if data is nullptr then start at one back from beginning
+            address = memory - itemSize;
+        }
+        do {
+            address += itemSize;
+            if (address >= memory + itemSize * count) {
+                data = nullptr;
+                return false;
+            }
+        } while (((Item*)(address))->free);
+
+        data = (T*)address;
+        return true;
+    }
+
+    int getIndex(T* data) { // get index from type pointer
+        return ((char*)data - memory) / itemSize;
+    }
+
+    int getIndex(char* ptr) {   // get index to current item from random point in memory block
+        return (int)(((char*)ptr - memory) / itemSize);
+    }
+
+    T* get(int index) { // return data pointer by index
+        return (T*)(memory + index * itemSize);
     }
 
 private:
-    std::vector<obj<T>> objs;
-    std::vector<size_t> free_list;
+    char* memory;
+    size_t max_size;
+
+    Item* nextFree;
+    size_t count;
+
+    static const size_t itemSize;
 
 };
 
-template <class T>
-Pool<T>::Pool() {
-}
-
-template <class T>
-Pool<T>::Pool(int max_size) {
-    objs.resize(max_size);
-    for (size_t i = max_size; i > 0; i--) { // careful, size_t is unsigned
-        free_list.push_back(i - 1);
-    }
-}
-
-template <class T>
-int Pool<T>::get() {
-    if (free_list.empty()) {
-        //std::cout << "POOL EMPTY!!! WEEEEEEEEEEE";
-        // maybe should assert here instead, or just no message?
-        return -1;
-    }
-    size_t free = free_list.back();
-    free_list.pop_back();
-    objs[free].id = free;
-    return free;
-}
-
-// get pointer to object in pool
+// ensures itemSize is at least 8 bytes
+// needs to be able to store the pointer for free list and the bool to signify free
 template<class T>
-obj<T>* Pool<T>::getObj(int id) {
-    return objs[id].id == -1 ? nullptr : &objs[id];
-}
-
-// get pointer to data in pool
-template<class T>
-T* Pool<T>::getData(int id) {
-    return objs[id].id == -1 ? nullptr : &objs[id].data;
-}
-
-// frees object at index
-template <class T>
-void Pool<T>::ret(int id) {
-    // assert crashes the program if the boolean statement evaluates false
-    // only works in debug mode and you can #define NDEBUG to skip it in that file (or maybe whole project, not sure)
-    //assert(id >= 0 && id < objs.size());
-    objs[id].id = -1;
-    free_list.push_back(id);
-}
-
-// should probs make an iterator
-template <class T>
-std::vector<obj<T>>& Pool<T>::getObjects() {
-    return objs;
-}
-
-template <class T>
-std::vector<size_t>& Pool<T>::getFreeList() {
-    return free_list;
-}
-
-template <class T>
-void Pool<T>::returnAll() {
-    for (size_t i = 0, len = objs.size(); i < len; ++i) {
-        if (objs[i].id < 0) {
-            continue;
-        }
-        ret(i);
-    }
-}
-
-
-// ill do the iterator.... later...
-// heres some nice examples to jog my barn
-//http://www.cs.northwestern.edu/~riesbeck/programming/c++/stl-iterator-define.html#TOC8
-
-//// iterator
-//template <class T>
-//class PoolIterator {
-//private:
-//    Pool<T>& pool;
-//    int size;
-//    int* p;
-//public:
-//    PoolIterator(Pool& pool, int size)
-//        : pool{ pool }, size{ size } {
-//    }
-//
-//    T& operator*() {
-//        return pool.objs[p];
-//    }
-//
-//};
+const size_t MemPool<T>::itemSize = sizeof(Item) < 8 ? 8 : sizeof(Item);

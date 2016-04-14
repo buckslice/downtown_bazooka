@@ -16,12 +16,11 @@ public:
 
 	void onDeath();
 
-    void init(int id, glm::vec3 pos, glm::vec3 vel);
+    void init(glm::vec3 pos, glm::vec3 vel);
 
 	ProjectileType type;
 
 private:
-    int id;
     float timer;
 };
 

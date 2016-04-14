@@ -164,7 +164,6 @@
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="cityGenerator.cpp" />
     <ClCompile Include="collider.cpp" />
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
@@ -192,7 +191,6 @@
     <ClInclude Include="aabb.h" />
     <ClInclude Include="audio.h" />
     <ClInclude Include="camera.h" />
-    <ClInclude Include="cityGenerator.h" />
     <ClInclude Include="collider.h" />
     <ClInclude Include="enemy.h" />
     <ClInclude Include="entity.h" />

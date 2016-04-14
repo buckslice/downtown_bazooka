@@ -3,7 +3,14 @@
 
 // prob add something here
 Transform::Transform() {
-    reset();
+    pos = glm::vec3(0.0f);
+    rot = glm::quat();
+    scale = glm::vec3(1.0f);
+    color = glm::vec3(1.0f);
+    parent = nullptr;
+    visibility = VISIBLE;
+}
+Transform::~Transform() {
 }
 
 void Transform::setPos(glm::vec3 pos) {
@@ -95,16 +102,4 @@ bool Transform::shouldDraw() {
 
 void Transform::setVisibility(Visibility visibility) {
     this->visibility = visibility;
-}
-
-// way to reset it since they will be stored in pools
-// maybe could just recall constructor?
-Transform* Transform::reset() {
-    pos = glm::vec3(0.0f);
-    rot = glm::quat();
-    scale = glm::vec3(1.0f);
-    color = glm::vec3(1.0f);
-    parent = nullptr;
-    visibility = VISIBLE;
-    return this;
 }

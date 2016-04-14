@@ -2,16 +2,14 @@
 
 Particle::Particle() : Entity() {
     curlife = 0;
-    getCollider()->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
+    collider->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
 }
 
 void Particle::activate() {
-    Transform* t = getTransform();
-    t->setVisibility(VISIBLE);
-    t->shape = Shape::CUBE_SOLID;
+    transform->setVisibility(VISIBLE);
+    transform->shape = Shape::CUBE_SOLID;
 
-    Collider* c = getCollider();
-    c->enabled = true;
+    collider->enabled = true;
 
     float gravmult;
     switch (type) {
@@ -31,17 +29,16 @@ void Particle::activate() {
 		gravmult = 0.0f;
 		lifetime = 0.5f;
     }
-    c->gravityMultiplier = gravmult;
+    collider->gravityMultiplier = gravmult;
     curlife = lifetime;
 }
 
 void Particle::update(GLfloat dt) {
-    Collider* c = getCollider();
-    if (!c->enabled) {
+    if (!collider->enabled) {
         return;
     } else if ((curlife -= dt) <= 0) {
-        c->enabled = false;
-        getTransform()->setVisibility(HIDDEN);
+        collider->enabled = false;
+        transform->setVisibility(HIDDEN);
         return;
     }
 
@@ -50,7 +47,7 @@ void Particle::update(GLfloat dt) {
     switch (type) {
     case SPARK:
         scalemult = .97f;
-        getCollider()->vel *= curlife + (1.0f - curlife) * 0.75f;
+        collider->vel *= curlife + (1.0f - curlife) * 0.75f;
         //getCollider()->vel *= .95f;
         break;
     case CLOUD:
@@ -60,18 +57,17 @@ void Particle::update(GLfloat dt) {
             scalemult = .9f;
         break;
     case FIRE:
-		getCollider()->vel *= .95f;
+		collider->vel *= .95f;
         scalemult = .95f;
         break;
 	case BEAM:
 		scalemult = 1.02f;
-		getCollider()->vel *= curlife + (1.0f - curlife) * 0.75f;
+		collider->vel *= curlife + (1.0f - curlife) * 0.75f;
 		break;
     }
 
-    Transform* t = getTransform();
-    t->color = getColor();
-    t->setScale(curlife / lifetime * glm::vec3(1.0f));
+    transform->color = getColor();
+    transform->setScale(curlife / lifetime * glm::vec3(1.0f));
 }
 
 glm::vec3 Particle::getColor() {

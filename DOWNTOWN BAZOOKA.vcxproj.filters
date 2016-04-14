@@ -21,9 +21,6 @@
     <ClCompile Include="aabb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cityGenerator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="physics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,9 +114,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mathutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cityGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="glHelper.h">

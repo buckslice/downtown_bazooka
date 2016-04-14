@@ -3,23 +3,19 @@
 #include <algorithm>
 #include <glm/gtx/projection.hpp>
 #include "physics.h"
-#include "cityGenerator.h"
 #include "graphics.h"
 
 // declared like this so can be accessed from static methods
 const int MAX_DYNAMICS = 10000;
 const int MAX_STATICS = 15000;
 
-std::vector<ColliderData> Physics::dynamicObjects(MAX_DYNAMICS);
-std::vector<int> Physics::freeDynamics;
-Pool<AABB> Physics::staticPool(MAX_STATICS);
+// pool for static and dynamic objects
+static MemPool<ColliderData> dynamicPool(MAX_DYNAMICS);
+static MemPool<AABB> staticPool(MAX_STATICS);
 
 Quadtree* Physics::collisionTree;
 
 Physics::Physics() {
-    for (int i = MAX_DYNAMICS; i > 0; --i) {
-        freeDynamics.push_back(i - 1);
-    }
     collisionTree = new Quadtree(0, getPhysicsArea(glm::vec3(0.0f), MATRIX_SIZE));
 }
 
@@ -37,41 +33,37 @@ void Physics::update(float delta, glm::vec3 center) {
     delete collisionTree;
     collisionTree = new Quadtree(0, getPhysicsArea(center, MATRIX_SIZE));
 
-    auto& staticObjects = staticPool.getObjects();
-    // insert all statics into tree
-    for (int sndx = 0, len = static_cast<int>(staticObjects.size()); sndx < len; ++sndx) {
-        auto& sobj = staticObjects[sndx];
-        if (sobj.id < 0) {
-            continue;
-        }
-        collisionTree->insert(QuadtreeData{ sobj.data, sndx, false });
+    for (AABB* b = nullptr; staticPool.next(b);) {
+        collisionTree->insert(QuadtreeData{ *b, staticPool.getIndex(b), false });
     }
+
     // insert all dynamics into tree (that are awake and not basic)
-    for (int dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
-        auto& dobj = dynamicObjects[dndx];
-        auto& col = dobj.collider;
-        // ensure dynamic object is active and awake
-        // if type is basic then dont insert into tree, just retrieve
-        if (dobj.id < 0 || !col.enabled) {
+    for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
+        Collider& col = cd->collider;
+        // ensure object is active
+        if (!col.enabled) {
             continue;
         }
         // update collider position from transform
-        col.pos = Graphics::getTransform(col.transform)->getPos();
+        col.pos = col.transform->getPos();
 
         if (col.type == ColliderType::BASIC) {
             continue;
         }
-        col.awake = collisionTree->insert(QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dndx, true });
+        col.awake = collisionTree->insert(QuadtreeData{
+            AABB::getSwept(col.getAABB(), col.vel*delta), dynamicPool.getIndex(cd), true });
+
     }
+
 
     std::vector<QuadtreeData> returnData;
     // for each dynamic object check it against all objects in its leaf(s)
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
-    for (size_t dndx = 0; dndx < MAX_DYNAMICS; ++dndx) {
-        auto& dobj = dynamicObjects[dndx];
-        Collider& col = dobj.collider;
-        if (dobj.id < 0 || !col.enabled || !col.awake) {
+    for (ColliderData* cdObj = nullptr; dynamicPool.next(cdObj);) {
+        int dndx = dynamicPool.getIndex(cdObj);
+        Collider& col = cdObj->collider;
+        if (!col.enabled || !col.awake) {
             col.vel = glm::vec3(0.0f);
             col.grounded = false;
             continue;
@@ -123,7 +115,7 @@ void Physics::update(float delta, glm::vec3 center) {
                         continue;
                     }
                     // pretend like they aren't moving since you are going first
-                    AABB otherAABB = dynamicObjects[index].collider.getAABB();
+                    AABB otherAABB = dynamicPool.get(index)->collider.getAABB();
 
                     // broadphase sweep bounds check
                     if (!AABB::check(broadphase, otherAABB)) {
@@ -156,7 +148,8 @@ void Physics::update(float delta, glm::vec3 center) {
 
                     // pretent like they aren't moving since you are going first
                     // cant collide two swept AABBs
-                    AABB& otherAABB = staticObjects[index].data;
+                    //AABB& otherAABB = staticObjects[index].data;
+                    AABB& otherAABB = qtd.box;
 
                     // broadphase sweep bounds check
                     if (!AABB::check(broadphase, otherAABB)) {
@@ -189,19 +182,19 @@ void Physics::update(float delta, glm::vec3 center) {
                     // dont let this dynamic collide with this other object again (this frame)
                     dynamicResolvedSet.insert(closestIndex);
 
-                    ColliderData& other = dynamicObjects[closestIndex];
+                    ColliderData* other = dynamicPool.get(closestIndex);
 
-                    if (dobj.entity != nullptr) {
-                        dobj.entity->onCollision(CollisionData{ other.collider.type, other.collider.tag, other.entity });
+                    if (cdObj->entity) {
+                        cdObj->entity->onCollision(CollisionData{ other->collider.type, other->collider.tag, other->entity });
                     }
-                    if (other.entity != nullptr) {
-                        other.entity->onCollision(CollisionData{ col.type, col.tag, dobj.entity });
+                    if (other->entity) {
+                        other->entity->onCollision(CollisionData{ col.type, col.tag, cdObj->entity });
                     }
 
                     // if your type is TRIGGER or their type is TRIGGER
                     // then reset collision variables to ignore the collision basically
                     if (col.type == ColliderType::TRIGGER ||
-                        other.collider.type == ColliderType::TRIGGER) {
+                        other->collider.type == ColliderType::TRIGGER) {
                         time = 1.0f;
                         norm = glm::vec3(0.0f);
                     }
@@ -251,7 +244,7 @@ void Physics::update(float delta, glm::vec3 center) {
         }
 
         // update transforms position after fully resolved
-        Graphics::getTransform(col.transform)->setPos(col.pos);
+        col.transform->setPos(col.pos);
     }
 
     //std::cout << numberOver << std::endl;
@@ -260,22 +253,23 @@ void Physics::update(float delta, glm::vec3 center) {
 }
 
 void Physics::setCollisionCallback(Entity* entity) {
-    dynamicObjects[entity->collider].entity = entity;
+    int index = dynamicPool.getIndex((char*)entity->collider);
+    dynamicPool.get(index)->entity = entity;
 }
 
 // add aabb to static object list
 int Physics::addStatic(AABB obj) {
-    // push new object onto statics list and get index
-    int ondx = staticPool.get();
-    if (ondx < 0) {
+    AABB* b = staticPool.alloc();
+    if (!b) {
         std::cout << "NO FREE STATIC COLLIDERS" << std::endl;
         return -1;
     }
-    *staticPool.getData(ondx) = obj;
+    *b = obj;
+    int index = staticPool.getIndex(b);
     // inserts right away so can checkStatic without having
     // to wait until next frame for tree to be built
-    collisionTree->insert(QuadtreeData{ obj, ondx, false });
-    return ondx;
+    collisionTree->insert(QuadtreeData{ *b, index, false });
+    return index;
 }
 
 // checks static against other statics in the matrix
@@ -297,19 +291,22 @@ void Physics::removeStatic(int index) {
     if (index < 0) {
         return;
     }
-    staticPool.ret(index);
+    staticPool.free(index);
 }
 
-int Physics::registerDynamic(int transform) {
-    if (freeDynamics.empty()) {
+Collider* Physics::registerDynamic(Transform* transform) {
+    ColliderData* cd = dynamicPool.alloc();
+    if (!cd) {
         std::cout << "NO FREE DYNAMIC COLLIDERS";
-        return -1;
+        return nullptr;
     }
-    int index = freeDynamics.back();
-    freeDynamics.pop_back();
-    dynamicObjects[index].id = index;
-    dynamicObjects[index].collider.transform = transform;
-    return index;
+    cd->collider.transform = transform;
+    return &cd->collider;
+}
+
+void Physics::returnDynamic(Collider* collider) {
+    int index = dynamicPool.getIndex((char*)collider);
+    dynamicPool.free(index);
 }
 
 AABB Physics::getPhysicsArea(glm::vec3 center, float size) {
@@ -324,50 +321,37 @@ void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
     for (size_t i = 0, len = returnData.size(); i < len; ++i) {
         QuadtreeData& qtd = returnData[i];
         if (qtd.dynamic) {
-            ColliderData& cd = dynamicObjects[qtd.index];
-            if (cd.entity != nullptr && AABB::check(aabb, cd.collider.getAABB())) {
-                cd.entity->onCollision(data);
+            ColliderData* cd = dynamicPool.get(qtd.index);
+            if (cd->entity && AABB::check(aabb, cd->collider.getAABB())) {
+                cd->entity->onCollision(data);
             }
         }
     }
-}
-
-Collider* Physics::getCollider(int index) {
-    assert(index >= 0 && index < MAX_DYNAMICS);
-    if (dynamicObjects[index].id < 0) {
-        return nullptr;
-    }
-    return &dynamicObjects[index].collider;
 }
 
 void Physics::streamColliderModels() {
-    auto& staticObjects = staticPool.getObjects();
-    for (size_t i = 0, len = staticObjects.size(); i < len; ++i) {
-        auto& sobj = staticObjects[i];
-        if (sobj.id < 0) {
-            continue;
-        }
-        // yellow for static colliders
-        Graphics::addToStream(Shape::CUBE_SOLID, sobj.data.getModelMatrix(), glm::vec3(1.0f, 1.0f, 0.0f));
+    for (AABB* b = nullptr; staticPool.next(b);) {
+        Graphics::addToStream(Shape::CUBE_SOLID, b->getModelMatrix(), glm::vec3(1.0f, 1.0f, 0.0f));
     }
 
-    for (size_t i = 0; i < MAX_DYNAMICS; ++i) {
-        auto& pobj = dynamicObjects[i];
+    for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
         glm::vec3 color;
-        if (pobj.id < 0) {
-            continue;
-        } else if (!pobj.collider.enabled) {
+        Collider& col = cd->collider;
+        if (!col.enabled) {
             // ignore drawing deactivated particles to avoid cluttering
-            if (pobj.collider.type == ColliderType::BASIC) {
+            if (col.type == ColliderType::BASIC) {
                 continue;
             }
+            // this pretty much never happens now since
+            // since everything is pooled now and its memory is 
+            // corrupted as soon as its returned, should think of way to fix pools
             color = glm::vec3(0.7f);        // grey for disabled colliders
-        } else if (!pobj.collider.awake) {
+        } else if (!col.awake) {
             color = glm::vec3(0.0f, 1.0f, 1.0f);    // teal for sleeping colliders
         } else {
             color = glm::vec3(1.0f, 0.0f, 0.0f);    // red for active dynamic colliders
         }
-        Graphics::addToStream(Shape::CUBE_SOLID, pobj.collider.getAABB().getModelMatrix(), color);
+        Graphics::addToStream(Shape::CUBE_SOLID, col.getAABB().getModelMatrix(), color);
     }
 
     // white for quadtree

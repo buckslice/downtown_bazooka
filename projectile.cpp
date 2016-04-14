@@ -3,13 +3,11 @@
 #include "entityManager.h"
 
 Projectile::Projectile() {
-    Collider* c = getCollider();
-    c->enabled = false;
-    c->type = ColliderType::TRIGGER;
-    c->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
+    collider->type = ColliderType::TRIGGER;
+    collider->setExtents(glm::vec3(-0.5f), glm::vec3(0.5f));
 
-    getTransform()->setVisibility(HIDDEN);
-    getTransform()->color = glm::vec3(1.0f, 0.2f, 0.0f);
+    transform->setVisibility(HIDDEN);
+    transform->color = glm::vec3(1.0f, 0.2f, 0.0f);
 
     Physics::setCollisionCallback(this);
 }
@@ -17,17 +15,12 @@ Projectile::Projectile() {
 Projectile::~Projectile() {
 }
 
-void Projectile::init(int id, glm::vec3 pos, glm::vec3 vel) {
+void Projectile::init(glm::vec3 pos, glm::vec3 vel) {
+    transform->setPos(pos);
+    transform->setVisibility(VISIBLE);
 
-    Transform* t = getTransform();
-    Collider* c = getCollider();
-    t->setPos(pos);
-    t->setVisibility(VISIBLE);
+    collider->vel = vel;
 
-    c->vel = vel;
-    c->enabled = true;
-
-    this->id = id;
     timer = 2.0f;
 }
 
@@ -39,11 +32,11 @@ void Projectile::update(GLfloat delta) {
     }
     switch (type) {
     case ProjectileType::ROCKET:
-        EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), FIRE, 3.0f);
+        EntityManagerInstance->SpawnParticle(transform->getWorldPos(), FIRE, 3.0f);
         break;
     case ProjectileType::LASER:
         for (int i = 0; i < 2; ++i) {
-            EntityManagerInstance->SpawnParticle(getTransform()->getWorldPos(), BEAM, 10.0f, Mth::randInsideUnitCube());
+            EntityManagerInstance->SpawnParticle(transform->getWorldPos(), BEAM, 10.0f, Mth::randInsideUnitCube());
         }
         break;
     default:
@@ -53,17 +46,17 @@ void Projectile::update(GLfloat delta) {
 }
 
 void Projectile::onDeath() {
-    EntityManagerInstance->ReturnProjectile(id);
-    if (getCollider()->tag == Tag::PLAYER_PROJECTILE) {
-        EntityManagerInstance->MakeExplosion(getTransform()->getWorldPos(), 100, 16.0f, getCollider()->vel);
-        glm::vec3 p = getTransform()->getWorldPos();
+    if (collider->tag == Tag::PLAYER_PROJECTILE) {
+        EntityManagerInstance->MakeExplosion(transform->getWorldPos(), 100, 16.0f, collider->vel);
+        glm::vec3 p = transform->getWorldPos();
         glm::vec3 s = glm::vec3(20.0f) / 2.0f;
         Physics::sendOverlapEvent(AABB(p - s, p + s), CollisionData{ ColliderType::BASIC, Tag::EXPLOSION });
     }
+    EntityManagerInstance->ReturnProjectile(this);
 }
 
 void Projectile::onCollision(CollisionData data) {
-    Tag tag = getCollider()->tag;
+    Tag tag = collider->tag;
     if (data.tag == Tag::PLAYER && tag != Tag::PLAYER_PROJECTILE) {
         onDeath();
     } else if (data.tag == Tag::ENEMY && tag != Tag::ENEMY_PROJECTILE) {

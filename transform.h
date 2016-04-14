@@ -5,7 +5,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
 #include "mathutil.h"
-#include "pool.h"
 
 enum Visibility {
     VISIBLE,         // show yourself
@@ -22,6 +21,7 @@ enum class Shape {
 class Transform {
 public:
     Transform();
+    ~Transform();
 
     // set local position of transform
     void setPos(glm::vec3 pos);
@@ -91,10 +91,6 @@ public:
         parentAllWithColor(rest...);
     }
 
-    // way to reset it since they will be stored in pools
-    // maybe could just recall constructor?
-    Transform* reset();
-
     glm::vec3 color;
     Shape shape = Shape::CUBE_SOLID;
 
@@ -109,7 +105,6 @@ private:
 
     Visibility visibility;
 
-    // should switch this to index later once more work is done with pools / slotmaps
     Transform* parent = nullptr;
 
 };

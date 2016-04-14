@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "aabb.h"
+#include "transform.h"
 
 enum class ColliderType {
     BASIC,          // collides with statics, invisible to other types
@@ -25,7 +26,7 @@ enum class Tag {
 // Colliders represent dynamic physics objects
 class Collider {
 public:
-    int transform;  // id of transform this collider is changing position of
+    Transform* transform;  // id of transform this collider is changing position of
 
     Tag tag;
     ColliderType type;

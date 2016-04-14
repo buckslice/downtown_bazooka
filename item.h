@@ -19,15 +19,13 @@ public:
 
 	void onCollision(CollisionData data) override;
 
-	void init(int id, float rotSpeed, glm::vec3 pos, ItemType type);
+	void init(float rotSpeed, glm::vec3 pos, ItemType type);
 
 	ItemType type;
 private:
+	Transform* model;
 
-	int id;
 	float rotSpeed;
 	float timer;
-
-	Transform* model;
 };
 

@@ -5,7 +5,6 @@
 #include "glHelper.h"
 #include "camera.h"
 #include "mesh.h"
-#include "cityGenerator.h"
 #include "terrain.h"
 #include "pool.h"
 #include "skybox.h"
@@ -25,7 +24,8 @@ public:
 
     void finalProcessing(Camera& cam, bool blurring);
 
-    static int registerTransform(Shape shape = Shape::CUBE_GRID);
+    static Transform* registerTransform(Shape shape = Shape::CUBE_GRID);
+    static void returnTransform(Transform* transform);
     static Transform* getTransform(int id);
 
     // TODO generic mesh registration and handling

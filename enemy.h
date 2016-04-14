@@ -14,20 +14,21 @@ enum class EnemyType {
 class Enemy : public Entity {
 public:
     Enemy();
+    ~Enemy();
 
     void update(GLfloat delta) override;
 
     void onCollision(CollisionData data) override;
 
-    void init(int id, int player, glm::vec3 pos, EnemyType type);
+    void init(Transform* player, glm::vec3 pos, EnemyType type);
 
 private:
-    int id;
-    int player = -1;
+    Transform* player = nullptr;
+    Transform* model;
+
     float speed;
     float jumpVel;
     float health;
     float jumpTimer;
     float shootTimer;
-    Transform* model;
 };

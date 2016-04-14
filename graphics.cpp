@@ -8,7 +8,7 @@
 #include "mathutil.h"
 #include "glm/ext.hpp"
 
-static Pool<Transform>* boxes;
+static MemPool<Transform> boxes(10000);
 //static std::vector<Mesh<Vertex>*> meshes;
 
 static std::vector<glm::mat4> smodels;
@@ -24,15 +24,18 @@ bool Graphics::DEBUG = false;
 Graphics::Graphics() {
 }
 
-int Graphics::registerTransform(Shape shape) {
-    int i = boxes->get();
-    getTransform(i)->reset()->shape = shape;
-    //std::cout << boxes->getFreeList().size() << std::endl;
-    return i;
+Transform* Graphics::registerTransform(Shape shape) {
+    Transform* t = boxes.alloc();
+    t->shape = shape;
+    return t;
+}
+
+void Graphics::returnTransform(Transform* transform) {
+    boxes.free(transform);
 }
 
 Transform* Graphics::getTransform(int id) {
-    return boxes->getData(id);
+    return boxes.get(id);
 }
 
 Graphics::Graphics(sf::RenderWindow& window) {
@@ -48,21 +51,21 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     skybox = new Skybox();
 
-    boxes = new Pool<Transform>(10000);
+    //boxes = new Pool<Transform>(10000);
 
     // testing out new transforms by setting up some arrows for the axes
-    Transform* xbox = getTransform(registerTransform());
-    Transform* xboxl = getTransform(registerTransform());
-    Transform* xboxr = getTransform(registerTransform());
-    Transform* xx1 = getTransform(registerTransform());
-    Transform* xx2 = getTransform(registerTransform());
+    Transform* xbox = registerTransform();
+    Transform* xboxl = registerTransform();
+    Transform* xboxr = registerTransform();
+    Transform* xx1 = registerTransform();
+    Transform* xx2 = registerTransform();
 
-    Transform* zbox = getTransform(registerTransform());
-    Transform* zboxl = getTransform(registerTransform());
-    Transform* zboxr = getTransform(registerTransform());
-    Transform* zz1 = getTransform(registerTransform());
-    Transform* zz2 = getTransform(registerTransform());
-    Transform* zz3 = getTransform(registerTransform());
+    Transform* zbox = registerTransform();
+    Transform* zboxl = registerTransform();
+    Transform* zboxr = registerTransform();
+    Transform* zz1 = registerTransform();
+    Transform* zz2 = registerTransform();
+    Transform* zz3 = registerTransform();
 
     glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
     xbox->setPos(10.0f, 0.0f, 0.0f);
@@ -114,7 +117,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
     zz2->color = red;
     zz3->color = red;
 
-    Transform* center = getTransform(registerTransform());
+    Transform* center = registerTransform();
     center->setPos(0.0f, 400.0f, 0.0f);
 
     // TODO figure out zclipping issues with this system
@@ -125,17 +128,13 @@ Graphics::Graphics(sf::RenderWindow& window) {
 }
 
 void Graphics::uploadTransforms() {
-    auto bx = boxes->getObjects();  // should make Pool class iterator
-    for (size_t i = 0, len = bx.size(); i < len; ++i) {
-        if (bx[i].id < 0 || !bx[i].data.shouldDraw()) { // iterator could do this check in ++ operator
+    for (Transform* t = nullptr; boxes.next(t);) {
+        if (!t->shouldDraw()) {
             continue;
         }
-        Transform& t = bx[i].data;
-        // if debug rendering then set color to pink to show these are just the models (no collider info)
-        glm::vec3 color = DEBUG ? glm::vec3(1.0f, 0.0f, 1.0f) : t.color;
-        Graphics::addToStream(DEBUG ? Shape::CUBE_SOLID : t.shape, t.getModelMatrix(), color);
+        glm::vec3 color = DEBUG ? glm::vec3(1.0f, 0.0f, 1.0f) : t->color;
+        Graphics::addToStream(DEBUG ? Shape::CUBE_SOLID : t->shape, t->getModelMatrix(), color);
     }
-
 }
 
 void Graphics::initGL(sf::RenderWindow& window) {

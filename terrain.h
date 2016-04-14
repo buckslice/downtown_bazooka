@@ -14,6 +14,10 @@ const int CHUNK_RAD = 15;
 //const float DIST = CHUNK_RAD * CHUNK_SIZE + 10.0f;
 const float DIST = 1450.0f;
 
+const float CITY_SIZE = 2000.0f;    // distance from one side to another
+const float LOW_HEIGHT = 20.0f;     // for building generation
+const float HIGH_HEIGHT = 60.0f;
+
 // hash function for pairs
 // should figure out how to get it working for sf::Vector2i
 // or use typedefs so i dont have to type std::pair<int,int> so much
@@ -51,6 +55,7 @@ private:
 
     void generateTerrain();
     void generateStructures();
+    void spawnEntities();
 
     CTVertex genPoint(float xo, float yo);
 

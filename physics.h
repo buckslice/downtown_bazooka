@@ -12,7 +12,6 @@
 struct ColliderData {
     Collider collider;
     Entity* entity = nullptr;
-    int id = -1;
 };
 
 class Quadtree;
@@ -33,20 +32,13 @@ public:
     static bool checkStatic(AABB obj);
     static void removeStatic(int index);
 
-    // clear dynamic object list
-    //void clearDynamics();
-
-    // returns a Collider pointer from an index
-    static Collider* getCollider(int index);
-
     // sets Entity callback pointer for when collision happens
     static void setCollisionCallback(Entity* entity);
 
     // registers a collider that will control the movement of
     // the given transform and returns that colliders index
-    static int registerDynamic(int transform);
-
-    //static void returnDynamic(int id);
+    static Collider* registerDynamic(Transform* transform);
+    static void returnDynamic(Collider* collider);
 
     static void sendOverlapEvent(AABB aabb, CollisionData data);
 
@@ -55,12 +47,6 @@ public:
     Terrain* terrainGen;   // ref to terrain for collision detection
 private:
     const float MATRIX_SIZE = 1500.0f;
-
-    // pool of dynamic objects
-    static std::vector<ColliderData> dynamicObjects;
-    static std::vector<int> freeDynamics;
-    // list of static objects
-    static Pool<AABB> staticPool;
 
     static Quadtree* collisionTree;
 
@@ -90,7 +76,7 @@ struct QuadtreeData {
 class Quadtree {
 public:
     const int MAX_OBJECTS = 10; // max objects per node
-    const int MAX_LEVELS = 8;   // max number of levels to tree
+    const int MAX_LEVELS = 9;   // max number of levels to tree
 
     Quadtree(int level, AABB bounds);
 

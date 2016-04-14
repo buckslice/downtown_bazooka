@@ -3,22 +3,24 @@
 #include "entityManager.h"
 
 Enemy::Enemy() {
-    model = Graphics::getTransform(Graphics::registerTransform());
+    model = Graphics::registerTransform();
     model->setVisibility(VISIBLE);
 
-    getTransform()->setVisibility(HIDDEN);
-    getTransform()->parentAll(model);
-    getCollider()->type = ColliderType::FULL;
-    getCollider()->tag = Tag::ENEMY;
-    getCollider()->enabled = false;
+    transform->setVisibility(HIDDEN);
+    transform->parentAll(model);
+    collider->type = ColliderType::FULL;
+    collider->tag = Tag::ENEMY;
 
     jumpTimer = Mth::rand01() * 5.0f + 5.0f;
     shootTimer = Mth::rand01() * 5.0f + 5.0f;
     Physics::setCollisionCallback(this);
 }
 
-void Enemy::init(int id, int player, glm::vec3 pos, EnemyType type) {
-    this->id = id;
+Enemy::~Enemy() {
+    Graphics::returnTransform(model);
+}
+
+void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
     this->player = player;
 
     glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
@@ -45,32 +47,29 @@ void Enemy::init(int id, int player, glm::vec3 pos, EnemyType type) {
         break;
     }
 
-    getTransform()->setVisibility(HIDDEN_SELF);
-    getTransform()->setPos(pos);
+    transform->setVisibility(HIDDEN_SELF);
+    transform->setPos(pos);
     model->setPos(0.0f, scale.y / 2.0f, 0.0f);
     model->setScale(scale);
     model->color = color;
 
-    Collider* c = getCollider();
     glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
     glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
-    c->setExtents(min, max);
-    c->type = ColliderType::FULL;
-    c->tag = Tag::ENEMY;
-    c->enabled = true;
+    collider->setExtents(min, max);
+    collider->type = ColliderType::FULL;
+    collider->tag = Tag::ENEMY;
 }
 
 void Enemy::update(GLfloat delta) {
     if (health <= 0.0f) {
-        EntityManagerInstance->ReturnEnemy(id);
+        EntityManagerInstance->ReturnEnemy(this);
     }
-    Collider& col = *getCollider();
 
     jumpTimer -= delta;
     shootTimer -= delta;
-    if (col.grounded && jumpTimer < 0.0f) {
-        col.vel.y = jumpVel;
-        col.grounded = false;
+    if (collider->grounded && jumpTimer < 0.0f) {
+        collider->vel.y = jumpVel;
+        collider->grounded = false;
         jumpTimer += Mth::rand01() * 10.0f + 2.0f;
     }
 
@@ -78,7 +77,7 @@ void Enemy::update(GLfloat delta) {
         return;
     }
 
-    glm::vec3 dirToPlayer = Graphics::getTransform(player)->getWorldPos() - getTransform()->getWorldPos();
+    glm::vec3 dirToPlayer = player->getWorldPos() - transform->getWorldPos();
     glm::vec3 shootDir = dirToPlayer + Mth::randInsideUnitCube() * AIM_DEVIANCE;
     float distsq = glm::dot(dirToPlayer, dirToPlayer);
     if (shootDir != glm::vec3(0.0f)) {
@@ -91,12 +90,12 @@ void Enemy::update(GLfloat delta) {
     if (shootTimer < 0.0f) {
         shootTimer = Mth::rand01() * 10.0f + 5.0f;
         if (distsq <= SHOOT_VECINITY * SHOOT_VECINITY) {
-            EntityManagerInstance->SpawnProjectile(getTransform()->getWorldPos(), getCollider()->vel + shootDir*40.0f, false);
+            EntityManagerInstance->SpawnProjectile(transform->getWorldPos(), collider->vel + shootDir*40.0f, false);
         }
     }
 
-    col.vel.x = dirToPlayer.x;
-    col.vel.z = dirToPlayer.z;
+    collider->vel.x = dirToPlayer.x;
+    collider->vel.z = dirToPlayer.z;
 
 }
 

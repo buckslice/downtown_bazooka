@@ -5,49 +5,48 @@
 
 Player::Player(Camera* cam) {
     this->cam = cam;
-    getTransform()->setVisibility(Visibility::HIDDEN_SELF);
+    transform->setVisibility(Visibility::HIDDEN_SELF);
 
-    Transform* model = Graphics::getTransform(Graphics::registerTransform());
+    Transform* model = Graphics::registerTransform();
     model->setPos(0.0f, 1.5f, 0.0f);
     model->setScale(1.0f, 1.2f, 1.0f);
 
-    Transform* face = Graphics::getTransform(Graphics::registerTransform());
+    Transform* face = Graphics::registerTransform();
     face->setPos(0.0f, 1.8f, 0.4f);
     face->setScale(0.8f, 0.4f, 0.9f);
 
-    Transform* lleg = Graphics::getTransform(Graphics::registerTransform());
+    Transform* lleg = Graphics::registerTransform();
     lleg->setPos(0.35f, 0.5f, 0.0f);
     lleg->setScale(0.25f, 1.0f, 0.25f);
 
-    Transform* rleg = Graphics::getTransform(Graphics::registerTransform());
+    Transform* rleg = Graphics::registerTransform();
     rleg->setPos(-0.35f, 0.5f, 0.0f);
     rleg->setScale(0.25f, 1.0f, 0.25f);
 
-    Transform* larm = Graphics::getTransform(Graphics::registerTransform());
+    Transform* larm = Graphics::registerTransform();
     larm->setPos(0.5f, 1.5f, 0.0f);
     larm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* rarm = Graphics::getTransform(Graphics::registerTransform());
+    Transform* rarm = Graphics::registerTransform();
     rarm->setPos(-0.5f, 1.5f, 0.0f);
     rarm->setScale(1.0f, 0.25f, 0.25f);
 
-    Transform* bazooka = Graphics::getTransform(Graphics::registerTransform());
+    Transform* bazooka = Graphics::registerTransform();
     bazooka->setPos(0.8f, 1.8f, 0.2f);
     bazooka->setScale(0.5f, 0.5f, 2.0f);
 
-    getTransform()->color = glm::vec3(0.0f, 1.0f, 0.4f);
-    getTransform()->parentAllWithColor(model, face, lleg, rleg, larm, rarm, bazooka);
+    transform->color = glm::vec3(0.0f, 1.0f, 0.4f);
+    transform->parentAllWithColor(model, face, lleg, rleg, larm, rarm, bazooka);
     bazooka->color = glm::vec3(0.25f, 0.0f, 0.5f);
 
     currRot = targRot = glm::quat();
 
-    Collider* c = getCollider();
     glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
     glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
     glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
-    c->setExtents(min, max);
-    c->tag = Tag::PLAYER;
-    c->type = ColliderType::FULL;
+    collider->setExtents(min, max);
+    collider->tag = Tag::PLAYER;
+    collider->type = ColliderType::FULL;
 
     Physics::setCollisionCallback(this);
 }
@@ -55,8 +54,8 @@ Player::Player(Camera* cam) {
 void Player::spawn(glm::vec3 spawnPos, bool awake) {
     flying = false;
     health = maxHealth;
-    getTransform()->setPos(spawnPos);
-    getCollider()->enabled = awake;
+    transform->setPos(spawnPos);
+    collider->enabled = awake;
 }
 
 float Player::getHealth() {
@@ -74,11 +73,11 @@ float Player::getDamage() {
 void Player::update(GLfloat delta) {
     isDead = health <= 0.0f;
     if (isDead) {
-        getCollider()->enabled = false;
+        collider->enabled = false;
         return;
     }
     bool childrenVisible = cam->getCamDist() > 1.0f;
-    getTransform()->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
+    transform->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
 
     // get movement
     glm::vec3 input = getMovementDir();
@@ -94,7 +93,6 @@ void Player::update(GLfloat delta) {
 
     // check shoot input
     if (Input::justPressed(sf::Keyboard::E)) {
-
         if (timeSinceShot > 1 / shotsPerSecond) {
             timeSinceShot = 0.0f;
             shoot();
@@ -123,46 +121,45 @@ void Player::update(GLfloat delta) {
 
     // slerp keeps the quaternion normalized throughout (lerp looks like shit lol)
     currRot = glm::slerp(currRot, targRot, delta * 8.0f);
-    getTransform()->setRot(currRot);
+    transform->setRot(currRot);
 
-    Collider& pt = *getCollider();
     if (flying) {
-        pt.gravityMultiplier = 0.0f;
+        collider->gravityMultiplier = 0.0f;
         float flyspeed = speed * 20.0f;
         if (Input::pressed(sf::Keyboard::LControl)) {
             flyspeed *= 3.0f;
         }
-        pt.vel = (xzmove + cam->worldUp * input.y) * flyspeed;
+        collider->vel = (xzmove + cam->worldUp * input.y) * flyspeed;
     } else {
         input.y = 0.0f; // ignore this part of input when not flying
-        if (pt.vel.y != 0.0f) {
-            pt.grounded = false;
+        if (collider->vel.y != 0.0f) {
+            collider->grounded = false;
         }
-        GLfloat oldy = pt.vel.y;
+        GLfloat oldy = collider->vel.y;
 
-        pt.gravityMultiplier = 1.0f;
+        collider->gravityMultiplier = 1.0f;
         //if (!pt.grounded && Input::pressed(sf::Keyboard::Space) && oldy > 0)//If the player is holding down Space and moving up, then they'll decelerate more slowly
         //	pt.gravityMultiplier = 1.0f;
         //else
         //	pt.gravityMultiplier = 3.0f;
 
-        GLfloat accel = pt.grounded ? 10.0f : 2.0f;
+        GLfloat accel = collider->grounded ? 10.0f : 2.0f;
         accel *= speed * delta;
-        pt.vel.y = 0.0f;
-        pt.vel += xzmove * accel;
+        collider->vel.y = 0.0f;
+        collider->vel += xzmove * accel;
 
         // max vel limit
-        if (glm::dot(pt.vel, pt.vel) > speed * speed) {
-            pt.vel = glm::normalize(pt.vel) * speed;
+        if (glm::dot(collider->vel, collider->vel) > speed * speed) {
+            collider->vel = glm::normalize(collider->vel) * speed;
         }
 
         // if no input then apply drag
         if (input == glm::vec3(0.0f)) {
-            pt.vel *= (pt.grounded ? .8f : .95f);
-            pt.vel *= .9f;
+            collider->vel *= (collider->grounded ? .8f : .95f);
+            collider->vel *= .9f;
         }
         // gravity 9.81 not right for some reason
-        pt.vel.y = oldy;
+        collider->vel.y = oldy;
     }
 }
 
@@ -202,20 +199,19 @@ void Player::onCollision(CollisionData data) {
 
 void Player::jump() {
     // check if grounded
-    Collider& c = *getCollider();
-    if (c.grounded && !flying) {
+    if (collider->grounded && !flying) {
         AudioInstance->playSound(Resources::get().jumpSound);
-        c.vel.y = jumpSpeed;
-        c.grounded = false;
+        collider->vel.y = jumpSpeed;
+        collider->grounded = false;
         timeSinceHitJump = 1000.0f;
     }
 }
 
 void Player::shoot() {
     AudioInstance->playSound(Resources::get().shootSound);
-    glm::vec3 shootPos = getTransform()->getWorldPos();
+    glm::vec3 shootPos = transform->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, getCollider()->vel + cam->forward*shootSpeed, true);
+    EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
 }
 
 void Player::addHealth(float amount) {

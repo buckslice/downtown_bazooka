@@ -7,22 +7,21 @@ EntityManager *EntityManagerInstance;//An extern from entityManager.h
 EntityManager::EntityManager(Player* player) : player(player) {
 
     // init particles
-    particles.clear();
-    for (int i = 0; i < MAX_PARTICLES; i++) {
-        Particle p;
-        particles.push_back(p);
-    }
+    // careful with stuff like this because don't want to make a temp obj and call destructor with pooled stuff
+    // i tried deleting the copy constructor in entity where this happens but then this function cant be
+    // used at all. Probably need to rethink pool strategy a bit to be less error prone
+    particles.resize(MAX_PARTICLES);
 
     // should switch this from pool ?
-    projectiles = new Pool<Projectile>(MAX_PROJECTILES);
-    enemies = new Pool<Enemy>(MAX_ENEMIES);
-    items = new Pool<Item>(MAX_ITEMS);
+    projectiles = new MemPool<Projectile>(MAX_PROJECTILES);
+    enemies = new MemPool<Enemy>(MAX_ENEMIES);
+    items = new MemPool<Item>(MAX_ITEMS);
 
 }
 
 void EntityManager::init(int numberOfDudes) {
     EntityManagerInstance = this;
-    return;
+
     for (int i = 0; i < numberOfDudes; i++) {
         SpawnEnemy();
     }
@@ -34,45 +33,27 @@ void EntityManager::init(int numberOfDudes) {
 // should make like a PooledEntity child class of Entity or something
 // this is pretty filth for now but whatever
 void EntityManager::returnAllObjects() {
-    for (size_t i = 0, len = projectiles->getSize(); i < len; ++i) {
-        ReturnProjectile(i);
-    }
-    for (size_t i = 0, len = enemies->getSize(); i < len; ++i) {
-        ReturnEnemy(i);
-    }
-    for (size_t i = 0, len = items->getSize(); i < len; ++i) {
-        ReturnItem(i);
-    }
+    projectiles->freeAll();
+    enemies->freeAll();
+    items->freeAll();
 }
 
 void EntityManager::update(float delta) {
     player->update(delta);
 
     // update enemies
-    auto& eobjs = enemies->getObjects();
-    for (size_t i = 0, len = eobjs.size(); i < len; ++i) {
-        if (eobjs[i].id < 0) {
-            continue;
-        }
-        eobjs[i].data.update(delta);
+    for (Enemy* e = nullptr; enemies->next(e);) {
+        e->update(delta);
     }
 
     // update items
-    auto& iobjs = items->getObjects();
-    for (size_t i = 0, len = iobjs.size(); i < len; ++i) {
-        if (iobjs[i].id < 0) {
-            continue;
-        }
-        iobjs[i].data.update(delta);
+    for (Item* i = nullptr; items->next(i);) {
+        i->update(delta);
     }
 
     // update projectiles
-    auto& pobjs = projectiles->getObjects();
-    for (size_t i = 0, len = pobjs.size(); i < len; ++i) {
-        if (pobjs[i].id < 0) {
-            continue;
-        }
-        pobjs[i].data.update(delta);
+    for (Projectile* p = nullptr; projectiles->next(p);) {
+        p->update(delta);
     }
 
     // update particles
@@ -97,10 +78,9 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float
     Particle* p = getNextParticle();
     p->type = effect;
     p->activate();
-    p->getCollider()->vel = vel + Mth::randInsideSphere(1.0f) * mag;
-    Transform* t = p->getTransform();
-    t->setPos(pos);
-    t->setScale(glm::vec3(.25f));
+    p->collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
+    p->transform->setPos(pos);
+    p->transform->setScale(glm::vec3(.25f));
     return p;
 }
 
@@ -115,65 +95,45 @@ void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 v
 
 // projectiles
 void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer) {
-    int id = projectiles->get();
-    if (id < 0) {  // happens if pool is empty
-        return;
+    Projectile* p = projectiles->alloc();
+    if (!p) {
+        return; // just ignore cuz pool is empty
     }
-    Projectile* p = projectiles->getData(id);
-    p->getCollider()->tag = forPlayer ? Tag::PLAYER_PROJECTILE : Tag::ENEMY_PROJECTILE;
+    p->collider->tag = forPlayer ? Tag::PLAYER_PROJECTILE : Tag::ENEMY_PROJECTILE;
     p->type = forPlayer ? ProjectileType::ROCKET : ProjectileType::LASER;
-    p->init(id, pos, vel);
+    p->init(pos, vel);
 }
 
 void EntityManager::SpawnEnemy() {
-    int id = enemies->get();
-    if (id < 0) {
+    Enemy* e = enemies->alloc();
+    if (!e){
         return;
     }
-
-    Enemy* e = enemies->getData(id);
-
     //glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
     glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
     EnemyType et = Mth::rand01() < 0.02f ? EnemyType::ELITE : EnemyType::BASIC;
-    e->init(id, player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), et);
-
+    e->init(player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), et);
 }
 
 
 void EntityManager::SpawnItem() {
-    int id = items->get();
-    if (id < 0) {
+    Item* i = items->alloc();
+    if (!i) {
         return;
     }
-
-    Item* i = items->getData(id);
-
     glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    i->init(id, 60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType)(int)Mth::rand0X((int)ItemType::COUNT));
+    i->init(60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType)(int)Mth::rand0X((int)ItemType::COUNT));
 }
 
 // should make a sub class of entity / template this or some shit later
-void EntityManager::ReturnProjectile(int id) {
-    ReturnPooledEntity(id, projectiles);
+void EntityManager::ReturnProjectile(Projectile* p) {
+    projectiles->free(p);
 }
 
-void EntityManager::ReturnEnemy(int id) {
-    ReturnPooledEntity(id, enemies);
+void EntityManager::ReturnEnemy(Enemy* e) {
+    enemies->free(e);
 }
 
-void EntityManager::ReturnItem(int id) {
-    ReturnPooledEntity(id, items);
-}
-
-template <class Entity>
-void EntityManager::ReturnPooledEntity(int id, Pool<Entity>* pool) {
-    auto& objs = pool->getObjects();
-    if (id < 0 || objs[id].id < 0) {
-        return;
-    }
-
-    objs[id].data.getCollider()->enabled = false;
-    objs[id].data.getTransform()->setVisibility(HIDDEN);
-    pool->ret(id);
+void EntityManager::ReturnItem(Item* i) {
+    items->free(i);
 }
