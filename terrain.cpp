@@ -265,10 +265,6 @@ float Chunk::getHeight(float x, float z) {
     glm::vec3 c;
     float i, j;
 
-    // shouldnt ever happen but not sure if it still does lol
-    // should try this #def NDEBUG shit working would be cool
-    //assert(a + 1 < vert.size() && b - 1 < verts.size());
-
     // check which triangle of tile youre in
     if (x - o.x - xi*TILE_SIZE > z - o.z - zi*TILE_SIZE) {
         c = verts[a + 1].position;

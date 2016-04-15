@@ -1,22 +1,28 @@
 #pragma once
+
+// would make debug run better but we need to recompile SFML with this option i think
+// though it definitely seems like glm/glm.hpp is culprit but thats not even in a lib soo..
+//#define _HAS_ITERATOR_DEBUGGING 0
+
 #include <vector>
 #include "entity.h"
 #include "enemy.h"
 #include "item.h"
 #include "mathutil.h"
-#include "Particle.h"
+#include "particle.h"
 #include "resources.h"
 #include "audio.h"
 #include "pool.h"
+
 const int MAX_PROJECTILES = 200;
 const int MAX_PARTICLES = 5000;
 const int MAX_ENEMIES = 1100;
 const int MAX_ITEMS = 1100;
 const float SPAWN_HEIGHT = 200.0f;
 const float SPAWN_OFFSET = 50.0f; // how much lower the player spawns from the items and enemies
+
 class EntityManager {
 public:
-
     EntityManager(Player* player);
 
     ~EntityManager() {

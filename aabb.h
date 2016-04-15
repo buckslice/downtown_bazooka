@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "glm/gtx/component_wise.hpp"
 
 class AABB {
 public:

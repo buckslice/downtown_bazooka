@@ -14,12 +14,18 @@ struct ColliderData {
     Entity* entity = nullptr;
 };
 
+struct OverlapEvent {
+    AABB bounds;
+    CollisionData data;
+};
+
 class Quadtree;
 class Physics {
 public:
     const float GRAVITY = -30.0f;
 
     Physics();
+    ~Physics();
 
     // progress the physics simulation by delta time
     // center dictates the center of the collision area
@@ -45,10 +51,16 @@ public:
     void streamColliderModels();
 
     Terrain* terrainGen;   // ref to terrain for collision detection
+
 private:
     const float MATRIX_SIZE = 1500.0f;
 
+    // used for spacial partitioning to reduce physics checks
+    // turns an N^2 problem into NlogN
     static Quadtree* collisionTree;
+
+    // stores overlapEvents and executes them after a new tree is built
+    static std::vector<OverlapEvent> overlapEvents;
 
     // returns top level aabb that indicates the boundaries of the physics simulation
     // starts as root node for the collisionTree

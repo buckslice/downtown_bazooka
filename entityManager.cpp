@@ -125,7 +125,6 @@ void EntityManager::SpawnItem() {
     i->init(60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType)(int)Mth::rand0X((int)ItemType::COUNT));
 }
 
-// should make a sub class of entity / template this or some shit later
 void EntityManager::ReturnProjectile(Projectile* p) {
     projectiles->free(p);
 }

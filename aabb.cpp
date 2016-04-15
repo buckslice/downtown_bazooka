@@ -1,5 +1,6 @@
 #include "aabb.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include "glm/gtx/component_wise.hpp"
 
 AABB::AABB() {}
 

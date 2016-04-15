@@ -10,8 +10,8 @@ class Entity;
 
 struct CollisionData {
     ColliderType type;  // collider type
-    Tag tag;    // collider tag
-    Entity* entity;     // pointer to entity you collided with
+    Tag tag;            // collider tag
+    Entity* entity;   // pointer to entity you collided with
 };
 
 class Entity {

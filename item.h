@@ -27,5 +27,6 @@ private:
 
 	float rotSpeed;
 	float timer;
+    float shouldDestroy = false;
 };
 

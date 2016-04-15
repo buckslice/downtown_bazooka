@@ -56,10 +56,8 @@ void Projectile::onDeath() {
 }
 
 void Projectile::onCollision(CollisionData data) {
-    Tag tag = collider->tag;
-    if (data.tag == Tag::PLAYER && tag != Tag::PLAYER_PROJECTILE) {
-        onDeath();
-    } else if (data.tag == Tag::ENEMY && tag != Tag::ENEMY_PROJECTILE) {
-        onDeath();
+    if ((data.tag == Tag::PLAYER && collider->tag != Tag::PLAYER_PROJECTILE) ||
+        (data.tag == Tag::ENEMY && collider->tag != Tag::ENEMY_PROJECTILE)) {
+        timer = -1.0f;
     }
 }

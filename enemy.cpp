@@ -63,6 +63,7 @@ void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
 void Enemy::update(GLfloat delta) {
     if (health <= 0.0f) {
         EntityManagerInstance->ReturnEnemy(this);
+        return;
     }
 
     jumpTimer -= delta;
@@ -102,6 +103,5 @@ void Enemy::update(GLfloat delta) {
 void Enemy::onCollision(CollisionData data) {
     if (data.tag == Tag::PLAYER_PROJECTILE || data.tag == Tag::EXPLOSION) {
         health -= EntityManagerInstance->getPlayerDamage();
-        //health -= dynamic_cast<Player*>(data.entity)->getDamage();
     }
 }

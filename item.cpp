@@ -21,6 +21,10 @@ Item::~Item() {
 }
 
 void Item::update(GLfloat delta) {
+    if (shouldDestroy) {
+        EntityManagerInstance->ReturnItem(this);
+        return;
+    }
 	timer += delta;
 	transform->rotate(rotSpeed*delta, glm::vec3(0.0f, 1.0f, 0.0f));
 	model->setPos(0.0f, 1.0f + sin(timer * 2.0f) * 0.5f, 0.0f);
@@ -28,7 +32,7 @@ void Item::update(GLfloat delta) {
 
 void Item::onCollision(CollisionData data) {
 	if (data.tag == Tag::PLAYER) {
-		EntityManagerInstance->ReturnItem(this);
+        shouldDestroy = true;
 	}
 }
 

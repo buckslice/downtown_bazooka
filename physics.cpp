@@ -5,18 +5,20 @@
 #include "physics.h"
 #include "graphics.h"
 
-// declared like this so can be accessed from static methods
-const int MAX_DYNAMICS = 10000;
-const int MAX_STATICS = 15000;
-
-// pool for static and dynamic objects
-static MemPool<ColliderData> dynamicPool(MAX_DYNAMICS);
-static MemPool<AABB> staticPool(MAX_STATICS);
 
 Quadtree* Physics::collisionTree;
 
+static MemPool<ColliderData> dynamicPool(10000);
+static MemPool<AABB> staticPool(15000);
+
+std::vector<OverlapEvent> Physics::overlapEvents;
+
 Physics::Physics() {
     collisionTree = new Quadtree(0, getPhysicsArea(glm::vec3(0.0f), MATRIX_SIZE));
+}
+
+Physics::~Physics() {
+    delete collisionTree;
 }
 
 // if you want to add these back in later for science
@@ -26,7 +28,6 @@ Physics::Physics() {
 
 void Physics::update(float delta, glm::vec3 center) {
     //std::cout << staticPool.getFreeList().size() << std::endl;
-
     bool printedErrorThisFrame = false;
     int numberOver = 0;
 
@@ -50,13 +51,32 @@ void Physics::update(float delta, glm::vec3 center) {
         if (col.type == ColliderType::BASIC) {
             continue;
         }
-        col.awake = collisionTree->insert(QuadtreeData{
-            AABB::getSwept(col.getAABB(), col.vel*delta), dynamicPool.getIndex(cd), true });
+        col.awake = collisionTree->insert(
+            QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dynamicPool.getIndex(cd), true });
 
     }
 
-
+    // used by rest of update method 
     std::vector<QuadtreeData> returnData;
+
+    // process and send out all overlap events since last frame
+    for (size_t i = 0; i < overlapEvents.size(); ++i) {
+        OverlapEvent& oe = overlapEvents[i];
+
+        collisionTree->retrieve(returnData, oe.bounds);
+
+        for (size_t i = 0, len = returnData.size(); i < len; ++i) {
+            QuadtreeData& qtd = returnData[i];
+            if (qtd.dynamic) {
+                ColliderData* cd = dynamicPool.get(qtd.index);
+                if (cd->entity && AABB::check(oe.bounds, cd->collider.getAABB())) {
+                    cd->entity->onCollision(oe.data);
+                }
+            }
+        }
+    }
+    overlapEvents.clear(); // clear event list for next frame
+
     // for each dynamic object check it against all objects in its leaf(s)
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
@@ -295,6 +315,8 @@ void Physics::removeStatic(int index) {
 }
 
 Collider* Physics::registerDynamic(Transform* transform) {
+    assert(transform && "Physics::registerDynamic");
+
     ColliderData* cd = dynamicPool.alloc();
     if (!cd) {
         std::cout << "NO FREE DYNAMIC COLLIDERS";
@@ -315,18 +337,7 @@ AABB Physics::getPhysicsArea(glm::vec3 center, float size) {
 }
 
 void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
-    std::vector<QuadtreeData> returnData;
-    collisionTree->retrieve(returnData, aabb);
-
-    for (size_t i = 0, len = returnData.size(); i < len; ++i) {
-        QuadtreeData& qtd = returnData[i];
-        if (qtd.dynamic) {
-            ColliderData* cd = dynamicPool.get(qtd.index);
-            if (cd->entity && AABB::check(aabb, cd->collider.getAABB())) {
-                cd->entity->onCollision(data);
-            }
-        }
-    }
+    overlapEvents.push_back(OverlapEvent{ aabb, data });
 }
 
 void Physics::streamColliderModels() {

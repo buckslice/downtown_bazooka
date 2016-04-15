@@ -14,13 +14,13 @@ public:
 
     void onCollision(CollisionData data) override;
 
-	void onDeath();
-
     void init(glm::vec3 pos, glm::vec3 vel);
 
 	ProjectileType type;
 
 private:
+	void onDeath();
+
     float timer;
 };
 

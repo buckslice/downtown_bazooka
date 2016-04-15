@@ -15,15 +15,15 @@ public:
         bool free;
     };
 
-    explicit MemPool(size_t max_size) :
-        max_size(max_size),
+    explicit MemPool(size_t max) :
+        maxCount(max),
         nextFree(nullptr),
-        count(0) {
-        if (max_size > 64000) { // cap at arbitrary 64K
-            max_size = 64000;
+        count(0){
+        if (maxCount > 64000) { // cap at arbitrary 64K
+            maxCount = 64000;
         }
         // operator new to allocate a whole block of memory for this pool
-        memory = (char*)::operator new(max_size * itemSize);
+        memory = (char*)::operator new(maxCount * itemSize);
     }
 
     ~MemPool() {
@@ -38,8 +38,11 @@ public:
             return &ret->data;
         }
 
-        if (count >= max_size) {
-            return nullptr; // later allocate new memory block
+        // if there is no more room and nextFree is null then return nullptr
+        // later add ability to allocate new memory blocks like original article
+        if (count >= maxCount) {
+            std::cout << "pool empty" << std::endl;
+            return nullptr;
         }
         // else increment count and allocate
         Item* ret = new(memory + itemSize * count) Item();
@@ -50,11 +53,11 @@ public:
     void free(T* data) {
         data->~T(); //call destructor on data
 
-                    // cast data as a pointer to a pointer
-                    // and store the current location of nextFree in its place
+        // cast data as a pointer to a pointer
+        // and store the current location of nextFree in its place
         *((Item**)data) = nextFree;
         nextFree = (Item*)data; // make nextFree point to this item
-        nextFree->free = true;
+        nextFree->free = true;  // set the free bool so next() will skip it
     }
 
     void free(int index) {
@@ -79,14 +82,14 @@ public:
         if (!data) {    // if data is nullptr then start at one back from beginning
             address = memory - itemSize;
         }
-        do {
+        do {    // increment forward and check to make sure not past memory block
             address += itemSize;
             if (address >= memory + itemSize * count) {
                 data = nullptr;
                 return false;
             }
-        } while (((Item*)(address))->free);
-
+        } while (((Item*)(address))->free); // keep doing so while the item is free
+        // update the pointer reference with address of next allocated
         data = (T*)address;
         return true;
     }
@@ -104,14 +107,13 @@ public:
     }
 
 private:
-    char* memory;
-    size_t max_size;
+    char* memory;    // block of memory for this pool
+    size_t maxCount; // number of elements in pool
 
-    Item* nextFree;
-    size_t count;
+    Item* nextFree;  // pointer to next free element
+    size_t count;    // signifies highest element index since reset
 
     static const size_t itemSize;
-
 };
 
 // ensures itemSize is at least 8 bytes

@@ -51,8 +51,6 @@ Graphics::Graphics(sf::RenderWindow& window) {
 
     skybox = new Skybox();
 
-    //boxes = new Pool<Transform>(10000);
-
     // testing out new transforms by setting up some arrows for the axes
     Transform* xbox = registerTransform();
     Transform* xboxl = registerTransform();
@@ -128,6 +126,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
 }
 
 void Graphics::uploadTransforms() {
+//    std::cout << boxes.actualCountLol << std::endl;
     for (Transform* t = nullptr; boxes.next(t);) {
         if (!t->shouldDraw()) {
             continue;
