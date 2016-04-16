@@ -45,6 +45,7 @@ private:
     float invulnTime = 0.0f;
     float timeSinceHitJump = -1.0f;
     float timeSinceShot = 10.0f;
+    float timeSinceGrounded = 0.0f;
 
     glm::quat currRot, targRot;
 

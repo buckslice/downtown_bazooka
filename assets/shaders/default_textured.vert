@@ -17,6 +17,7 @@ void main()
 {
 	Color = color;
 	Texcoord = texcoord;
-    gl_Position = proj * view * model * vec4(position, 1.0);
-	wpos = (model * vec4(position,1.0)).xyz;
+	vec4 mvec = model*vec4(position, 1.0);
+	wpos = mvec.xyz;
+    gl_Position = proj * view * mvec;
 }

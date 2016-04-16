@@ -28,11 +28,17 @@ struct TVertex : Vertex {
     glm::vec2 texcoord;
 };
 
-//struct CVertex : Vertex {
-//    glm::vec3 color;
-//};
+struct CVertex : Vertex {
+    CVertex(glm::vec3 position, glm::vec3 color) :
+        Vertex(position), color(color) {
+    }
+    glm::vec3 color;
+};
 
 struct CTVertex : Vertex {
+    CTVertex(CVertex cvert, glm::vec2 texcoord) :
+        Vertex(cvert.position), color(cvert.color), texcoord(texcoord) {
+    }
     CTVertex(glm::vec3 position, glm::vec3 color, glm::vec2 texcoord) :
         Vertex(position), color(color), texcoord(texcoord) {
     }
@@ -43,16 +49,11 @@ struct CTVertex : Vertex {
 template<class Vertex>
 class Mesh {
 public:
-    std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
     const GLuint TRIS;
 
     virtual void render() = 0;
 
     Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices) : TRIS(indices.size()) {
-        this->vertices = vertices;
-        this->indices = indices;
-
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
@@ -86,17 +87,12 @@ protected:
     GLuint VAO, VBO, EBO;
 };
 
-// used for standard models (none in game yet) and terrain
+// used for standard models (none in game yet) and terrain (currently hardcoded for this)
 class StandardMesh : Mesh<CTVertex> {
     // bool manual mesh binding?
 
 public:
-
-    GLuint texture;
-    //bool manualBinding = true;
-
-    StandardMesh(std::vector<CTVertex>& vertices, std::vector<GLuint> indices, GLuint texture) : Mesh(vertices, indices) {
-        this->texture = texture;
+    StandardMesh(std::vector<CTVertex>& vertices, std::vector<GLuint> indices) : Mesh(vertices, indices) {
         // set up attribute pointers
         glBindVertexArray(VAO);
 
@@ -108,10 +104,22 @@ public:
         glBindVertexArray(0);
     }
 
-    void render() override {
-        // set bindings
+    // hard coded batching for now
+    void bindTextures(GLuint texture, GLuint noise) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, noise);
+    }
+    void unbind() {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    void render() override {
+        // set bindings
         glBindVertexArray(VAO);
 
         // draw
@@ -119,9 +127,7 @@ public:
 
         // unbind stuff
         glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
-
 
 };
 

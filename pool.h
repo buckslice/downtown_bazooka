@@ -11,7 +11,7 @@ template <class T>
 class MemPool {
 public:
     struct Item {
-        T data;
+        T item;
         bool free;
     };
 
@@ -30,13 +30,13 @@ public:
         ::operator delete(memory);  // deallocate whole memory block
     }
 
-    // constructs data and returns pointer
+    // constructs item and returns pointer to it
     T* alloc() {
         if (nextFree) { // if nextFree is not null
             Item* ret = nextFree;   // get pointer to item at nextFree
             nextFree = *((Item**)nextFree); // assign nextFree to be whatever was in this free spot
             new(ret) Item();    // placement new 
-            return &ret->data;
+            return &ret->item;
         }
 
         // if there is no more room and nextFree is null then return nullptr
@@ -48,28 +48,28 @@ public:
         // else increment count and allocate
         Item* ret = new(memory + itemSize * count) Item();
         ++count;
-        return &ret->data;
+        return &ret->item;
     }
 
-    // frees data from pointer address
-    void free(T* data) {
-        data->~T(); //call destructor on data
+    // frees item at pointer address
+    void free(T* item) {
+        item->~T(); //call destructor on item
 
-        // cast data as a pointer to a pointer
+        // cast item as a pointer to a pointer
         // and store the current location of nextFree in its place
-        *((Item**)data) = nextFree;
-        nextFree = (Item*)data; // make nextFree point to this item
+        *((Item**)item) = nextFree;
+        nextFree = (Item*)item; // make nextFree point to this item
         nextFree->free = true;  // set the free bool so next() will skip it
     }
 
-    // frees data from index
+    // frees item at index
     void free(int index) {
         free((T*)(memory + index*itemSize));
     }
 
-    // frees all allocated data in pool
+    // frees all allocated items in pool
     void freeAll() {
-        // call destructors on all allocated data
+        // call destructors on all allocated items
         for (T* t = nullptr; next(t);) {
             t->~T();
         }
@@ -81,32 +81,32 @@ public:
     // this is pretty much an iterator
     // call like so to iterate over all allocated elements:
     // for(T* t = nullptr; pool.next(t);){}
-    bool next(T*& data) {   // reference to a pointer
-        char* address = (char*)data;
-        if (!data) {    // if data is nullptr then start at one back from beginning
+    bool next(T*& item) {   // reference to a pointer
+        char* address = (char*)item;
+        if (!item) {    // if item is nullptr then start at one back from beginning
             address = memory - itemSize;
         }
         do {    // increment forward and check to make sure not past memory block
             address += itemSize;
             if (address >= memory + itemSize * count) {
-                data = nullptr;
+                item = nullptr;
                 return false;
             }
         } while (((Item*)(address))->free); // keep doing so while the item is free
         // update the pointer reference with address of next allocated
-        data = (T*)address;
+        item = (T*)address;
         return true;
     }
 
-    int getIndex(T* data) { // get index from type pointer
-        return ((char*)data - memory) / itemSize;
+    int getIndex(T* item) { // get index from type pointer
+        return ((char*)item - memory) / itemSize;
     }
 
     int getIndex(char* ptr) {   // get index to current item from random point in memory block
         return (int)(((char*)ptr - memory) / itemSize);
     }
 
-    T* get(int index) { // return data pointer by index
+    T* get(int index) { // return item pointer by index
         return (T*)(memory + index * itemSize);
     }
 

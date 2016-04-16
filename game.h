@@ -62,8 +62,7 @@ private:
     Menu* menu;
     Audio* audio;
 
-    // some utility clocks
-    sf::Clock frameTime, gameTime;
+    sf::Clock frameTime;
 
     void testMathUtils();
 

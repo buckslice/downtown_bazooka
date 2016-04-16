@@ -230,6 +230,7 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 proj = cam.getProjMatrix(WIDTH, HEIGHT);
 
+    // use solid cube shader
     r.instanceShader.use();
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -243,15 +244,15 @@ void Graphics::renderScene(Camera& cam, Terrain& terrain, bool toFrameBuffer) {
     // upload boxes to corresponding streams
     uploadTransforms();
 
-    // set and draw normal streams
+    // set and draw solid streams
     solidStream->setModels(smodels, true);
     solidStream->setColors(scolors, true);
     solidStream->render();
 
-    // draw terrain
+    // draw terrain using default shader and uploads building and trees to textured streams
     terrain.render(view, proj);
 
-    // draw textured cube instances
+    // use instanced textured shader
     r.instanceTexShader.use();
     glUniformMatrix4fv(glGetUniformLocation(r.instanceTexShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.instanceTexShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));

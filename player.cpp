@@ -76,6 +76,11 @@ void Player::update(GLfloat delta) {
         collider->enabled = false;
         return;
     }
+    timeSinceHitJump += delta;
+    timeSinceGrounded += delta;
+    timeSinceShot += delta;
+    invulnTime += delta;
+
     bool childrenVisible = cam->getCamDist() > 1.0f;
     transform->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
 
@@ -91,6 +96,10 @@ void Player::update(GLfloat delta) {
         timeSinceHitJump = 0.0f;
     }
 
+    if (collider->grounded) {
+        timeSinceGrounded = 0.0f;
+    }
+
     // check shoot input
     if (Input::justPressed(sf::Keyboard::E)) {
         if (timeSinceShot > 1 / shotsPerSecond) {
@@ -104,9 +113,7 @@ void Player::update(GLfloat delta) {
     if (timeSinceHitJump < jumpLenience) {
         jump();
     }
-    timeSinceHitJump += delta;
-    timeSinceShot += delta;
-    invulnTime += delta;
+
 
     // cam forward in xz plane
     glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
@@ -199,7 +206,7 @@ void Player::onCollision(CollisionData data) {
 
 void Player::jump() {
     // check if grounded
-    if (collider->grounded && !flying) {
+    if ((collider->grounded || timeSinceGrounded < 0.25f) && !flying) {
         AudioInstance->playSound(Resources::get().jumpSound);
         collider->vel.y = jumpSpeed;
         collider->grounded = false;

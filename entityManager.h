@@ -1,6 +1,6 @@
 #pragma once
 
-// would make debug run better but we need to recompile SFML with this option i think
+// would make debug run way better but we need to recompile SFML with this option i think
 // though it definitely seems like glm/glm.hpp is culprit but thats not even in a lib soo..
 //#define _HAS_ITERATOR_DEBUGGING 0
 

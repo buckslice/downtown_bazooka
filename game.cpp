@@ -1,5 +1,7 @@
 #include "game.h"
 
+sf::Clock gameTime;
+
 Game::Game(GLuint width, GLuint height)
     : WIDTH{ width }, HEIGHT{ height } {
 

@@ -59,6 +59,7 @@ void Resources::loadTextures(bool mipmapped) {
     terrainTex = GLHelper::loadTexture("assets/images/grid2.png", mipmapped);
     solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
     triangleTex = GLHelper::loadTexture("assets/images/triangle.png", mipmapped);
+    noiseTex = GLHelper::loadTexture("assets/images/noise4.jpg", mipmapped);
 
     loadedTexturesBefore = true;
 }
@@ -94,13 +95,15 @@ void Resources::buildShaders() {
     glUniform1i(glGetUniformLocation(instanceTexShader.program, "tex"), 0);
 
     // terrainShader
-    success &= defaultShader.build("assets/shaders/default_textured.vert", "assets/shaders/default_textured.frag");
-    defaultShader.use();
-    glUniform1i(glGetUniformLocation(defaultShader.program, "tex"), 0);
+    success &= terrainShader.build("assets/shaders/default_textured.vert", "assets/shaders/terrain_textured.frag");
+    terrainShader.use();
+    glUniform1i(glGetUniformLocation(terrainShader.program, "tex"), 0);
+    glUniform1i(glGetUniformLocation(terrainShader.program, "noise"), 1);
+
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    glUniformMatrix4fv(glGetUniformLocation(defaultShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(terrainShader.program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
     // blurShader and screenShader
     success &= blurShader.build("assets/shaders/screen.vert", "assets/shaders/blur.frag");
@@ -133,7 +136,7 @@ void Resources::deleteShaders() {
     }
     glDeleteProgram(instanceShader.program);
     glDeleteProgram(instanceTexShader.program);
-    glDeleteProgram(defaultShader.program);
+    glDeleteProgram(terrainShader.program);
     glDeleteProgram(blurShader.program);
     glDeleteProgram(screenShader.program);
     glDeleteProgram(blendShader.program);

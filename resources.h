@@ -17,10 +17,11 @@ public:
     GLuint solidTex;
     GLuint triangleTex;
     GLuint skyboxTex;
+    GLuint noiseTex;
 
     Shader instanceShader;
     Shader instanceTexShader;
-    Shader defaultShader;
+    Shader terrainShader;
     Shader blurShader;
     Shader screenShader;
     Shader blendShader;

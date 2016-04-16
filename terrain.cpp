@@ -18,7 +18,7 @@ bool Terrain::toggleDebugColors() {
     return debugColors;
 }
 
-CTVertex Chunk::genPoint(float x, float y) {
+CVertex Chunk::genPoint(float x, float y) {
     const int max = 2;
     double f[max];
     uint32_t id[max];
@@ -29,63 +29,70 @@ CTVertex Chunk::genPoint(float x, float y) {
     h = Mth::clamp(h, 0.0f, 1.0f);
 
     int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    glm::vec3 rand = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 50) / 255.0f, (id[idc] % 127) / 255.0f);
-    rand = glm::clamp(rand, glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(0.2f, 0.2f, 0.5f));
-    glm::vec3 color = glm::vec3(rand);
+    glm::vec3 color = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 50) / 255.0f, (id[idc] % 127) / 255.0f);
+    color = glm::clamp(color, glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(0.2f, 0.2f, 0.5f));
+    //color = glm::vec3(1.0f, 0.0f, 0.0f);
 
     Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
     float b = static_cast<float>(1.0f - f[0]);
     b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
 
-    return CTVertex{ glm::vec3(x, (h + b)*100.0f, y), color, glm::vec2() };
+    return CVertex{ glm::vec3(x, (h + b)*100.0f, y), color };
 }
 
 void Chunk::generateTerrain() {
     std::vector<GLuint> tris;
     tris.reserve(NUM_TILES*NUM_TILES * 6);
+    std::vector<CVertex> genVerts;
+    genVerts.reserve((NUM_TILES + 1)*(NUM_TILES + 1));
     verts.reserve((NUM_TILES + 1)*(NUM_TILES + 1));
-
-    // used for texture coordinates
-    bool bot = true;
 
     // debug color
     glm::vec3 debugColor = HSBColor(Mth::rand01(), 1.0f, 1.0f).toRGB();
 
     // calculate vertex for each point
     for (int y = 0; y < NUM_TILES + 1; y++) {
-        bool left = true;
         for (int x = 0; x < NUM_TILES + 1; x++) {
             float xo = x * TILE_SIZE + pos.first * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
             float yo = y * TILE_SIZE + pos.second * CHUNK_SIZE - CHUNK_SIZE / 2.0f;
 
-            CTVertex cv = genPoint(xo, yo);
+            CVertex cv = genPoint(xo, yo);
             if (debugColors) {
                 cv.color = debugColor;
             }
 
-            // texcoords are mirrored for max vertex sharing,
-            // limitation is that textures have to be symmetric
-            cv.texcoord = glm::vec2(left ? 0.0f : 1.0f, bot ? 1.0f : 0.0f);
-
-            verts.push_back(cv);
-            left = !left;
+            genVerts.push_back(cv);
+            verts.push_back(cv.position);
         }
-        bot = !bot;
     }
 
-    // calculate triangles
-    for (int i = 0, len = (NUM_TILES + 1)*NUM_TILES - 1; i < len; ++i) {
-        if ((i + 1) % (NUM_TILES + 1) == 0) {
-            continue;
+    std::vector<CTVertex> meshVerts;
+
+    // split triangles and make UV based on chunk size
+    GLuint tri = 0;
+    for (int y = 0; y < NUM_TILES; ++y) {
+        for (int x = 0; x < NUM_TILES; ++x) {
+            float x0 = (float)x / NUM_TILES;
+            float x1 = (float)(x + 1) / NUM_TILES;
+            float y0 = (float)y / NUM_TILES;
+            float y1 = (float)(y + 1) / NUM_TILES;
+
+            meshVerts.push_back({ genVerts[x + y*(NUM_TILES + 1)], glm::vec2(x0, y0) });
+            meshVerts.push_back({ genVerts[x + (y + 1)*(NUM_TILES + 1)], glm::vec2(x0, y1) });
+            meshVerts.push_back({ genVerts[x + (y + 1)*(NUM_TILES + 1) + 1], glm::vec2(x1, y1) });
+            meshVerts.push_back({ genVerts[x + y*(NUM_TILES + 1) + 1], glm::vec2(x1, y0) });
+
+            tris.push_back(tri);
+            tris.push_back(tri + 1);
+            tris.push_back(tri + 2);
+            tris.push_back(tri + 2);
+            tris.push_back(tri + 3);
+            tris.push_back(tri);
+            tri += 4;
         }
-        tris.push_back(i);
-        tris.push_back(i + NUM_TILES + 1);
-        tris.push_back(i + NUM_TILES + 2);
-        tris.push_back(i + NUM_TILES + 2);
-        tris.push_back(i + 1);
-        tris.push_back(i);
     }
-    mesh = new StandardMesh(verts, tris, Resources::get().terrainTex);
+
+    mesh = new StandardMesh(meshVerts, tris);
 }
 
 // randomly generate trees and buildings in cities
@@ -207,7 +214,7 @@ void Chunk::generateStructures(std::mt19937& rng, Distributions rds) {
 
 void Chunk::spawnEntities(std::mt19937& rng, Distributions rds) {
     //int numEnemies = (int)(rds.zeroToOne(rng) * 1.0 + 1.0f);
-    int numEnemies = 2;
+    int numEnemies = 0;
     int numItems = 2;
 
     for (int i = 0; i < numEnemies; ++i) {
@@ -281,7 +288,7 @@ void Chunk::render() {
 }
 
 float Chunk::getHeight(float x, float z) {
-    glm::vec3 o = verts[0].position;
+    glm::vec3 o = verts[0];
     // get tile coordinate in mesh
     int xi = Mth::clamp((int)((x - o.x) / TILE_SIZE), 0, NUM_TILES - 1);
     int zi = Mth::clamp((int)((z - o.z) / TILE_SIZE), 0, NUM_TILES - 1);
@@ -293,16 +300,16 @@ float Chunk::getHeight(float x, float z) {
 
     // check which triangle of tile youre in
     if (x - o.x - xi*TILE_SIZE > z - o.z - zi*TILE_SIZE) {
-        c = verts[a + 1].position;
+        c = verts[a + 1];
         i = c.x - x;
         j = z - c.z;
     } else {
-        c = verts[b - 1].position;
+        c = verts[b - 1];
         i = c.z - z;
         j = x - c.x;
     }
 
-    return (((verts[a].position - c)*i + (verts[b].position - c)*j) / TILE_SIZE + c).y;
+    return (((verts[a] - c)*i + (verts[b] - c)*j) / TILE_SIZE + c).y;
 }
 
 
@@ -409,14 +416,23 @@ void Terrain::update(glm::vec3 pl) {
 // render all terrain chunks
 void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     Resources& r = Resources::get();
-    r.defaultShader.use();
-    glUniformMatrix4fv(glGetUniformLocation(r.defaultShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(r.defaultShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    r.terrainShader.use();
+
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    float t = gameTime.getElapsedTime().asSeconds();
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "time"), t);
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "tileFactor"), (float)NUM_TILES);
+
+    chunks[0]->mesh->bindTextures(Resources::get().terrainTex, Resources::get().noiseTex);
 
     //std::cout << chunks.size() << std::endl;
     for (size_t i = 0, len = chunks.size(); i < len; ++i) {
         chunks[i]->render();
     }
+
+    chunks[0]->mesh->unbind();
 
 }
 

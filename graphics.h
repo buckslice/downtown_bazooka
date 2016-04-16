@@ -11,6 +11,7 @@
 #include "skybox.h"
 
 const GLuint BLUR_DOWNSAMPLE = 2;
+extern sf::Clock gameTime;
 
 class Graphics {
 public:

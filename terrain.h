@@ -49,6 +49,7 @@ public:
 
     point pos;
 
+    StandardMesh* mesh;
 private:
     struct Distributions {
         std::uniform_real_distribution<float>& unix;
@@ -56,18 +57,18 @@ private:
         std::uniform_real_distribution<float>& zeroToOne;
     };
 
-    std::vector<CTVertex> verts; // save these for collision detection
+    std::vector<glm::vec3> verts; // save these for collision detection
 
     void generateTerrain();
     void generateStructures(std::mt19937& rng, Distributions rds);
     void spawnEntities(std::mt19937& rng, Distributions rds);
 
-    CTVertex genPoint(float xo, float yo);
+    CVertex genPoint(float xo, float yo);
 
     // delete statics objects out of physics
     void clearStatics();
 
-    StandardMesh* mesh;
+
     std::vector<glm::mat4> buildingModels;
     std::vector<glm::vec3> buildingColors;
     std::vector<glm::mat4> treeModels;
