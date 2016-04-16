@@ -27,7 +27,7 @@ public:
         DesiredOffsets = new sf::Vector2f[length];
         for (int i = 0; i < length; i++) {
             Characters[i] = sf::Text(std::string(1, text[i]), Font, 80U);
-            Characters[i].setPosition(sf::Vector2f(Mth::rand0X(1200), Mth::rand0X(1200)));
+            Characters[i].setPosition(sf::Vector2f(Mth::randRange(0.0f, 1200.0f), Mth::randRange(0.0f, 1200.0f)));
         }
         SetIsSelected(false);
     }

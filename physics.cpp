@@ -227,6 +227,10 @@ void Physics::update(float delta, glm::vec3 center) {
 
             // check height of terrain
             float h = terrainGen->queryHeight(col.pos.x, col.pos.z);
+            if (h < -100.0f) {  // no terrain loaded currently at this x,z position
+                col.awake = false;
+                break;
+            }
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
             // check to make sure normal is pointing up actually now

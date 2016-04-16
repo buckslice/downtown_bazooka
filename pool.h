@@ -18,7 +18,7 @@ public:
     explicit MemPool(size_t max) :
         maxCount(max),
         nextFree(nullptr),
-        count(0){
+        count(0) {
         if (maxCount > 64000) { // cap at arbitrary 64K
             maxCount = 64000;
         }
@@ -30,6 +30,7 @@ public:
         ::operator delete(memory);  // deallocate whole memory block
     }
 
+    // constructs data and returns pointer
     T* alloc() {
         if (nextFree) { // if nextFree is not null
             Item* ret = nextFree;   // get pointer to item at nextFree
@@ -41,7 +42,7 @@ public:
         // if there is no more room and nextFree is null then return nullptr
         // later add ability to allocate new memory blocks like original article
         if (count >= maxCount) {
-            std::cout << "pool empty" << std::endl;
+            std::cout << "WARNING::MEMPOOL::EMPTY: of " << typeid(T).name() << std::endl;
             return nullptr;
         }
         // else increment count and allocate
@@ -50,6 +51,7 @@ public:
         return &ret->data;
     }
 
+    // frees data from pointer address
     void free(T* data) {
         data->~T(); //call destructor on data
 
@@ -60,10 +62,12 @@ public:
         nextFree->free = true;  // set the free bool so next() will skip it
     }
 
+    // frees data from index
     void free(int index) {
         free((T*)(memory + index*itemSize));
     }
 
+    // frees all allocated data in pool
     void freeAll() {
         // call destructors on all allocated data
         for (T* t = nullptr; next(t);) {

@@ -1,15 +1,17 @@
 #include "entityManager.h"
+#include "audio.h"
 
 // TODO maybe make everything like this, singletons instead of static function calls?
 // except this is kind of a shitty singleton
 EntityManager *EntityManagerInstance;//An extern from entityManager.h
 
 EntityManager::EntityManager(Player* player) : player(player) {
+    EntityManagerInstance = this;
 
     // init particles
     // careful with stuff like this because don't want to make a temp obj and call destructor with pooled stuff
     // i tried deleting the copy constructor in entity where this happens but then this function cant be
-    // used at all. Probably need to rethink pool strategy a bit to be less error prone
+    // used at all. Should add more guards and checks in pool class to make it less error prone
     particles.resize(MAX_PARTICLES);
 
     // should switch this from pool ?
@@ -20,18 +22,19 @@ EntityManager::EntityManager(Player* player) : player(player) {
 }
 
 void EntityManager::init(int numberOfDudes) {
-    EntityManagerInstance = this;
+    //EntityManagerInstance = this;
 
-    for (int i = 0; i < numberOfDudes; i++) {
-        SpawnEnemy();
-    }
-    for (int i = 0; i < numberOfDudes; i++) {
-        SpawnItem();
-    }
+    //for (int i = 0; i < numberOfDudes; i++) {
+    //    glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
+    //    EnemyType et = Mth::rand01() < 0.02f ? EnemyType::ELITE : EnemyType::BASIC;
+    //    SpawnEnemy(glm::vec3(rnd.x, 200.0f, rnd.y), et);
+    //}
+    //for (int i = 0; i < numberOfDudes; i++) {
+    //    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
+    //    SpawnItem(glm::vec3(rnd.x, 200.0f, rnd.y), (ItemType)Mth::randRange(0,(int)ItemType::COUNT));
+    //}
 }
 
-// should make like a PooledEntity child class of Entity or something
-// this is pretty filth for now but whatever
 void EntityManager::returnAllObjects() {
     projectiles->freeAll();
     enemies->freeAll();
@@ -104,25 +107,21 @@ void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer
     p->init(pos, vel);
 }
 
-void EntityManager::SpawnEnemy() {
+void EntityManager::SpawnEnemy(glm::vec3 pos, EnemyType type) {
     Enemy* e = enemies->alloc();
-    if (!e){
+    if (!e) {
         return;
     }
-    //glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
-    EnemyType et = Mth::rand01() < 0.02f ? EnemyType::ELITE : EnemyType::BASIC;
-    e->init(player->transform, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), et);
+    e->init(player->transform, pos, type);
 }
 
 
-void EntityManager::SpawnItem() {
+void EntityManager::SpawnItem(glm::vec3 pos, ItemType type) {
     Item* i = items->alloc();
     if (!i) {
         return;
     }
-    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    i->init(60.0f, glm::vec3(rnd.x, SPAWN_HEIGHT, rnd.y), (ItemType)(int)Mth::rand0X((int)ItemType::COUNT));
+    i->init(pos, type);
 }
 
 void EntityManager::ReturnProjectile(Projectile* p) {

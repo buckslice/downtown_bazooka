@@ -4,6 +4,7 @@
 #include "physics.h"
 #include "input.h"
 #include "graphics.h"
+#include "entityManager.h"
 
 // public variables for both terrain and chunk
 glm::vec2 seed;
@@ -88,23 +89,8 @@ void Chunk::generateTerrain() {
 }
 
 // randomly generate trees and buildings in cities
-void Chunk::generateStructures() {
-    float cx = pos.first * CHUNK_SIZE;
-    float cz = pos.second * CHUNK_SIZE;
-    float hc = CHUNK_SIZE / 2.0f;
+void Chunk::generateStructures(std::mt19937& rng, Distributions rds) {
     float x, z, sx, sy, sz, x0, z0, x1, z1;
-
-    // use a seeded random generator for this chunk based on its chunk coords
-    // this way the building positions and shapes will be the same each time
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
-    rng.seed(rngseed);
-
-    // generators for this chunk
-    std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
-    std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
-    std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
 
     // return variables for worley noise
     const int max = 3;
@@ -115,8 +101,8 @@ void Chunk::generateStructures() {
     bool breakOuter = false;
     for (GLuint i = 0; i < 20 && !breakOuter; ++i) {    // try to build this many buildings
         for (int j = 0; j < 10; ++j) {  // try this many times to find a spot for current building
-            x = unix(rng);    // random x position in chunk
-            z = uniz(rng);    // random y position in chunk
+            x = rds.unix(rng);    // random x position in chunk
+            z = rds.uniz(rng);    // random y position in chunk
 
             // calculate noise that represents city centers
             Noise::worley(x + seed.x, z + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
@@ -133,9 +119,9 @@ void Chunk::generateStructures() {
                 break;
             }
             // calculate scale of building
-            sx = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
-            sy = zeroToOne(rng) * 10.0f + b * 100.0f + 5.0f;
-            sz = zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
+            sx = rds.zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
+            sy = rds.zeroToOne(rng) * 10.0f + b * 100.0f + 5.0f;
+            sz = rds.zeroToOne(rng) * 10.0f + b * 20.0f + 5.0f;
 
             // calculate building corners
             x0 = x - sx / 2.0f;
@@ -159,12 +145,12 @@ void Chunk::generateStructures() {
                 // calculate color
                 glm::vec3 c;
                 if (sy < LOW_HEIGHT) {
-                    if (zeroToOne(rng) <= 0.05f) {
+                    if (rds.zeroToOne(rng) <= 0.05f) {
                         c = glm::vec3(0.0f, 1.0f, 0.25f);    // green
                     } else {
                         float n = Noise::ridged_2D(x, z, 3, .001f);
                         if (n < 0.25f) {
-                            c = glm::vec3(0.0f, zeroToOne(rng)* 0.5f, 1.0f);	// blueish
+                            c = glm::vec3(0.0f, rds.zeroToOne(rng)* 0.5f, 1.0f);	// blueish
                         } else {
                             c = glm::vec3(0.0f, 1.0f, 1.0f);    // teal
                         }
@@ -175,7 +161,7 @@ void Chunk::generateStructures() {
 
                     //c = glm::vec3(Mth::rand01() * .25f + .5f, 0.0, 1.0f);	// purp
                 } else {
-                    c = glm::vec3(1.0f, zeroToOne(rng) * .2f + .3f, 0.0f);	// orange
+                    c = glm::vec3(1.0f, rds.zeroToOne(rng) * .2f + .3f, 0.0f);	// orange
                 }
                 buildingModels.push_back(box.getModelMatrix());
                 buildingColors.push_back(c);
@@ -189,16 +175,16 @@ void Chunk::generateStructures() {
         return;
     }
     for (GLuint i = 0; i < 20; ++i) {
-        x = unix(rng);    // random x position in chunk
-        z = uniz(rng);    // random y position in chunk
+        x = rds.unix(rng);    // random x position in chunk
+        z = rds.uniz(rng);    // random y position in chunk
 
         float n = Noise::fractal_2D(x + seed.x, z + seed.y, 3, 0.001f);
         if (n > 0.0f) {
             continue;
         }
         float h = getHeight(x, z);
-        sx = zeroToOne(rng) * 8.0f + 8.0f;
-        sy = zeroToOne(rng) * 10.0f + 20.0f;
+        sx = rds.zeroToOne(rng) * 8.0f + 8.0f;
+        sy = rds.zeroToOne(rng) * 10.0f + 20.0f;
 
         AABB trunk(glm::vec3(x - 1.0f, h - 1.0f, z - 1.0f), glm::vec3(x + 1.0f, h + sy / 2.2f, z + 1.0f));
         if (Physics::checkStatic(trunk)) {  // if trunk isnt blocked then build whole tree
@@ -206,27 +192,68 @@ void Chunk::generateStructures() {
         }
         staticIndices.push_back(Physics::addStatic(trunk));
         buildingModels.push_back(trunk.getModelMatrix());
-        HSBColor trunkColor(0.0833f, 0.4f * zeroToOne(rng) + 0.6f, 0.4f);
+        HSBColor trunkColor(0.0833f, 0.4f * rds.zeroToOne(rng) + 0.6f, 0.4f);
         buildingColors.push_back(trunkColor.toRGB());
 
-        glm::vec3 euler = glm::vec3(0.0f, zeroToOne(rng)*360.0f, 0.0f);
+        glm::vec3 euler = glm::vec3(0.0f, rds.zeroToOne(rng)*360.0f, 0.0f);
         glm::quat q = glm::quat(euler*DEGREESTORADS);
         glm::mat4 model = Mth::getModelMatrix(glm::vec3(x, h + sy * 0.4f, z), glm::vec3(sx, sy, sx), q);
         treeModels.push_back(model);
 
-        HSBColor leafColor(0.2f * zeroToOne(rng) + 0.25f, 1.0f, 0.5f * zeroToOne(rng) + 0.3f);
+        HSBColor leafColor(0.2f * rds.zeroToOne(rng) + 0.25f, 1.0f, 0.5f * rds.zeroToOne(rng) + 0.3f);
         treeColors.push_back(leafColor.toRGB());
     }
 }
 
-void Chunk::spawnEntities() {
+void Chunk::spawnEntities(std::mt19937& rng, Distributions rds) {
+    //int numEnemies = (int)(rds.zeroToOne(rng) * 1.0 + 1.0f);
+    int numEnemies = 2;
+    int numItems = 2;
+
+    for (int i = 0; i < numEnemies; ++i) {
+        float x = rds.unix(rng);    // random x position in chunk
+        float z = rds.uniz(rng);    // random y position in chunk
+        float h = getHeight(x, z) + 10.0f;
+
+        EnemyType et = rds.zeroToOne(rng) < 0.1f ? EnemyType::ELITE : EnemyType::BASIC;
+
+        EntityManagerInstance->SpawnEnemy(glm::vec3(x, h, z), et);
+    }
+    for (int i = 0; i < numItems; ++i) {
+        float x = rds.unix(rng);    // random x position in chunk
+        float z = rds.uniz(rng);    // random y position in chunk
+        float h = getHeight(x, z) + 10.0f;
+
+        ItemType it = (ItemType)Mth::randRange(0, (int)ItemType::COUNT);
+
+        EntityManagerInstance->SpawnItem(glm::vec3(x, h, z), it);
+    }
 
 }
 
-Chunk::Chunk(point pos) {
-    this->pos = pos;
+Chunk::Chunk(point p) {
+    this->pos = p;
+
+    float cx = pos.first * CHUNK_SIZE;
+    float cz = pos.second * CHUNK_SIZE;
+    float hc = CHUNK_SIZE / 2.0f;
+
+    // use a seeded random generator for this chunk based on its chunk coords
+    // this way the building positions and shapes will be the same each time
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
+    rng.seed(rngseed);
+
+    // generators for this chunk
+    std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
+    std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
+    std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
+    Distributions dist = Distributions{ unix, uniz, zeroToOne };
+
     generateTerrain();
-    generateStructures();
+    generateStructures(rng, dist);
+    spawnEntities(rng, dist);
 }
 
 Chunk::~Chunk() {
@@ -253,7 +280,6 @@ void Chunk::render() {
     }
 }
 
-
 float Chunk::getHeight(float x, float z) {
     glm::vec3 o = verts[0].position;
     // get tile coordinate in mesh
@@ -278,6 +304,8 @@ float Chunk::getHeight(float x, float z) {
 
     return (((verts[a].position - c)*i + (verts[b].position - c)*j) / TILE_SIZE + c).y;
 }
+
+
 
 float Terrain::queryHeight(float x, float z) {
     point p = worldToChunk(x, z);
@@ -307,8 +335,8 @@ void Terrain::update(glm::vec3 pl) {
     size_t newChunksPerFrame = 10;
 
     // find closest chunks to build this frame
-    for (int y = -CHUNK_RAD; y <= CHUNK_RAD; y++) {
-        for (int x = -CHUNK_RAD; x <= CHUNK_RAD; x++) {
+    for (int y = -CHUNK_LOAD_RADIUS; y <= CHUNK_LOAD_RADIUS; y++) {
+        for (int x = -CHUNK_LOAD_RADIUS; x <= CHUNK_LOAD_RADIUS; x++) {
             point ccc = point{ pcc.first + x, pcc.second + y };
             // continue if current chunk coord is already in table
             if (coordsByIndices.count(ccc)) {
@@ -319,7 +347,7 @@ void Terrain::update(glm::vec3 pl) {
             float cz = ccc.second*CHUNK_SIZE;
             // calculate square distance
             float sqrdist = (pl.x - cx)*(pl.x - cx) + (pl.z - cz)*(pl.z - cz);
-            if (sqrdist > DIST*DIST) {
+            if (sqrdist > LOAD_DIST*LOAD_DIST) {
                 continue;
             }
 
@@ -359,7 +387,7 @@ void Terrain::update(glm::vec3 pl) {
         float cx = c->pos.first * CHUNK_SIZE;
         float cz = c->pos.second * CHUNK_SIZE;
         float sqrdist = (pl.x - cx)*(pl.x - cx) + (pl.z - cz)*(pl.z - cz);
-        if (sqrdist > DIST * DIST + 1.0f) { // if too far away
+        if (sqrdist > LOAD_DIST * LOAD_DIST + 1.0f) { // if too far away
             // reassign back guy to this index, 
             coordsByIndices[chunks.back()->pos] = i;
 

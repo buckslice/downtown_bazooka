@@ -11,6 +11,7 @@ Item::Item() {
 	transform->setVisibility(HIDDEN);
 	transform->parentAll(model);
 	collider->type = ColliderType::TRIGGER;
+    rotSpeed = 60.0f;
 
 	Physics::setCollisionCallback(this);
 }
@@ -21,7 +22,7 @@ Item::~Item() {
 }
 
 void Item::update(GLfloat delta) {
-    if (shouldDestroy) {
+    if (shouldDestroy || !collider->awake) {
         EntityManagerInstance->ReturnItem(this);
         return;
     }
@@ -36,11 +37,10 @@ void Item::onCollision(CollisionData data) {
 	}
 }
 
-void Item::init(float rotSpeed, glm::vec3 pos, ItemType type) {
+void Item::init(glm::vec3 pos, ItemType type) {
 	transform->setPos(pos);
 	transform->setVisibility(HIDDEN_SELF);
 
-	this->rotSpeed = rotSpeed;
 	this->type = type;
 
     collider->tag = Tag::ITEM;

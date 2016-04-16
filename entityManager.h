@@ -10,16 +10,12 @@
 #include "item.h"
 #include "mathutil.h"
 #include "particle.h"
-#include "resources.h"
-#include "audio.h"
 #include "pool.h"
 
 const int MAX_PROJECTILES = 200;
 const int MAX_PARTICLES = 5000;
-const int MAX_ENEMIES = 1100;
-const int MAX_ITEMS = 1100;
-const float SPAWN_HEIGHT = 200.0f;
-const float SPAWN_OFFSET = 50.0f; // how much lower the player spawns from the items and enemies
+const int MAX_ENEMIES = 2000;
+const int MAX_ITEMS = 2000;
 
 class EntityManager {
 public:
@@ -50,10 +46,10 @@ public:
     void SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer);
     void ReturnProjectile(Projectile* p);
 
-    void SpawnEnemy();
+    void SpawnEnemy(glm::vec3 pos, EnemyType type);
     void ReturnEnemy(Enemy* e);
 
-	void SpawnItem();
+	void SpawnItem(glm::vec3 pos, ItemType type);
 	void ReturnItem(Item* i);
 
     float getPlayerDamage();

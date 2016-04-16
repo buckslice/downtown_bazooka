@@ -32,9 +32,9 @@ public:
     ColliderType type;
 
     glm::vec3 vel;
-    bool grounded = false;
-    bool enabled = true;
-    bool awake = true;
+    bool grounded = false;  // true if is standing on something
+    bool enabled = true;    // true if should be apart of physics simulation
+    bool awake = true;      // true if inside physics simulation area
 
     float gravityMultiplier = 1.0f;
 

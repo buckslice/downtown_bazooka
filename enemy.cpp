@@ -61,7 +61,7 @@ void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
 }
 
 void Enemy::update(GLfloat delta) {
-    if (health <= 0.0f) {
+    if (health <= 0.0f || !collider->awake) {
         EntityManagerInstance->ReturnEnemy(this);
         return;
     }

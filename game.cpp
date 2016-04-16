@@ -168,6 +168,7 @@ void Game::toggleOptions() {
 }
 
 void Game::update(GLfloat delta) {
+
     // plus and minus keys are on shift layer so use equals and dash for convenience
     if (Input::pressed(sf::Keyboard::Equal)) {
         mouseScroll += 5.0f * delta;
@@ -181,12 +182,12 @@ void Game::update(GLfloat delta) {
 
     if (menu->justClosed) {
         entityManager->init(NUM_ENEMIES);
-        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), true);
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), true);
         //Resources::get().menuTrack.stop();
         //Resources::get().mainTrack.play();
     }
     if (menu->justOpened) {
-        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
         entityManager->returnAllObjects();
         //Resources::get().menuTrack.play();
         //Resources::get().mainTrack.stop();
@@ -200,7 +201,7 @@ void Game::update(GLfloat delta) {
         cam.behavior = CameraMode::DEATH;
     } else if (menu->getVisible()) {
         cam.behavior = CameraMode::AUTOSPIN;
-        player->spawn(glm::vec3(0.0f, SPAWN_HEIGHT - SPAWN_OFFSET, 0.0f), false);
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
     } else {
         cam.behavior = CameraMode::NORMAL;
     }

@@ -11,10 +11,7 @@ float Mth::rand01() {
     // RS: below function returns number [0,1) - very rarely returns 1.0 - (10 bits of randomness)
     return std::generate_canonical<float, 10>(rng);
 }
-float Mth::rand0X(float X) {
-    std::uniform_real_distribution<> uni(0.0f, X);
-    return static_cast <float> (uni(rng));
-}
+
 float Mth::randUnit() {
     std::uniform_real_distribution<float> uni(-1.0f, 1.0f);
     return uni(rng);
@@ -24,18 +21,31 @@ float Mth::randRange(float a, float b) {
     return uni(rng);
 }
 
+int Mth::randRange(int a, int b) {
+    std::uniform_int_distribution<int> uni(a, b - 1);   // -1 to make b not inclusive
+    return uni(rng);
+}
+
 glm::vec3 Mth::randInsideUnitCube() {
     return glm::vec3(randUnit(), randUnit(), randUnit());
 }
 
 glm::vec3 Mth::randInsideSphere(float radius) {
-    float phi = rand0X(PI*2.0f);
+    float phi = randRange(0.0f, PI*2.0f);
     float costheta = randUnit();
     float u = rand01();
 
     float theta = acos(costheta);
     float r = radius * std::pow(u, 1.0f / 3.0f);
     return glm::vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta))*r;
+}
+
+glm::vec3 Mth::randomPointInRange(glm::vec3 min, glm::vec3 max) {
+    std::uniform_real_distribution<float> unix(min.x, max.x);
+    std::uniform_real_distribution<float> uniy(min.y, max.y);
+    std::uniform_real_distribution<float> uniz(min.z, max.z);
+
+    return glm::vec3(unix(rng), uniy(rng), uniz(rng));
 }
 
 glm::vec2 Mth::randomPointInSquare(float size) {

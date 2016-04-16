@@ -21,33 +21,38 @@ private:
     static std::mt19937 rng;        // generator uses a random device
     static std::mt19937 rngVector;
 public:
-    // returns random float between 0 and 1 - [0,1)
+    // returns random float [0, 1)
     static float rand01();
 
-    // returns random float between 0 and X - [0,X)
-    static float rand0X(float X);
-
-    // returns random float between -1 and 1 - [-1,1)
+    // returns random float between -1 and 1 [-1, 1)
     static float randUnit();
 
-    // returns random float between a and b
+    // returns random float [a, b)
     static float randRange(float a, float b);
 
-    // returns random vector3 with each value between -1 and 1
+    // returns random int [a, b)
+    static int randRange(int a, int b);
+
+    // returns random vec3 with each value between -1 and 1
     static glm::vec3 randInsideUnitCube();
 
-    // returns random vector3 somewhere inside a unit sphere
+    // returns random vec3 somewhere inside a unit sphere
     static glm::vec3 randInsideSphere(float radius);
 
-    // returns random vector2 with each value between -size and size
+    // returns random vec3 with values between min and max
+    static glm::vec3 randomPointInRange(glm::vec3 min, glm::vec3 max);
+
+    // returns random vec2 with each value between -size and size
     static glm::vec2 randomPointInSquare(float size);
 
-    // returns random vector2 somewhere inside a circle with given radius
+    // returns random vec2 somewhere inside a circle with given radius
     static glm::vec2 randomPointInCircle(float radius);
 
     // calculates a model matrix
     static glm::mat4 getModelMatrix(
-        glm::vec3 pos = glm::vec3(), glm::vec3 scale = glm::vec3(), glm::quat rot = glm::quat());
+        glm::vec3 pos = glm::vec3(),
+        glm::vec3 scale = glm::vec3(),
+        glm::quat rot = glm::quat());
 
     // returns n clamped between min and max
     // TODO make clamp use a template instead:

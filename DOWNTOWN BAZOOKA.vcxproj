@@ -92,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\libs\SFML-2.3.2\include;$(ProjectDir)\libs\glm-0.9.7.1\glm;$(ProjectDir)\libs\glew-1.13.0\include;-&gt; add glm+0.9.7.1/include;-&gt; add glew+1.13.0/include;-&gt; add SFML+2.3.2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\libs\SFML-2.3.2\include;$(ProjectDir)\libs\glm-0.9.7.1\glm;$(ProjectDir)\libs\glew-1.13.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>

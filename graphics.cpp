@@ -8,7 +8,7 @@
 #include "mathutil.h"
 #include "glm/ext.hpp"
 
-static MemPool<Transform> boxes(10000);
+static MemPool<Transform> boxes(15000);
 //static std::vector<Mesh<Vertex>*> meshes;
 
 static std::vector<glm::mat4> smodels;

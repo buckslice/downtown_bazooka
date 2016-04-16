@@ -10,9 +10,8 @@
 const int NUM_TILES = 20;
 const float TILE_SIZE = 5.0f;
 const float CHUNK_SIZE = NUM_TILES*TILE_SIZE;
-const int CHUNK_RAD = 15;
-//const float DIST = CHUNK_RAD * CHUNK_SIZE + 10.0f;
-const float DIST = 1450.0f;
+const int CHUNK_LOAD_RADIUS = 15;
+const float LOAD_DIST = CHUNK_LOAD_RADIUS * CHUNK_SIZE - 50.0f;
 
 const float CITY_SIZE = 2000.0f;    // distance from one side to another
 const float LOW_HEIGHT = 20.0f;     // for building generation
@@ -51,11 +50,17 @@ public:
     point pos;
 
 private:
+    struct Distributions {
+        std::uniform_real_distribution<float>& unix;
+        std::uniform_real_distribution<float>& uniz;
+        std::uniform_real_distribution<float>& zeroToOne;
+    };
+
     std::vector<CTVertex> verts; // save these for collision detection
 
     void generateTerrain();
-    void generateStructures();
-    void spawnEntities();
+    void generateStructures(std::mt19937& rng, Distributions rds);
+    void spawnEntities(std::mt19937& rng, Distributions rds);
 
     CTVertex genPoint(float xo, float yo);
 
@@ -97,4 +102,6 @@ private:
     std::unordered_map<point, size_t> coordsByIndices;
 
     point worldToChunk(float x, float z);
+
+    std::uniform_real_distribution<float> un;
 };
