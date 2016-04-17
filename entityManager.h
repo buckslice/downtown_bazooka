@@ -30,7 +30,7 @@ public:
 
     void returnAllObjects();
 
-    int curParticle = 0;
+    int nextParticleIndex = 0;
     Particle *getNextParticle();
 
     // spawn a particle at world position pos

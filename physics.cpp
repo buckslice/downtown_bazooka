@@ -9,7 +9,7 @@
 Quadtree* Physics::collisionTree;
 
 static MemPool<ColliderData> dynamicPool(15000);
-static MemPool<AABB> staticPool(15000);
+static MemPool<StaticData> staticPool(15000);
 
 std::vector<OverlapEvent> Physics::overlapEvents;
 
@@ -34,23 +34,20 @@ void Physics::update(float delta, glm::vec3 center) {
     delete collisionTree;
     collisionTree = new Quadtree(0, getPhysicsArea(center, MATRIX_SIZE));
 
-    for (AABB* b = nullptr; staticPool.next(b);) {
-        collisionTree->insert(QuadtreeData{ *b, staticPool.getIndex(b), false });
+    for (StaticData* sd = nullptr; staticPool.next(sd);) {
+        collisionTree->insert(QuadtreeData{ sd->bounds, staticPool.getIndex(sd), false });
     }
 
     // insert all dynamics into tree (that are awake and not basic)
     for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
         Collider& col = cd->collider;
         // ensure object is active
-        if (!col.enabled) {
+        if (!col.enabled || col.type == ColliderType::BASIC) {
             continue;
         }
         // update collider position from transform
         col.pos = col.transform->getPos();
 
-        if (col.type == ColliderType::BASIC) {
-            continue;
-        }
         col.awake = collisionTree->insert(
             QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dynamicPool.getIndex(cd), true });
 
@@ -70,7 +67,7 @@ void Physics::update(float delta, glm::vec3 center) {
             if (qtd.dynamic) {
                 ColliderData* cd = dynamicPool.get(qtd.index);
                 if (cd->entity && AABB::check(oe.bounds, cd->collider.getAABB())) {
-                    cd->entity->onCollision(oe.data);
+                    cd->entity->onCollision(oe.tag, oe.entity);
                 }
             }
         }
@@ -83,11 +80,13 @@ void Physics::update(float delta, glm::vec3 center) {
     for (ColliderData* cdObj = nullptr; dynamicPool.next(cdObj);) {
         int dndx = dynamicPool.getIndex(cdObj);
         Collider& col = cdObj->collider;
+        col.onTerrain = col.grounded = false;
         if (!col.enabled || !col.awake) {
             col.vel = glm::vec3(0.0f);
-            col.grounded = false;
             continue;
         }
+        // make sure to do this again incase new objects were created since built tree up above
+        col.pos = col.transform->getPos();
 
         staticResolvedSet.clear();
         dynamicResolvedSet.clear();
@@ -103,9 +102,9 @@ void Physics::update(float delta, glm::vec3 center) {
         // try to resolve up to 10 collisions for this object this frame
         for (int resolutionAttempts = 0; resolutionAttempts < 10; ++resolutionAttempts) {
             //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
-                //std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
-                //numberOver++;
-                //printedErrorThisFrame = true;   // to avoid spam
+            //    std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
+            //    numberOver++;
+            //    printedErrorThisFrame = true;   // to avoid spam
             //}
 
             // should try only clearing these at beginning of dynamic not each resolution
@@ -168,7 +167,6 @@ void Physics::update(float delta, glm::vec3 center) {
 
                     // pretent like they aren't moving since you are going first
                     // cant collide two swept AABBs
-                    //AABB& otherAABB = staticObjects[index].data;
                     AABB& otherAABB = qtd.box;
 
                     // broadphase sweep bounds check
@@ -197,32 +195,18 @@ void Physics::update(float delta, glm::vec3 center) {
                 }
             }
 
-            if (closestIndex >= 0) {    // collided with another object
-                if (closestIsDynamic) {
-                    // dont let this dynamic collide with this other object again (this frame)
-                    dynamicResolvedSet.insert(closestIndex);
-
-                    ColliderData* other = dynamicPool.get(closestIndex);
-
-                    if (cdObj->entity) {
-                        cdObj->entity->onCollision(CollisionData{ other->collider.type, other->collider.tag, other->entity });
-                    }
-                    if (other->entity) {
-                        other->entity->onCollision(CollisionData{ col.type, col.tag, cdObj->entity });
-                    }
-
-                    // if your type is TRIGGER or their type is TRIGGER
-                    // then reset collision variables to ignore the collision basically
-                    if (col.type == ColliderType::TRIGGER ||
-                        other->collider.type == ColliderType::TRIGGER) {
-                        time = 1.0f;
-                        norm = glm::vec3(0.0f);
-                    }
-                } else {
-                    staticResolvedSet.insert(closestIndex);
+            if (closestIndex >= 0 && closestIsDynamic) {
+                ColliderData* other = dynamicPool.get(closestIndex);
+                // if your type is TRIGGER or their type is TRIGGER
+                // then reset collision variables to pretent like it didn't happen
+                if (col.type == ColliderType::TRIGGER ||
+                    other->collider.type == ColliderType::TRIGGER) {
+                    time = 1.0f;
+                    norm = glm::vec3(0.0f);
                 }
             }
 
+            // update position
             col.pos += rvel * delta * time;
 
             // check height of terrain
@@ -234,19 +218,43 @@ void Physics::update(float delta, glm::vec3 center) {
 
             // ground the object if it hits terrain or normal of what it hits is flat (top of building)
             // check to make sure normal is pointing up actually now
-            if (col.pos.y < h || norm.y > 0.0f) {
+            if (col.pos.y < h) {
+                col.onTerrain = true;
                 col.grounded = true;
                 col.vel.y = 0.0f;
                 rvel.y = 0.0f;
-            }
-
-            if (norm.y < 0.0f) {
+            } else if (norm.y != 0.0f) {
+                col.grounded = true;
                 col.vel.y = 0.0f;
                 rvel.y = 0.0f;
             }
 
             // dont let dynamic go below terrain height
             col.pos.y = fmax(col.pos.y, h);
+
+            if (closestIndex >= 0) {    // collided with another object
+                if (closestIsDynamic) {
+                    // dont let this dynamic collide with this other object again (this frame)
+                    dynamicResolvedSet.insert(closestIndex);
+
+                    ColliderData* other = dynamicPool.get(closestIndex);
+
+                    if (cdObj->entity) {
+                        cdObj->entity->onCollision(other->collider.tag, other->entity);
+                    }
+                    if (other->entity) {
+                        other->entity->onCollision(col.tag, cdObj->entity);
+                    }
+                } else {
+                    // get tag from static and send to entity
+                    StaticData* other = staticPool.get(closestIndex);
+                    if (other->tag != Tag::NONE && cdObj->entity) {
+                        cdObj->entity->onCollision(other->tag);
+                    }
+
+                    staticResolvedSet.insert(closestIndex);
+                }
+            }
 
             // if there was a collision then update remaining velocity for subsequent collision tests
             if (time < 1.0f && norm != glm::vec3(0.0f)) {
@@ -282,17 +290,18 @@ void Physics::setCollisionCallback(Entity* entity) {
 }
 
 // add aabb to static object list
-int Physics::addStatic(AABB obj) {
-    AABB* b = staticPool.alloc();
-    if (!b) {
+int Physics::addStatic(AABB bounds, Tag tag) {
+    StaticData* sd = staticPool.alloc();
+    if (!sd) {
         std::cout << "NO FREE STATIC COLLIDERS" << std::endl;
         return -1;
     }
-    *b = obj;
-    int index = staticPool.getIndex(b);
+    sd->bounds = bounds;
+    sd->tag = tag;
+    int index = staticPool.getIndex(sd);
     // inserts right away so can checkStatic without having
     // to wait until next frame for tree to be built
-    collisionTree->insert(QuadtreeData{ *b, index, false });
+    collisionTree->insert(QuadtreeData{ sd->bounds, index, false });
     return index;
 }
 
@@ -340,13 +349,13 @@ AABB Physics::getPhysicsArea(glm::vec3 center, float size) {
     return AABB(glm::vec3(-size, -10.0, -size) + center, glm::vec3(size, 10000.0f, size) + center);
 }
 
-void Physics::sendOverlapEvent(AABB aabb, CollisionData data) {
-    overlapEvents.push_back(OverlapEvent{ aabb, data });
+void Physics::sendOverlapEvent(AABB bounds, Tag tag, Entity* entity) {
+    overlapEvents.push_back(OverlapEvent{ bounds, tag, entity });
 }
 
 void Physics::streamColliderModels() {
-    for (AABB* b = nullptr; staticPool.next(b);) {
-        Graphics::addToStream(Shape::CUBE_SOLID, b->getModelMatrix(), glm::vec3(1.0f, 1.0f, 0.0f));
+    for (StaticData* sd = nullptr; staticPool.next(sd);) {
+        Graphics::addToStream(Shape::CUBE_SOLID, sd->bounds.getModelMatrix(), glm::vec3(1.0f, 1.0f, 0.0f));
     }
 
     for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {

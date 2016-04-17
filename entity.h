@@ -6,13 +6,6 @@
 #include "transform.h"
 #include "collider.h"
 
-class Entity;
-
-struct CollisionData {
-    ColliderType type;  // collider type
-    Tag tag;            // collider tag
-    Entity* entity;   // pointer to entity you collided with
-};
 
 class Entity {
 public:
@@ -25,7 +18,7 @@ public:
     virtual void update(GLfloat delta) = 0;
 
     // may override this if you want
-    virtual void onCollision(CollisionData data) {}
+    virtual void onCollision(Tag tag, Entity* other = nullptr) {}
 
     Transform* transform;
     Collider* collider;

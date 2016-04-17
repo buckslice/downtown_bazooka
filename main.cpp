@@ -1,8 +1,8 @@
-#include "game.h"
+#include "gameEngine.h"
 
 int main() {
-	Game game(1280, 800);
-    game.start();
+	GameEngine ge(1280, 800);
+    ge.start();
 
     return 0;
 }

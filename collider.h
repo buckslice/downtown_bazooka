@@ -13,14 +13,15 @@ enum class ColliderType {
 // maybe just make collision callback except a simplified collider struct
 // with a enum tag and position and stuff maybe
 enum class Tag {
-    DEFAULT,
+    NONE,
     PLAYER,
     PLAYER_PROJECTILE,
     ENEMY_PROJECTILE,
     ENEMY,
     EXPLOSION,
     TERRAIN, 
-	ITEM	
+	ITEM,
+    HEALER
 };
 
 // Colliders represent dynamic physics objects
@@ -32,7 +33,8 @@ public:
     ColliderType type;
 
     glm::vec3 vel;
-    bool grounded = false;  // true if is standing on something
+    bool grounded = false;  // true if is standing on something flat
+    bool onTerrain = false; // true if standing on terrain
     bool enabled = true;    // true if should be apart of physics simulation
     bool awake = true;      // true if inside physics simulation area
 

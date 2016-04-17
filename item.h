@@ -17,7 +17,7 @@ public:
 
 	void update(GLfloat delta) override;
 
-	void onCollision(CollisionData data) override;
+	void onCollision(Tag tag, Entity* other) override;
 
 	void init(glm::vec3 pos, ItemType type);
 

@@ -31,8 +31,8 @@ void Item::update(GLfloat delta) {
 	model->setPos(0.0f, 1.0f + sin(timer * 2.0f) * 0.5f, 0.0f);
 }
 
-void Item::onCollision(CollisionData data) {
-	if (data.tag == Tag::PLAYER) {
+void Item::onCollision(Tag tag, Entity* other) {
+	if (tag == Tag::PLAYER) {
         shouldDestroy = true;
 	}
 }

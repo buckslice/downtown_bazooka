@@ -72,8 +72,9 @@ float EntityManager::getPlayerDamage() {
 
 // particles
 Particle* EntityManager::getNextParticle() {
-    Particle *p = &particles[curParticle];
-    curParticle = (++curParticle) % (MAX_PARTICLES - 1);
+    Particle *p = &particles[nextParticleIndex];
+    nextParticleIndex = (++nextParticleIndex) % (MAX_PARTICLES - 1);
+    //nextParticleIndex = ++nextParticleIndex % MAX_PARTICLES;
     return p;
 }
 

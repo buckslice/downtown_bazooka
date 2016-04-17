@@ -169,6 +169,7 @@
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entityManager.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="gameEngine.cpp" />
     <ClCompile Include="glHelper.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="input.cpp" />
@@ -195,11 +196,12 @@
     <ClInclude Include="enemy.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="entityManager.h" />
+    <ClInclude Include="game.h" />
     <ClInclude Include="item.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="skybox.h" />
     <ClInclude Include="slotMap.h" />
-    <ClInclude Include="game.h" />
+    <ClInclude Include="gameEngine.h" />
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="hsbColor.h" />

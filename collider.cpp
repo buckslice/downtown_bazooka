@@ -2,7 +2,7 @@
 
 Collider::Collider() {
     type = ColliderType::BASIC;
-	tag = Tag::DEFAULT;
+	tag = Tag::NONE;
     setExtents(glm::vec3(-0.5f, 0.0f, -0.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 }
 

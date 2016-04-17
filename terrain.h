@@ -105,7 +105,4 @@ private:
     point worldToChunk(float x, float z);
 
     std::uniform_real_distribution<float> un;
-
-    float lavaTime = 0.0f;
-    float timeSinceFlow = 1.0f;
 };

@@ -25,12 +25,19 @@ void Particle::activate() {
         gravmult = Mth::randRange(-0.5f, -0.35f);
         lifetime = 2.0f;
         break;
-	case BEAM:
-		gravmult = 0.0f;
-		lifetime = 0.5f;
+    case BEAM:
+        gravmult = 0.0f;
+        lifetime = 0.5f;
+        break;
+    case HEAL:
+        gravmult = -1.0f;
+        lifetime = 0.5f;
+        break;
     }
     collider->gravityMultiplier = gravmult;
     curlife = lifetime;
+
+    update(0);  // incase spawned after the update this frame
 }
 
 void Particle::update(GLfloat dt) {
@@ -42,28 +49,21 @@ void Particle::update(GLfloat dt) {
         return;
     }
 
-	// scalemult unused
-    float scalemult;
     switch (type) {
     case SPARK:
-        scalemult = .97f;
         collider->vel *= curlife + (1.0f - curlife) * 0.75f;
-        //getCollider()->vel *= .95f;
         break;
     case CLOUD:
-        if (curlife > lifetime*.25f)
-            scalemult = 1.02f;
-        else
-            scalemult = .9f;
         break;
     case FIRE:
-		collider->vel *= .95f;
-        scalemult = .95f;
+        collider->vel *= .95f;
         break;
-	case BEAM:
-		scalemult = 1.02f;
-		collider->vel *= curlife + (1.0f - curlife) * 0.75f;
-		break;
+    case BEAM:
+        collider->vel *= curlife + (1.0f - curlife) * 0.75f;
+        break;
+    case HEAL:
+        //collider->vel *= curlife;
+        break;
     }
 
     transform->color = getColor();
@@ -74,8 +74,11 @@ glm::vec3 Particle::getColor() {
     switch (type) {
     case FIRE:
         return glm::vec3(1.0f, curlife / lifetime, 0.0f);
-	case BEAM:
-		return HSBColor(curlife / lifetime * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
+    case BEAM:
+        return HSBColor(curlife / lifetime * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
+    case HEAL:
+        float f = (1.0f - curlife / lifetime) * 0.5f;
+        return glm::vec3(f, 1.0f, f);
     }
     return glm::vec3(1.0f);
 }

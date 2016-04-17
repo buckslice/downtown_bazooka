@@ -39,6 +39,8 @@ public:
     sf::SoundBuffer menuSelectSound;
     sf::SoundBuffer menuMoveSound;
     sf::SoundBuffer explosionSound;
+    sf::SoundBuffer burningSound;
+    sf::SoundBuffer healingSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

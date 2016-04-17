@@ -50,14 +50,14 @@ void Projectile::onDeath() {
         EntityManagerInstance->MakeExplosion(transform->getWorldPos(), 100, 16.0f, collider->vel);
         glm::vec3 p = transform->getWorldPos();
         glm::vec3 s = glm::vec3(20.0f) / 2.0f;
-        Physics::sendOverlapEvent(AABB(p - s, p + s), CollisionData{ ColliderType::BASIC, Tag::EXPLOSION });
+        Physics::sendOverlapEvent(AABB(p - s, p + s), Tag::EXPLOSION , nullptr );
     }
     EntityManagerInstance->ReturnProjectile(this);
 }
 
-void Projectile::onCollision(CollisionData data) {
-    if ((data.tag == Tag::PLAYER && collider->tag != Tag::PLAYER_PROJECTILE) ||
-        (data.tag == Tag::ENEMY && collider->tag != Tag::ENEMY_PROJECTILE)) {
+void Projectile::onCollision(Tag tag, Entity* other) {
+    if ((tag == Tag::PLAYER && collider->tag != Tag::PLAYER_PROJECTILE) ||
+        (tag == Tag::ENEMY && collider->tag != Tag::ENEMY_PROJECTILE)) {
         timer = -1.0f;
     }
 }

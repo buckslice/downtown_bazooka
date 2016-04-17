@@ -14,9 +14,15 @@ struct ColliderData {
     Entity* entity = nullptr;
 };
 
+struct StaticData {
+    AABB bounds;
+    Tag tag;
+};
+
 struct OverlapEvent {
     AABB bounds;
-    CollisionData data;
+    Tag tag;
+    Entity* entity;
 };
 
 class Quadtree;
@@ -32,7 +38,7 @@ public:
     void update(float delta, glm::vec3 center);
 
     // adds a static to the matrix (returns index)
-    static int addStatic(AABB obj);
+    static int addStatic(AABB bounds, Tag tag = Tag::NONE);
 
     // checks to see if static collides with any in the matrix
     static bool checkStatic(AABB obj);
@@ -46,7 +52,7 @@ public:
     static Collider* registerDynamic(Transform* transform);
     static void returnDynamic(Collider* collider);
 
-    static void sendOverlapEvent(AABB aabb, CollisionData data);
+    static void sendOverlapEvent(AABB bounds, Tag tag, Entity* entity = nullptr);
 
     void streamColliderModels();
 

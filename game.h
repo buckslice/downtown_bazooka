@@ -1,86 +1,24 @@
 #pragma once
-
-#include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <Windows.h>
-#include <memory>
-
-#include "audio.h"
-#include "shader.h"
-#include "camera.h"
-#include "terrain.h"
-#include "glHelper.h"
-#include "physics.h"
-#include "menu.h"
-#include "graphics.h"
-#include "input.h"
-#include "enemy.h"
-#include "mathutil.h"
-#include "entityManager.h"
+#include "SFML\Graphics.hpp"
 
 class Game {
 public:
-    Game(GLuint width, GLuint height);
-    ~Game();
+    Game::Game();
 
-    void start();
+    void update(float delta);
 
-    void pollEvents();
+    static float timeSinceStart();
+    static float deltaTime();
 
-    void getInput();
-
-    void toggleOptions();
-
-    void update(GLfloat delta);
-
-    void render();
-
+    static bool isGroundLava();
+    static float getLavaFlowRate();
+    static float getLavaTime();
 
 private:
-    const GLuint NUM_BUILDINGS = 1000; // 7500
-    const GLuint NUM_ENEMIES = 1000;
+    static sf::Clock time;
+    static float delta;     // save latest delta time each frame for convenience
 
-    GLuint WIDTH, HEIGHT;
-    sf::Vector2i center;
-    sf::RenderWindow* window;
-    Graphics* graphics;
-    Physics* physics;
-    Input input;
-    Terrain* terrain;
-    Camera cam;
-    Player* player;
-    EntityManager* entityManager;
-    Menu* menu;
-    Audio* audio;
-
-    sf::Clock frameTime;
-
-    void testMathUtils();
-
-    // for mouse input
-    sf::Vector2i mouseMove;
-    GLfloat mouseScroll;
-
-    // state tracking flags
-    bool running = true;
-    bool lastFocused = false;
-    bool gameFocused = false;
-    bool clickedInside = true;
-    bool mouseVisible = false;
-    bool lastMouseVisible = false;
-    bool mipmapping = true;
-    bool blurring = true;
-    bool wireframe = false;
-    bool paused = false;
-    bool showFPS = false;;
+    float flowSpeed = 3.0f; // how long in seconds to start flowing
+    static float flowRate;  // value from 0-1 denoting transition period
+    static float lavaTime;  // how much lava has flowed
 };
-

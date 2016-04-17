@@ -26,11 +26,12 @@ public:
 	float getDamage();
 
     void update(GLfloat delta) override;
-    void onCollision(CollisionData data) override;
+    void onCollision(Tag tag, Entity* other) override;
 
     void addHealth(float amount);
 
 private:
+    bool getGroundedRecent();
     void jump();
     void shoot();
 
@@ -43,9 +44,14 @@ private:
     float shotsPerSecond = 1.0f;
     float shootSpeed = 25.0f;
     float invulnTime = 0.0f;
-    float timeSinceHitJump = -1.0f;
+    float timeSinceHitJump = 10.0f;
     float timeSinceShot = 10.0f;
-    float timeSinceGrounded = 0.0f;
+    float timeSinceGrounded = 10.0f;
+    float burnTime = 0.0f;
+    // allows player to still jump if they try a little before they are allowed
+    const float jumpLenience = 0.2f;
+    // allows player to count as grounded potentially a little after they actually are
+    const float groundedLenience = 0.25f;   
 
     glm::quat currRot, targRot;
 

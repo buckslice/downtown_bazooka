@@ -100,8 +100,8 @@ void Enemy::update(GLfloat delta) {
 
 }
 
-void Enemy::onCollision(CollisionData data) {
-    if (data.tag == Tag::PLAYER_PROJECTILE || data.tag == Tag::EXPLOSION) {
+void Enemy::onCollision(Tag tag, Entity* other) {
+    if (tag == Tag::PLAYER_PROJECTILE || tag == Tag::EXPLOSION) {
         health -= EntityManagerInstance->getPlayerDamage();
     }
 }

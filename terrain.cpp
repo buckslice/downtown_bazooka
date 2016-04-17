@@ -5,6 +5,7 @@
 #include "input.h"
 #include "graphics.h"
 #include "entityManager.h"
+#include "game.h"
 
 // public variables for both terrain and chunk
 glm::vec2 seed;
@@ -147,13 +148,14 @@ void Chunk::generateStructures(std::mt19937& rng, Distributions rds) {
 
                 // add to physics matrix
                 box = AABB(glm::vec3(x0, lowestHeight, z0), glm::vec3(x1, sy + lowestHeight, z1));
-                staticIndices.push_back(Physics::addStatic(box));
 
                 // calculate color
+                Tag tag = Tag::NONE;
                 glm::vec3 c;
                 if (sy < LOW_HEIGHT) {
                     if (rds.zeroToOne(rng) <= 0.05f) {
                         c = glm::vec3(0.0f, 1.0f, 0.25f);    // green
+                        tag = Tag::HEALER;
                     } else {
                         float n = Noise::ridged_2D(x, z, 3, .001f);
                         if (n < 0.25f) {
@@ -170,6 +172,9 @@ void Chunk::generateStructures(std::mt19937& rng, Distributions rds) {
                 } else {
                     c = glm::vec3(1.0f, rds.zeroToOne(rng) * .2f + .3f, 0.0f);	// orange
                 }
+
+                staticIndices.push_back(Physics::addStatic(box, tag));
+
                 buildingModels.push_back(box.getModelMatrix());
                 buildingColors.push_back(c);
 
@@ -347,16 +352,6 @@ void Terrain::update(float delta, glm::vec3 pl) {
     point pcc = worldToChunk(pl.x, pl.z);
     //std::cout << pcc.first << " " << pcc.second << " " << pl.x << " " << pl.z << std::endl;
 
-    float flowStartup = 2.0f;
-    if (Input::pressed(sf::Keyboard::BackSpace)) {
-        timeSinceFlow -= delta / flowStartup;
-    } else {
-        timeSinceFlow += delta / flowStartup;
-    }
-    timeSinceFlow = Mth::saturate(timeSinceFlow);
-    lavaTime += delta * (1.0f - timeSinceFlow);
-
-
     std::vector<point> newPoints;
     std::vector<float> distances;
 
@@ -443,8 +438,8 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-    glUniform1f(glGetUniformLocation(r.terrainShader.program, "time"), lavaTime);
-    glUniform1f(glGetUniformLocation(r.terrainShader.program, "clerp"), timeSinceFlow);
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "time"), Game::getLavaTime());
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "clerp"), Game::getLavaFlowRate());
     glUniform1f(glGetUniformLocation(r.terrainShader.program, "tileFactor"), (float)NUM_TILES);
 
     chunks[0]->mesh->bindTextures(Resources::get().terrainTex, Resources::get().noiseTex);

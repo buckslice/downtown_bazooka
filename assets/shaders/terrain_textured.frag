@@ -15,7 +15,7 @@ in vec3 wpos;
 
 void main()
 {
-    //normal ground
+    //normal animated ground
 
     // vec2 ntc = Texcoord*5.0;
     // ntc.x += time*0.05;
@@ -59,7 +59,7 @@ void main()
 
     vec4 c1 = texture(tex, Texcoord*tileFactor + uvoff)*0.5;
     vec4 c2 = texture(tex, ((Texcoord+uvoff2)*tileFactor));
-    vec4 tcolor = mix(vec4(1.0, 0.0, 0.0, 1.0), vec4(Color, 1.0), clerp);
+    vec4 tcolor = mix(vec4(Color, 1.0),vec4(1.0, 0.0, 0.0, 1.0), clerp);
 
     color = clamp(c1+c2, 0.0, 1.0) * tcolor;
 

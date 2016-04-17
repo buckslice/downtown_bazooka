@@ -2,6 +2,7 @@
 #include "entityManager.h"
 #include "graphics.h"
 #include "audio.h"
+#include "game.h"
 
 Player::Player(Camera* cam) {
     this->cam = cam;
@@ -51,11 +52,14 @@ Player::Player(Camera* cam) {
     Physics::setCollisionCallback(this);
 }
 
-void Player::spawn(glm::vec3 spawnPos, bool awake) {
+void Player::spawn(glm::vec3 spawnPos, bool enabled) {
     flying = false;
     health = maxHealth;
+    burnTime = 0.0f;
     transform->setPos(spawnPos);
-    collider->enabled = awake;
+    collider->onTerrain = false;
+    //collider->grounded = false;
+    collider->enabled = enabled;
 }
 
 float Player::getHealth() {
@@ -96,10 +100,6 @@ void Player::update(GLfloat delta) {
         timeSinceHitJump = 0.0f;
     }
 
-    if (collider->grounded) {
-        timeSinceGrounded = 0.0f;
-    }
-
     // check shoot input
     if (Input::justPressed(sf::Keyboard::E)) {
         if (timeSinceShot > 1 / shotsPerSecond) {
@@ -109,11 +109,9 @@ void Player::update(GLfloat delta) {
     }
 
     // jump if in time
-    float jumpLenience = 0.2f;
     if (timeSinceHitJump < jumpLenience) {
         jump();
     }
-
 
     // cam forward in xz plane
     glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
@@ -138,10 +136,25 @@ void Player::update(GLfloat delta) {
         }
         collider->vel = (xzmove + cam->worldUp * input.y) * flyspeed;
     } else {
+
         input.y = 0.0f; // ignore this part of input when not flying
-        if (collider->vel.y != 0.0f) {
-            collider->grounded = false;
+        if (collider->grounded) {
+            timeSinceGrounded = 0.0f;
         }
+
+        // calculate burn damage from stepping on lava
+        burnTime -= delta;
+        if (collider->onTerrain && Game::isGroundLava()) {
+            burnTime = 0.5f;
+        }
+        if (burnTime > 0.0f) {
+            AudioInstance->playSoundSingle(Resources::get().burningSound);
+
+            glm::vec3 r = glm::vec3(Mth::randUnit(), Mth::rand01() + 0.5f, Mth::randUnit()) * 10.0f;
+            EntityManagerInstance->SpawnParticle(transform->getWorldPos(), ParticleType::FIRE, 5.0f, r);
+            addHealth(-delta*20.0f);
+        }
+
         GLfloat oldy = collider->vel.y;
 
         collider->gravityMultiplier = 1.0f;
@@ -150,7 +163,7 @@ void Player::update(GLfloat delta) {
         //else
         //	pt.gravityMultiplier = 3.0f;
 
-        GLfloat accel = collider->grounded ? 10.0f : 2.0f;
+        GLfloat accel = getGroundedRecent() ? 10.0f : 2.0f;
         accel *= speed * delta;
         collider->vel.y = 0.0f;
         collider->vel += xzmove * accel;
@@ -162,7 +175,7 @@ void Player::update(GLfloat delta) {
 
         // if no input then apply drag
         if (input == glm::vec3(0.0f)) {
-            collider->vel *= (collider->grounded ? .8f : .95f);
+            collider->vel *= (getGroundedRecent() ? .8f : .95f);
             collider->vel *= .9f;
         }
         // gravity 9.81 not right for some reason
@@ -170,17 +183,29 @@ void Player::update(GLfloat delta) {
     }
 }
 
-void Player::onCollision(CollisionData data) {
-    if ((data.tag == Tag::ENEMY || data.tag == Tag::ENEMY_PROJECTILE) && invulnTime >= 0.5f) {
-        AudioInstance->playSound(Resources::get().damageSound);
-        addHealth(-5);
-        invulnTime = 0.0f;
-    }
-
-    if (data.tag == Tag::ITEM) {
+void Player::onCollision(Tag tag, Entity* other) {
+    switch (tag) {
+    case Tag::HEALER: {
+        if (collider->grounded && !collider->onTerrain) {  // && health < maxHealth
+            AudioInstance->playSoundSingle(Resources::get().healingSound);
+            addHealth(10.0f * Game::deltaTime());
+            glm::vec2 p = glm::normalize(Mth::randomPointInCircle(1.0f))*3.0f;
+            glm::vec3 rp = transform->getWorldPos() + glm::vec3(p.x, 0.0f, p.y);
+            EntityManagerInstance->SpawnParticle(rp, ParticleType::HEAL, 1.0f, glm::vec3(0.0f));
+        }
+    }break;
+    case Tag::ENEMY:
+    case Tag::ENEMY_PROJECTILE:
+        if (invulnTime >= 0.5f) {
+            AudioInstance->playSound(Resources::get().damageSound);
+            addHealth(-5);
+            invulnTime = 0.0f;
+        }
+        break;
+    case Tag::ITEM:
         AudioInstance->playSound(Resources::get().itemGetSound);
 
-        Item* i = dynamic_cast<Item*>(data.entity);
+        Item* i = dynamic_cast<Item*>(other);
         switch (i->type) {
         case ItemType::HEAL:
             addHealth(10);
@@ -200,17 +225,22 @@ void Player::onCollision(CollisionData data) {
             shotsPerSecond += 0.5f;
             break;
         }
+        break;
     }
 
 }
 
+bool Player::getGroundedRecent() {
+    return timeSinceGrounded < groundedLenience;
+}
+
 void Player::jump() {
     // check if grounded
-    if ((collider->grounded || timeSinceGrounded < 0.25f) && !flying) {
+    if (getGroundedRecent() && !flying) {
         AudioInstance->playSound(Resources::get().jumpSound);
         collider->vel.y = jumpSpeed;
         collider->grounded = false;
-        timeSinceHitJump = 1000.0f;
+        timeSinceHitJump = 10.0f;
     }
 }
 
