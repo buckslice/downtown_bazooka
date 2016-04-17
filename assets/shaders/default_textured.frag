@@ -11,6 +11,14 @@ in vec3 wpos;
 
 void main()
 {
+    // vec4 c1 = texture(tex, Texcoord);
+    // vec4 c2 = texture(tex, Texcoord* 10.0f);
+    // //c2 = vec4(0.0);
+    // if(c1.r < 0.01 && c2.r < 0.01){
+    //     color = vec4(0.0);
+    // }else{
+    // color = clamp(c1+c2, 0.0, 1.0) * vec4(Color,1.0);}
+
     color = texture(tex, Texcoord) * vec4(Color,1.0);
 
     // ignores texture

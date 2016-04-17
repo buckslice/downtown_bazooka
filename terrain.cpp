@@ -277,6 +277,17 @@ void Chunk::clearStatics() {
 
 void Chunk::render() {
     mesh->render();
+    //if (Mth::rand01() < 0.1f) {
+    //    float cx = pos.first * CHUNK_SIZE;
+    //    float cz = pos.second * CHUNK_SIZE;
+    //    float hc = CHUNK_SIZE / 2.0f;
+    //    float x = Mth::randRange(cx - hc, cx + hc);
+    //    float z = Mth::randRange(cz - hc, cz + hc);
+    //    float h = getHeight(x, z);
+
+    //    glm::vec3 pos = glm::vec3(x,h,z);
+    //    EntityManagerInstance->SpawnParticle(pos, ParticleType::FIRE, 0.0f, glm::vec3(Mth::randUnit(), Mth::rand01(), Mth::randUnit())*10.0f);
+    //}
     if (!Graphics::DEBUG) {
         Graphics::addToStream(Shape::CUBE_GRID, buildingModels, buildingColors);
         Graphics::addToStream(Shape::PYRAMID, treeModels, treeColors);
@@ -331,10 +342,20 @@ point Terrain::worldToChunk(float x, float z) {
 }
 
 int frames = 0;
-void Terrain::update(glm::vec3 pl) {
+void Terrain::update(float delta, glm::vec3 pl) {
     // get players chunk coordinates
     point pcc = worldToChunk(pl.x, pl.z);
     //std::cout << pcc.first << " " << pcc.second << " " << pl.x << " " << pl.z << std::endl;
+
+    float flowStartup = 2.0f;
+    if (Input::pressed(sf::Keyboard::BackSpace)) {
+        timeSinceFlow -= delta / flowStartup;
+    } else {
+        timeSinceFlow += delta / flowStartup;
+    }
+    timeSinceFlow = Mth::saturate(timeSinceFlow);
+    lavaTime += delta * (1.0f - timeSinceFlow);
+
 
     std::vector<point> newPoints;
     std::vector<float> distances;
@@ -414,6 +435,7 @@ void Terrain::update(glm::vec3 pl) {
 }
 
 // render all terrain chunks
+
 void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     Resources& r = Resources::get();
     r.terrainShader.use();
@@ -421,8 +443,8 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
     glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(r.terrainShader.program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-    float t = gameTime.getElapsedTime().asSeconds();
-    glUniform1f(glGetUniformLocation(r.terrainShader.program, "time"), t);
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "time"), lavaTime);
+    glUniform1f(glGetUniformLocation(r.terrainShader.program, "clerp"), timeSinceFlow);
     glUniform1f(glGetUniformLocation(r.terrainShader.program, "tileFactor"), (float)NUM_TILES);
 
     chunks[0]->mesh->bindTextures(Resources::get().terrainTex, Resources::get().noiseTex);

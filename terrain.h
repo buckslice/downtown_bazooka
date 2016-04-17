@@ -84,7 +84,7 @@ public:
 
     ~Terrain();
 
-    void update(glm::vec3 pl);
+    void update(float delta, glm::vec3 pp);
 
     void render(glm::mat4 view, glm::mat4 proj);
 
@@ -105,4 +105,7 @@ private:
     point worldToChunk(float x, float z);
 
     std::uniform_real_distribution<float> un;
+
+    float lavaTime = 0.0f;
+    float timeSinceFlow = 1.0f;
 };

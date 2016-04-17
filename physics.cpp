@@ -8,7 +8,7 @@
 
 Quadtree* Physics::collisionTree;
 
-static MemPool<ColliderData> dynamicPool(10000);
+static MemPool<ColliderData> dynamicPool(15000);
 static MemPool<AABB> staticPool(15000);
 
 std::vector<OverlapEvent> Physics::overlapEvents;

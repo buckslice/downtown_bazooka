@@ -13,7 +13,7 @@
 #include "pool.h"
 
 const int MAX_PROJECTILES = 200;
-const int MAX_PARTICLES = 5000;
+const int MAX_PARTICLES = 10000;
 const int MAX_ENEMIES = 2000;
 const int MAX_ITEMS = 2000;
 
@@ -37,11 +37,11 @@ public:
     // effect dictates appearance, lifetime, and velocity over time
     // mag is magnitude of randomized velocity
     // vel is initial velocity
-    Particle* SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0, glm::vec3 vel = glm::vec3(0, 0, 0));
+    Particle* SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0.0f, glm::vec3 vel = glm::vec3(0.0f));
 
     // make explosion out of particles at position pos
     // num dictates how many particles in explosion
-    void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0, 0, 0));
+    void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0.0f));
 
     void SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer);
     void ReturnProjectile(Projectile* p);

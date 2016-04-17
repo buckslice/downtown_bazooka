@@ -81,7 +81,11 @@ Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float
     Particle* p = getNextParticle();
     p->type = effect;
     p->activate();
-    p->collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
+    if (mag > 0.0f) {
+        p->collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
+    } else {
+        p->collider->vel = vel;
+    }
     p->transform->setPos(pos);
     p->transform->setScale(glm::vec3(.25f));
     return p;

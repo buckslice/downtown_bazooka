@@ -218,7 +218,7 @@ void Game::update(GLfloat delta) {
 
     glm::vec3 pp = player->transform->getWorldPos();
     //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
-    terrain->update(pp);
+    terrain->update(delta, pp);
 
     // detect and resolve collisions
     physics->update(delta, pp);
