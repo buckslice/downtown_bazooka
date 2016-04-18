@@ -44,6 +44,8 @@ void EntityManager::returnAllObjects() {
 void EntityManager::update(float delta) {
     player->update(delta);
 
+    waypoint.update(delta);
+
     // update enemies
     for (Enemy* e = nullptr; enemies->next(e);) {
         e->update(delta);
@@ -70,26 +72,19 @@ float EntityManager::getPlayerDamage() {
     return player->getDamage();
 }
 
-void EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float mag, glm::vec3 vel) {
-    Particle& p = particles[nextParticleIndex];
+void EntityManager::SpawnParticle(ParticleType type, 
+    glm::vec3 pos, glm::vec3 vel, float rmag, glm::vec3 scale, bool hasCollision) {
+
+    particles[nextParticleIndex].activate(type, pos, vel, rmag, scale, hasCollision);;
     nextParticleIndex = ++nextParticleIndex % MAX_PARTICLES;
-    p.type = effect;
-    p.activate();
-    if (mag > 0.0f) {
-        p.collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
-    } else {
-        p.collider->vel = vel;
-    }
-    p.transform->setPos(pos);
-    p.transform->setScale(glm::vec3(.25f));
 }
 
 
 void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 vel) {
     AudioInstance->playSound(Resources::get().explosionSound);
     for (int i = 0; i < num; ++i) {
-        SpawnParticle(pos, SPARK, mag * 5.0f, vel);
-        SpawnParticle(pos, FIRE, mag * 4, vel);
+        SpawnParticle(SPARK, pos, vel, mag * 5.0f);
+        SpawnParticle(FIRE, pos, vel, mag * 4.0f);
     }
 }
 

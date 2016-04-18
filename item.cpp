@@ -5,10 +5,10 @@
 
 Item::Item() {
     model = Graphics::registerTransform();
-    model->setVisibility(VISIBLE);
+    model->setVisibility(Visibility::SHOW_SELF);
     model->setPos(0.0f, 1.0f, 0.0f);
     model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));
-    transform->setVisibility(HIDDEN);
+    transform->setVisibility(Visibility::HIDE_ALL);
     transform->parentAll(model);
     collider->type = ColliderType::TRIGGER;
     collider->setExtents(glm::vec3(-0.75f, 0.0f, -0.75f), glm::vec3(0.75f, 1.5f, 0.75f));
@@ -41,7 +41,7 @@ void Item::onCollision(Tag tag, Entity* other) {
 
 void Item::init(glm::vec3 pos, ItemType type) {
     transform->setPos(pos);
-    transform->setVisibility(HIDDEN_SELF);
+    transform->setVisibility(Visibility::HIDE_SELF);
 
     this->type = type;
 

@@ -6,7 +6,7 @@
 
 Player::Player(Camera* cam) {
     this->cam = cam;
-    transform->setVisibility(Visibility::HIDDEN_SELF);
+    transform->setVisibility(Visibility::HIDE_SELF);
 
     Transform* model = Graphics::registerTransform();
     model->setPos(0.0f, 1.5f, 0.0f);
@@ -86,13 +86,14 @@ void Player::update(GLfloat delta) {
     invulnTime += delta;
 
     bool childrenVisible = cam->getCamDist() > 1.0f;
-    transform->setVisibility(childrenVisible ? HIDDEN_SELF : HIDDEN);
+    transform->setVisibility(childrenVisible ? Visibility::HIDE_SELF : Visibility::HIDE_ALL);
 
     // get movement
     glm::vec3 input = getMovementDir();
 
     // toggle flying
     if (Input::justPressed(sf::Keyboard::Q)) {
+        burnTime = 0.0f;
         flying = !flying;
     }
     // check jump input
@@ -150,8 +151,8 @@ void Player::update(GLfloat delta) {
         if (burnTime > 0.0f) {
             AudioInstance->playSoundSingle(Resources::get().burningSound);
 
-            glm::vec3 r = glm::vec3(Mth::randUnit(), Mth::rand01() + 0.5f, Mth::randUnit()) * 10.0f;
-            EntityManagerInstance->SpawnParticle(transform->getWorldPos(), ParticleType::FIRE, 5.0f, r);
+            glm::vec3 rvel = glm::vec3(Mth::randUnit(), Mth::rand01() + 0.5f, Mth::randUnit()) * 10.0f;
+            EntityManagerInstance->SpawnParticle(ParticleType::FIRE, transform->getWorldPos(), rvel, 5.0f);
             addHealth(-delta*20.0f);
         }
 
@@ -191,7 +192,7 @@ void Player::onCollision(Tag tag, Entity* other) {
             addHealth(10.0f * Game::deltaTime());
             glm::vec2 p = glm::normalize(Mth::randomPointInCircle(1.0f))*3.0f;
             glm::vec3 rp = transform->getWorldPos() + glm::vec3(p.x, 0.0f, p.y);
-            EntityManagerInstance->SpawnParticle(rp, ParticleType::HEAL, 1.0f, glm::vec3(0.0f));
+            EntityManagerInstance->SpawnParticle(ParticleType::HEAL, rp, glm::vec3(0.0f), 1.0f);
         }
     }break;
     case Tag::ENEMY:

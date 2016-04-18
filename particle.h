@@ -7,22 +7,25 @@
 #include "entity.h"
 enum ParticleType {
 	SPARK,
-	CLOUD,
 	FIRE,
 	BEAM,
-    HEAL   
+    HEAL,
+    BEACON
 };
 class Particle : public Entity {
 public:
-
-    float lifetime, curlife;
-	ParticleType type;
-
     Particle();
 
-	void activate();
+	void activate(ParticleType effect, glm::vec3 pos, glm::vec3 vel, 
+        float rmag, glm::vec3 scale, bool hasCollision);
 
 	void update(GLfloat dt) override;
 
-	glm::vec3 getColor();
+    glm::vec3 startScale;
+private:
+
+    ParticleType type;
+    float lifetime;
+    float curlife;
+
 };

@@ -11,6 +11,7 @@
 #include "mathutil.h"
 #include "particle.h"
 #include "pool.h"
+#include "waypoint.h"
 
 const int MAX_PROJECTILES = 200;
 const int MAX_PARTICLES = 10000;
@@ -34,7 +35,8 @@ public:
     // effect dictates appearance, lifetime, and velocity over time
     // mag is magnitude of randomized velocity
     // vel is initial velocity
-    void SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0.0f, glm::vec3 vel = glm::vec3(0.0f));
+    void SpawnParticle(ParticleType type, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f),
+        float rmag = 0.0f, glm::vec3 scale = glm::vec3(1.0f), bool hasCollision = true);
 
     // make explosion out of particles at position pos
     // num dictates how many particles in explosion
@@ -46,8 +48,8 @@ public:
     void SpawnEnemy(glm::vec3 pos, EnemyType type);
     void ReturnEnemy(Enemy* e);
 
-	void SpawnItem(glm::vec3 pos, ItemType type);
-	void ReturnItem(Item* i);
+    void SpawnItem(glm::vec3 pos, ItemType type);
+    void ReturnItem(Item* i);
 
     float getPlayerDamage();
 
@@ -56,11 +58,13 @@ private:
 
     // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;
-	MemPool<Item>* items;
+    MemPool<Item>* items;
     MemPool<Projectile>* projectiles;
     MemPool<Enemy>* enemies;
 
     Player* player;
+
+    Waypoint waypoint;
 
 };
 

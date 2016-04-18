@@ -1,15 +1,11 @@
 
 #include "transform.h"
 
-// prob add something here
-Transform::Transform() {
-    pos = glm::vec3(0.0f);
-    rot = glm::quat();
-    scale = glm::vec3(1.0f);
-    color = glm::vec3(1.0f);
-    parent = nullptr;
-    visibility = VISIBLE;
+Transform::Transform(glm::vec3 pos, glm::quat rot, glm::vec3 scale,
+    glm::vec3 color, Visibility visibility, Shape shape, Transform* parent) :
+    pos(pos), rot(rot), scale(scale), color(color), visibility(visibility), shape(shape), parent(parent) {
 }
+
 Transform::~Transform() {
 }
 
@@ -19,6 +15,11 @@ void Transform::setPos(glm::vec3 pos) {
 }
 void Transform::setPos(float x, float y, float z) {
     pos = glm::vec3(x, y, z);
+    needUpdate = true;
+}
+
+void Transform::addPos(glm::vec3 add) {
+    pos += add;
     needUpdate = true;
 }
 
@@ -63,10 +64,10 @@ glm::vec3 Transform::getWorldScale() {  // world scale?
 }
 
 glm::quat Transform::getWorldRot() {
-	if (parent != nullptr) {
-		return parent->getWorldRot() * rot;
-	}
-	return rot;
+    if (parent != nullptr) {
+        return parent->getWorldRot() * rot;
+    }
+    return rot;
 }
 
 glm::mat4 Transform::getModelMatrix() {
@@ -86,12 +87,12 @@ glm::mat4 Transform::getModelMatrix() {
 }
 
 bool Transform::shouldDraw() {
-    if (visibility != VISIBLE) {
+    if (visibility != Visibility::SHOW_SELF) {
         return false;
     }
     Transform* p = parent;
     while (p != nullptr) {
-        if (p->visibility != HIDDEN) {
+        if (p->visibility != Visibility::HIDE_ALL) {
             p = p->parent;
         } else {
             return false;

@@ -59,7 +59,8 @@ void main()
 
     vec4 c1 = texture(tex, Texcoord*tileFactor + uvoff)*0.5;
     vec4 c2 = texture(tex, ((Texcoord+uvoff2)*tileFactor));
-    vec4 tcolor = mix(vec4(Color, 1.0),vec4(1.0, 0.0, 0.0, 1.0), clerp);
+    vec3 lavaColor = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0),c1.r+c2.r); 
+    vec4 tcolor = vec4(mix(Color,lavaColor, clerp),1.0);
 
     color = clamp(c1+c2, 0.0, 1.0) * tcolor;
 

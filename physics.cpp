@@ -42,7 +42,7 @@ void Physics::update(float delta, glm::vec3 center) {
     for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
         Collider& col = cd->collider;
         // ensure object is active
-        if (!col.enabled || col.type == ColliderType::BASIC) {
+        if (!col.enabled || col.type == ColliderType::BASIC || col.type == ColliderType::NOCLIP) {
             continue;
         }
         // update collider position from transform
@@ -78,13 +78,18 @@ void Physics::update(float delta, glm::vec3 center) {
     // leafs objects are looked up using the superMatrix
     // leafs can have static and dynamic objects in them
     for (ColliderData* cdObj = nullptr; dynamicPool.next(cdObj);) {
-        int dndx = dynamicPool.getIndex(cdObj);
         Collider& col = cdObj->collider;
         col.onTerrain = col.grounded = false;
         if (!col.enabled || !col.awake) {
             col.vel = glm::vec3(0.0f);
             continue;
         }
+        if (col.type == ColliderType::NOCLIP) {
+            col.vel.y += GRAVITY * col.gravityMultiplier * delta;
+            col.transform->addPos(col.vel * delta);
+            continue;
+        }
+
         // make sure to do this again incase new objects were created since built tree up above
         col.pos = col.transform->getPos();
 
@@ -99,6 +104,7 @@ void Physics::update(float delta, glm::vec3 center) {
         // set remaining velocity to initial velocity of dynamic
         glm::vec3 rvel = col.vel;
 
+        int dndx = dynamicPool.getIndex(cdObj);
         // try to resolve up to 10 collisions for this object this frame
         for (int resolutionAttempts = 0; resolutionAttempts < 10; ++resolutionAttempts) {
             //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
@@ -128,9 +134,8 @@ void Physics::update(float delta, glm::vec3 center) {
                 QuadtreeData& qtd = returnData[indx];
                 int index = qtd.index;
                 if (qtd.dynamic) {
-                    if (col.type == ColliderType::BASIC ||
-                        dynamicResolvedSet.count(index) || dynamicCheckSet.count(index) ||
-                        dndx == index) {
+                    if (col.type == ColliderType::BASIC || dndx == index ||
+                        dynamicResolvedSet.count(index) || dynamicCheckSet.count(index)) {
                         continue;
                     }
                     // pretend like they aren't moving since you are going first
@@ -363,7 +368,7 @@ void Physics::streamColliderModels() {
         Collider& col = cd->collider;
         if (!col.enabled) {
             // ignore drawing deactivated particles to avoid cluttering
-            if (col.type == ColliderType::BASIC) {
+            if (col.type == ColliderType::BASIC || col.type == ColliderType::NOCLIP) {
                 continue;
             }
             // this pretty much never happens now since

@@ -6,10 +6,10 @@
 #include <iostream>
 #include "mathutil.h"
 
-enum Visibility {
-    VISIBLE,         // show yourself
-    HIDDEN_SELF,     // hide just yourself
-    HIDDEN           // hide yourself and your children
+enum class Visibility {
+    SHOW_SELF,       // show yourself
+    HIDE_SELF,       // hide just yourself
+    HIDE_ALL         // hide yourself and your children
 };
 
 enum class Shape {
@@ -20,13 +20,24 @@ enum class Shape {
 
 class Transform {
 public:
-    Transform();
+    Transform(
+        glm::vec3 pos = glm::vec3(0.0f),
+        glm::quat rot = glm::quat(),
+        glm::vec3 scale = glm::vec3(1.0f),
+        glm::vec3 color = glm::vec3(1.0f),
+        Visibility visibility = Visibility::SHOW_SELF,
+        Shape shape = Shape::CUBE_GRID,
+        Transform* parent = nullptr
+        );
+
     ~Transform();
 
     // set local position of transform
     void setPos(glm::vec3 pos);
     // set local position of transform
     void setPos(float x, float y, float z);
+    // adds to position of transform
+    void addPos(glm::vec3 add);
     // set local scale of transform
     void setScale(glm::vec3 scale);
     // set local scale of transform
@@ -35,7 +46,7 @@ public:
     void setRot(glm::vec3 euler);
     // set local rotation of transform
     void setRot(float x, float y, float z);
-    
+
     void setRot(glm::quat q);
     // local rotation around axis by angle in degrees
     void rotate(float angle, glm::vec3 axis);
@@ -46,7 +57,7 @@ public:
     // returns world scale of transform
     glm::vec3 getWorldScale();
 
-	glm::quat getWorldRot();
+    glm::quat getWorldRot();
 
     // get local position
     inline glm::vec3 getPos() { return pos; }
@@ -92,10 +103,11 @@ public:
     }
 
     glm::vec3 color;
-    Shape shape = Shape::CUBE_SOLID;
+    Shape shape;
 
 private:
-	glm::vec3 pos, scale;
+    glm::vec3 pos;
+    glm::vec3 scale;
     glm::quat rot;
 
     glm::mat4 model;           // local model matrix

@@ -187,6 +187,7 @@
     <ClCompile Include="skybox.cpp" />
     <ClCompile Include="terrain.cpp" />
     <ClCompile Include="transform.cpp" />
+    <ClCompile Include="waypoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
@@ -218,6 +219,7 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="terrain.h" />
     <ClInclude Include="transform.h" />
+    <ClInclude Include="waypoint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

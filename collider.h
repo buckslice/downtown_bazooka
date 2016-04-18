@@ -4,6 +4,7 @@
 #include "transform.h"
 
 enum class ColliderType {
+    NOCLIP,         // collides with nothing, movement influenced purely by velocity and gravity
     BASIC,          // collides with statics, invisible to other types
     TRIGGER,        // collides with statics, checks TRIGGERs and FULLs without colliding
     FULL            // collides with statics, checks TRIGGERs and FULLs, collides against FULLs

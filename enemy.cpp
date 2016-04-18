@@ -4,9 +4,9 @@
 
 Enemy::Enemy() {
     model = Graphics::registerTransform();
-    model->setVisibility(VISIBLE);
+    model->setVisibility(Visibility::SHOW_SELF);
 
-    transform->setVisibility(HIDDEN);
+    transform->setVisibility(Visibility::HIDE_ALL);
     transform->parentAll(model);
     collider->type = ColliderType::FULL;
     collider->tag = Tag::ENEMY;
@@ -47,7 +47,7 @@ void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
         break;
     }
 
-    transform->setVisibility(HIDDEN_SELF);
+    transform->setVisibility(Visibility::HIDE_SELF);
     transform->setPos(pos);
     model->setPos(0.0f, scale.y / 2.0f, 0.0f);
     model->setScale(scale);

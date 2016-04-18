@@ -168,12 +168,6 @@ void GameEngine::toggleOptions() {
 }
 
 void GameEngine::update(GLfloat delta) {
-    // update game first because it stores delta time and other useful variables
-    game->update(delta);
-
-    // update audio
-    audio->update(delta);
-
     // plus and minus keys are on shift layer so use equals and dash for convenience
     if (Input::pressed(sf::Keyboard::Equal)) {
         mouseScroll += 5.0f * delta;
@@ -213,6 +207,12 @@ void GameEngine::update(GLfloat delta) {
     if (paused) {   // dont update main game stuff if paused
         return;
     }
+
+    // update game first because it stores delta time and other useful variables
+    game->update(delta);
+
+    // update audio
+    audio->update(delta);
 
     entityManager->update(delta);
 

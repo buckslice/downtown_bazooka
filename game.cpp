@@ -3,7 +3,7 @@
 #include "mathutil.h"
 
 sf::Clock Game::time;
-
+float Game::timeCounter = 0.0f;
 float Game::delta = 0.0f;
 float Game::flowRate = 0.0f;
 float Game::lavaTime = 0.0f;   
@@ -17,6 +17,10 @@ float Game::deltaTime() {
 }
 
 float Game::timeSinceStart() {
+    return timeCounter;
+}
+
+float Game::realTimeSinceStart() {
     return time.getElapsedTime().asSeconds();
 }
 
@@ -33,10 +37,12 @@ float Game::getLavaTime() {
 }
 
 void Game::update(float delta) {
+    timeCounter += delta;
     this->delta = delta;
     // calculate lava flow time
     int lavaInterval = 20;
-    if (((int)timeSinceStart() / lavaInterval) % 2 == 1) {
+    if (((int)timeSinceStart() / lavaInterval) % 2 == 1 ||
+        Input::pressed(sf::Keyboard::BackSpace)) {  // for debugging purposes
         flowRate += delta / flowSpeed;
     } else {
         flowRate -= delta / flowSpeed;
