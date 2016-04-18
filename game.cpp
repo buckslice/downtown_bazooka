@@ -2,8 +2,6 @@
 #include "input.h"
 #include "mathutil.h"
 
-
-
 sf::Clock Game::time;
 
 float Game::delta = 0.0f;

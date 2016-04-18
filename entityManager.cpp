@@ -70,26 +70,18 @@ float EntityManager::getPlayerDamage() {
     return player->getDamage();
 }
 
-// particles
-Particle* EntityManager::getNextParticle() {
-    Particle *p = &particles[nextParticleIndex];
-    nextParticleIndex = (++nextParticleIndex) % (MAX_PARTICLES - 1);
-    //nextParticleIndex = ++nextParticleIndex % MAX_PARTICLES;
-    return p;
-}
-
-Particle* EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float mag, glm::vec3 vel) {
-    Particle* p = getNextParticle();
-    p->type = effect;
-    p->activate();
+void EntityManager::SpawnParticle(glm::vec3 pos, ParticleType effect, float mag, glm::vec3 vel) {
+    Particle& p = particles[nextParticleIndex];
+    nextParticleIndex = ++nextParticleIndex % MAX_PARTICLES;
+    p.type = effect;
+    p.activate();
     if (mag > 0.0f) {
-        p->collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
+        p.collider->vel = vel + Mth::randInsideSphere(1.0f) * mag;
     } else {
-        p->collider->vel = vel;
+        p.collider->vel = vel;
     }
-    p->transform->setPos(pos);
-    p->transform->setScale(glm::vec3(.25f));
-    return p;
+    p.transform->setPos(pos);
+    p.transform->setScale(glm::vec3(.25f));
 }
 
 

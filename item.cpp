@@ -4,16 +4,18 @@
 
 
 Item::Item() {
-	model = Graphics::registerTransform();
-	model->setVisibility(VISIBLE);
-	model->setPos(0.0f, 1.0f, 0.0f);
-	model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));
-	transform->setVisibility(HIDDEN);
-	transform->parentAll(model);
-	collider->type = ColliderType::TRIGGER;
+    model = Graphics::registerTransform();
+    model->setVisibility(VISIBLE);
+    model->setPos(0.0f, 1.0f, 0.0f);
+    model->setRot(glm::vec3(45.0f, 0.0f, 45.0f));
+    transform->setVisibility(HIDDEN);
+    transform->parentAll(model);
+    collider->type = ColliderType::TRIGGER;
+    collider->setExtents(glm::vec3(-0.75f, 0.0f, -0.75f), glm::vec3(0.75f, 1.5f, 0.75f));
+
     rotSpeed = 60.0f;
 
-	Physics::setCollisionCallback(this);
+    Physics::setCollisionCallback(this);
 }
 
 
@@ -26,39 +28,39 @@ void Item::update(GLfloat delta) {
         EntityManagerInstance->ReturnItem(this);
         return;
     }
-	timer += delta;
-	transform->rotate(rotSpeed*delta, glm::vec3(0.0f, 1.0f, 0.0f));
-	model->setPos(0.0f, 1.0f + sin(timer * 2.0f) * 0.5f, 0.0f);
+    timer += delta;
+    transform->rotate(rotSpeed*delta, glm::vec3(0.0f, 1.0f, 0.0f));
+    model->setPos(0.0f, 1.0f + sin(timer * 2.0f) * 0.5f, 0.0f);
 }
 
 void Item::onCollision(Tag tag, Entity* other) {
-	if (tag == Tag::PLAYER) {
+    if (tag == Tag::PLAYER) {
         shouldDestroy = true;
-	}
+    }
 }
 
 void Item::init(glm::vec3 pos, ItemType type) {
-	transform->setPos(pos);
-	transform->setVisibility(HIDDEN_SELF);
+    transform->setPos(pos);
+    transform->setVisibility(HIDDEN_SELF);
 
-	this->type = type;
+    this->type = type;
 
     collider->tag = Tag::ITEM;
-	switch (type) {
+    switch (type) {
     case ItemType::HEAL:
-		model->color = glm::vec3(0.0, 1.0, 0.0); //green
-		break;
-	case ItemType::STAMINA:
-		model->color = glm::vec3(1.0, 0.0, 0.0); //red
-		break;
-	case ItemType::STRENGTH:
-		model->color = glm::vec3(0.0, 1.0, 1.0); //cyan
-		break;
-	case ItemType::AGILITY:
-		model->color = glm::vec3(1.0, 1.0, 0.0); //yellow
-		break;
-	case ItemType::DEXTERITY:
-		model->color = glm::vec3(1.0, 1.0, 1.0); //white
-		break;
-	}
+        model->color = glm::vec3(0.0, 1.0, 0.0); //green
+        break;
+    case ItemType::STAMINA:
+        model->color = glm::vec3(1.0, 0.0, 0.0); //red
+        break;
+    case ItemType::STRENGTH:
+        model->color = glm::vec3(0.0, 1.0, 1.0); //cyan
+        break;
+    case ItemType::AGILITY:
+        model->color = glm::vec3(1.0, 1.0, 0.0); //yellow
+        break;
+    case ItemType::DEXTERITY:
+        model->color = glm::vec3(1.0, 1.0, 1.0); //white
+        break;
+    }
 }

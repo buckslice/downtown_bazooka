@@ -101,7 +101,7 @@ void Player::update(GLfloat delta) {
     }
 
     // check shoot input
-    if (Input::justPressed(sf::Keyboard::E)) {
+    if (Input::pressed(sf::Keyboard::E)) {
         if (timeSinceShot > 1 / shotsPerSecond) {
             timeSinceShot = 0.0f;
             shoot();
@@ -186,7 +186,7 @@ void Player::update(GLfloat delta) {
 void Player::onCollision(Tag tag, Entity* other) {
     switch (tag) {
     case Tag::HEALER: {
-        if (collider->grounded && !collider->onTerrain) {  // && health < maxHealth
+        if (collider->grounded && !collider->onTerrain && health < maxHealth) {
             AudioInstance->playSoundSingle(Resources::get().healingSound);
             addHealth(10.0f * Game::deltaTime());
             glm::vec2 p = glm::normalize(Mth::randomPointInCircle(1.0f))*3.0f;
@@ -240,6 +240,7 @@ void Player::jump() {
         AudioInstance->playSound(Resources::get().jumpSound);
         collider->vel.y = jumpSpeed;
         collider->grounded = false;
+        timeSinceGrounded = 10.0f;
         timeSinceHitJump = 10.0f;
     }
 }

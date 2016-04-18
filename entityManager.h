@@ -30,14 +30,11 @@ public:
 
     void returnAllObjects();
 
-    int nextParticleIndex = 0;
-    Particle *getNextParticle();
-
     // spawn a particle at world position pos
     // effect dictates appearance, lifetime, and velocity over time
     // mag is magnitude of randomized velocity
     // vel is initial velocity
-    Particle* SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0.0f, glm::vec3 vel = glm::vec3(0.0f));
+    void SpawnParticle(glm::vec3 pos, ParticleType effect = SPARK, float mag = 0.0f, glm::vec3 vel = glm::vec3(0.0f));
 
     // make explosion out of particles at position pos
     // num dictates how many particles in explosion
@@ -55,6 +52,8 @@ public:
     float getPlayerDamage();
 
 private:
+    int nextParticleIndex = 0;
+
     // particles can just be a vector since it doesnt really matter if one is replaced
     std::vector<Particle> particles;
 	MemPool<Item>* items;
@@ -67,4 +66,3 @@ private:
 
 //Global variable for the EntityManager
 extern EntityManager *EntityManagerInstance;
-// try implementing event system that entity manager can listen to!! at least for spawning of things

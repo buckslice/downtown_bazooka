@@ -61,7 +61,7 @@ void Resources::loadTextures(bool mipmapped) {
     terrainTex = GLHelper::loadTexture("assets/images/grid2.png", mipmapped);
     solidTex = GLHelper::loadTexture("assets/images/solid.png", mipmapped);
     triangleTex = GLHelper::loadTexture("assets/images/triangle.png", mipmapped);
-    noiseTex = GLHelper::loadTexture("assets/images/noise4.jpg", mipmapped);
+    noiseTex = GLHelper::loadTexture("assets/images/noise/noise4.jpg", mipmapped);
 
     loadedTexturesBefore = true;
 }
