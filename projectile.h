@@ -14,13 +14,12 @@ public:
 
     void onCollision(Tag tag, Entity* other) override;
 
-    void init(glm::vec3 pos, glm::vec3 vel);
-
-	ProjectileType type;
+    void activate(ProjectileType type, glm::vec3 pos, glm::vec3 vel);
 
 private:
 	void onDeath();
 
+	ProjectileType type;
     float timer;
 };
 

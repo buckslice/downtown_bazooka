@@ -18,6 +18,7 @@ public:
     void playSound(sf::SoundBuffer& sb);
 
     // sound will play and loop as long as this is called every frame
+    // only one instance of each soundbuffer can be looped like this at a time
     void playSoundSingle(sf::SoundBuffer& sb);
 
     void update(GLfloat delta);

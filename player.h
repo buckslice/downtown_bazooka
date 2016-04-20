@@ -14,46 +14,63 @@ const int HEALTH_BAR_HEIGHT = 20;
 
 class Player : public Entity {
 public:
-    bool flying = false;
-	bool isDead = false;
+    bool flyMode = false;
 
     Player(Camera* cam);
 
-	void spawn(glm::vec3 spawnPos, bool awake);
+    void spawn(glm::vec3 spawnPos, bool awake);
 
     float getHealth();
-	float getMaxHealth();
-	float getDamage();
+    float getMaxHealth();
+    float getDamage();
+
+    bool isDead();
+    void addHealth(float amount);
 
     void update(GLfloat delta) override;
     void onCollision(Tag tag, Entity* other) override;
 
-    void addHealth(float amount);
 
 private:
-    bool getGroundedRecent();
-    void jump();
+    // calculate burn damage from stepping on lava
+    glm::vec3 getMovementDir();
+    
+    void updateTimers(float delta);
+    // checks inputs and returns target move direction
+    glm::vec3 checkInputs(); 
     void shoot();
 
+    void updateModel(glm::vec3 targetDir, float delta);
+    void flyModeMovement(glm::vec3 targetDir);
+
+    bool recentlyGrounded();
+    void calculateBurnDamage(float delta);
+    void checkClampXZVel();
+    void checkJumpAndBoost();
+    void calculateMovement(glm::vec3 targetDir, float delta);
+
     Camera* cam;
-    float speed = 15.0f;
-    float maxHealth = 100.0f;
-    float health = maxHealth;
-    float damage = 10.0f;
-    float jumpSpeed = 25.0f;
-    float shotsPerSecond = 1.0f;
-    float shootSpeed = 25.0f;
-    float invulnTime = 0.0f;
-    float timeSinceHitJump = 10.0f;
-    float timeSinceShot = 10.0f;
-    float timeSinceGrounded = 10.0f;
-    float burnTime = 0.0f;
-    // allows player to still jump if they try a little before they are allowed
-    const float jumpLenience = 0.2f;
-    // allows player to count as grounded potentially a little after they actually are
-    const float groundedLenience = 0.25f;   
+    glm::quat currRot;
+    glm::quat targRot;
+    glm::vec3 oldPos;
 
-    glm::quat currRot, targRot;
+    float speed = 15.0f;            // movement speed of player
+    float jumpSpeed = 25.0f;        // jump speed of player
+    const float jumpLenience = 0.2f;  // still jump if player tries a little before allowed
+    const float groundedLenience = 0.25f;  // potentially allows player to count as grounded a little after he actually is
+    float boostSpeed = 60.0f;       // rocket boost speed
+    float boostParticleTime = 0.0f; // how much longer to spawn boost particles
+    float boostTimer = 0.0f;        // timer on boost recharge
+    const float boostCooldown = 0.5f; // how long it takes for boost to recharge
+    float maxHealth = 100.0f;       // maximum health player can have
+    float health = maxHealth;       // current health of player 
+    float attackDamage = 10.0f;     // how much damage player does per attack
+    float shotsPerSecond = 1.0f;    // the rate player can shoot at
+    float shootSpeed = 25.0f;       // how fast player shoots
+    float invulnTime = 0.0f;        // how much remaining invulnerability player has    
+    float timeSinceHitJump = 10.0f; // how long since player hit jump
+    float timeSinceShot = 10.0f;    // how long since player shot
+    float timeSinceGrounded = 10.0f;  // how long since player has been grounded
+    float burnTime = 0.0f;          // how much longer player must burn
 
-    glm::vec3 getMovementDir();
 };

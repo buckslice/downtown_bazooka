@@ -12,6 +12,6 @@ public:
     void update(GLfloat delta);
 
 private:
-    std::vector<Transform> particleSpawners;
+    std::vector<Transform> particleSpawnPoints;
 
 };

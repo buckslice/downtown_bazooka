@@ -21,18 +21,7 @@ EntityManager::EntityManager(Player* player) : player(player) {
 
 }
 
-void EntityManager::init(int numberOfDudes) {
-    //EntityManagerInstance = this;
-
-    //for (int i = 0; i < numberOfDudes; i++) {
-    //    glm::vec2 rnd = Mth::randomPointInSquare(500.0f);
-    //    EnemyType et = Mth::rand01() < 0.02f ? EnemyType::ELITE : EnemyType::BASIC;
-    //    SpawnEnemy(glm::vec3(rnd.x, 200.0f, rnd.y), et);
-    //}
-    //for (int i = 0; i < numberOfDudes; i++) {
-    //    glm::vec2 rnd = Mth::randomPointInSquare(CITY_SIZE);
-    //    SpawnItem(glm::vec3(rnd.x, 200.0f, rnd.y), (ItemType)Mth::randRange(0,(int)ItemType::COUNT));
-    //}
+EntityManager::~EntityManager() {
 }
 
 void EntityManager::returnAllObjects() {
@@ -95,8 +84,7 @@ void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer
         return; // just ignore cuz pool is empty
     }
     p->collider->tag = forPlayer ? Tag::PLAYER_PROJECTILE : Tag::ENEMY_PROJECTILE;
-    p->type = forPlayer ? ProjectileType::ROCKET : ProjectileType::LASER;
-    p->init(pos, vel);
+    p->activate(forPlayer ? ProjectileType::ROCKET : ProjectileType::LASER, pos, vel);
 }
 
 void EntityManager::SpawnEnemy(glm::vec3 pos, EnemyType type) {

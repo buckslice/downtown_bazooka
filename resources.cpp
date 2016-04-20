@@ -17,7 +17,8 @@ Resources::Resources() {
         { &menuMoveSound, "menu_move.wav"},
         { &explosionSound, "explosion.wav"},
         { &burningSound, "burning.wav"},
-        { &healingSound, "healing.wav"}
+        { &healingSound, "healing.wav"},
+        { &boostSound, "boost.wav"}
     };
     loadAudio(soundPaths);
 

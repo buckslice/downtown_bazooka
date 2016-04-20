@@ -10,7 +10,8 @@ enum ParticleType {
 	FIRE,
 	BEAM,
     HEAL,
-    BEACON
+    BEACON,
+    BOOST
 };
 class Particle : public Entity {
 public:

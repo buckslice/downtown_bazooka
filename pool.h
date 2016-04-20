@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 #include <cassert>
 
 //http://www.codeproject.com/Articles/746630/O-Object-Pool-in-Cplusplus

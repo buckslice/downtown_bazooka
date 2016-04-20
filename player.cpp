@@ -53,12 +53,10 @@ Player::Player(Camera* cam) {
 }
 
 void Player::spawn(glm::vec3 spawnPos, bool enabled) {
-    flying = false;
+    flyMode = false;
     health = maxHealth;
     burnTime = 0.0f;
     transform->setPos(spawnPos);
-    collider->onTerrain = false;
-    //collider->grounded = false;
     collider->enabled = enabled;
 }
 
@@ -71,30 +69,68 @@ float Player::getMaxHealth() {
 }
 
 float Player::getDamage() {
-    return damage;
+    return attackDamage;
 }
 
+bool Player::isDead() {
+    return health <= 0.0f;
+}
+
+void Player::addHealth(float amount) {
+    health += amount;
+    health = std::max(0.0f, std::min(health, maxHealth));
+}
+
+
 void Player::update(GLfloat delta) {
-    isDead = health <= 0.0f;
-    if (isDead) {
+    if (isDead()) {
         collider->enabled = false;
         return;
     }
+    updateTimers(delta);
+
+    glm::vec3 targetDir = checkInputs();
+
+    updateModel(targetDir, delta);
+
+    if (flyMode) {   // debug mode, execute this and return
+        flyModeMovement(targetDir);
+        return;
+    }
+
+    calculateBurnDamage(delta);
+
+    checkClampXZVel();
+
+    checkJumpAndBoost();
+
+    calculateMovement(targetDir, delta);
+
+}
+
+void Player::updateTimers(float delta) {
+    // update timer variables
     timeSinceHitJump += delta;
     timeSinceGrounded += delta;
     timeSinceShot += delta;
     invulnTime += delta;
+    burnTime -= delta;
+    boostTimer -= delta;
+    boostParticleTime -= delta;
+}
 
-    bool childrenVisible = cam->getCamDist() > 1.0f;
-    transform->setVisibility(childrenVisible ? Visibility::HIDE_SELF : Visibility::HIDE_ALL);
+void Player::shoot() {
+    AudioInstance->playSound(Resources::get().shootSound);
+    glm::vec3 shootPos = transform->getWorldPos();
+    shootPos.y += 1.8f;
+    EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
+}
 
-    // get movement
-    glm::vec3 input = getMovementDir();
-
+glm::vec3 Player::checkInputs() {
     // toggle flying
     if (Input::justPressed(sf::Keyboard::Q)) {
         burnTime = 0.0f;
-        flying = !flying;
+        flyMode = !flyMode;
     }
     // check jump input
     if (Input::justPressed(sf::Keyboard::Space)) {
@@ -102,86 +138,170 @@ void Player::update(GLfloat delta) {
     }
 
     // check shoot input
-    if (Input::pressed(sf::Keyboard::E)) {
+    if (Input::pressed(sf::Keyboard::E) || Input::pressed(sf::Mouse::Button::Right)) {
         if (timeSinceShot > 1 / shotsPerSecond) {
             timeSinceShot = 0.0f;
             shoot();
         }
     }
 
-    // jump if in time
-    if (timeSinceHitJump < jumpLenience) {
-        jump();
+    // calculate movement vector in xz plane
+    glm::vec3 input = getMovementDir(); // input from key presses
+    glm::vec3 xzCamForward = glm::normalize(glm::cross(cam->worldUp, cam->right)); // cam forward in xz plane
+    glm::vec3 targetDir = cam->right * input.x + xzCamForward * input.z;  //normalized target movement direction
+    targetDir.y = 0.0f;    // just to make sure
+    if (targetDir != glm::vec3(0.0f)) {
+        targetDir = glm::normalize(targetDir);
     }
 
-    // cam forward in xz plane
-    glm::vec3 xzforward = glm::normalize(glm::cross(cam->worldUp, cam->right));
+    return targetDir;
+}
 
-    // movement vector in xz plane
-    glm::vec3 xzmove = cam->right * input.x + xzforward * input.z;
-    xzmove.y = 0.0f;
-    if (xzmove != glm::vec3(0.0f)) {
-        xzmove = glm::normalize(xzmove);
-        targRot = glm::rotation(glm::vec3(0.0f, 0.0f, 1.0f), xzmove);
+void Player::updateModel(glm::vec3 targetDir, float delta) {
+    // only update model rotation if nonzero movement vector
+    if (targetDir != glm::vec3(0.0f)) {
+        targRot = glm::normalize(glm::rotation(glm::vec3(0.0f, 0.0f, 1.0f), targetDir));
     }
-
-    // slerp keeps the quaternion normalized throughout (lerp looks like shit lol)
+    // slerp keeps the quaternion normalized throughout
     currRot = glm::slerp(currRot, targRot, delta * 8.0f);
     transform->setRot(currRot);
 
-    if (flying) {
-        collider->gravityMultiplier = 0.0f;
-        float flyspeed = speed * 20.0f;
-        if (Input::pressed(sf::Keyboard::LControl)) {
-            flyspeed *= 3.0f;
-        }
-        collider->vel = (xzmove + cam->worldUp * input.y) * flyspeed;
-    } else {
+    // set your model visible based on how zoomed in camera is
+    bool childrenVisible = cam->getCamDist() > 1.0f;
+    transform->setVisibility(childrenVisible ? Visibility::HIDE_SELF : Visibility::HIDE_ALL);
 
-        input.y = 0.0f; // ignore this part of input when not flying
-        if (collider->grounded) {
-            timeSinceGrounded = 0.0f;
-        }
+}
 
-        // calculate burn damage from stepping on lava
-        burnTime -= delta;
-        if (collider->onTerrain && Game::isGroundLava()) {
-            burnTime = 0.5f;
-        }
-        if (burnTime > 0.0f) {
-            AudioInstance->playSoundSingle(Resources::get().burningSound);
-
-            glm::vec3 rvel = glm::vec3(Mth::randUnit(), Mth::rand01() + 0.5f, Mth::randUnit()) * 10.0f;
-            EntityManagerInstance->SpawnParticle(ParticleType::FIRE, transform->getWorldPos(), rvel, 5.0f);
-            addHealth(-delta*20.0f);
-        }
-
-        GLfloat oldy = collider->vel.y;
-
-        collider->gravityMultiplier = 1.0f;
-        //if (!pt.grounded && Input::pressed(sf::Keyboard::Space) && oldy > 0)//If the player is holding down Space and moving up, then they'll decelerate more slowly
-        //	pt.gravityMultiplier = 1.0f;
-        //else
-        //	pt.gravityMultiplier = 3.0f;
-
-        GLfloat accel = getGroundedRecent() ? 10.0f : 2.0f;
-        accel *= speed * delta;
-        collider->vel.y = 0.0f;
-        collider->vel += xzmove * accel;
-
-        // max vel limit
-        if (glm::dot(collider->vel, collider->vel) > speed * speed) {
-            collider->vel = glm::normalize(collider->vel) * speed;
-        }
-
-        // if no input then apply drag
-        if (input == glm::vec3(0.0f)) {
-            collider->vel *= (getGroundedRecent() ? .8f : .95f);
-            collider->vel *= .9f;
-        }
-        // gravity 9.81 not right for some reason
-        collider->vel.y = oldy;
+void Player::flyModeMovement(glm::vec3 targetDir) {
+    collider->gravityMultiplier = 0.0f;
+    float flyspeed = speed * 20.0f;
+    if (Input::pressed(sf::Keyboard::LControl)) {
+        flyspeed *= 3.0f;
     }
+    float yInput = 0.0f;
+    if (Input::pressed(sf::Keyboard::LShift)) {
+        yInput -= 1.0f;
+    }
+    if (Input::pressed(sf::Keyboard::Space)) {
+        yInput += 1.0f;
+    }
+    collider->vel = (targetDir + cam->worldUp * yInput) * flyspeed;
+}
+
+bool Player::recentlyGrounded() {
+    return timeSinceGrounded < groundedLenience;
+}
+
+void Player::calculateBurnDamage(float delta) {
+    if (collider->onTerrain && Game::isGroundLava()) {
+        burnTime = 0.5f;
+    }
+    if (burnTime > 0.0f) {
+        AudioInstance->playSoundSingle(Resources::get().burningSound);
+
+        glm::vec3 rvel = glm::vec3(Mth::randUnit(), Mth::rand01() + 0.5f, Mth::randUnit()) * 10.0f;
+        EntityManagerInstance->SpawnParticle(ParticleType::FIRE, transform->getWorldPos(), rvel, 5.0f);
+        addHealth(-delta*20.0f);
+    }
+}
+
+// work around for shortcoming with physics resolution
+// problem is physics doesnt zero your velocity in the direction of things you hit (like walls)
+// so if you slam into a corner of two buildings really fast you will be stuck for a bit while
+// your speed cools down, so what this does is check if your last x and z positions are almost equal
+// to your current then you set the x and z components of velocity to zero
+void Player::checkClampXZVel() {
+    glm::vec3 curPos = transform->getPos();
+    curPos.y = 0.0f;
+    glm::vec3 diff = curPos - oldPos;
+    if (glm::dot(diff, diff) < 0.00001f) {
+        //std::cout << "decimating";
+        collider->vel.x = 0.0f;
+        collider->vel.z = 0.0f;
+    }
+    // save current position
+    oldPos = curPos;
+}
+
+void Player::checkJumpAndBoost() {
+    // jump if able
+    if (timeSinceHitJump < jumpLenience && recentlyGrounded()) {
+        AudioInstance->playSound(Resources::get().jumpSound);
+        collider->vel.y = jumpSpeed;
+        collider->grounded = false;
+        timeSinceGrounded = 10.0f;
+        timeSinceHitJump = 10.0f;
+    }
+    if (collider->grounded) {   // set time since grounded
+        timeSinceGrounded = 0.0f;
+    }
+
+    if (Input::justPressed(sf::Mouse::Button::Left) && recentlyGrounded() && boostTimer < 0.0f) {
+        // set speed in negative camera facing direction
+        collider->vel += -cam->forward * boostSpeed;
+
+        boostTimer = boostCooldown;
+        boostParticleTime = 1.0f;
+
+        AudioInstance->playSound(Resources::get().boostSound);
+
+        // spawn a bunch of particles
+        glm::vec3 pos = transform->getWorldPos();
+        for (int i = 0; i < 200; ++i) {
+            glm::vec3 r = Mth::randInsideSphere(40.0f);
+            r.y *= 0.75f;
+            EntityManagerInstance->SpawnParticle(BOOST, pos, r);
+        }
+    }
+
+    // continue launching boost particles for a bit
+    if (boostParticleTime > 0.0f) {
+        glm::vec3 pos = transform->getWorldPos();
+        float s = std::max(0.1f, boostParticleTime / 1.0f);
+        for (int i = 0; i < 2; ++i) {
+            EntityManagerInstance->SpawnParticle(BOOST, pos, Mth::randInsideSphere(20.0f * s), 0.0f, glm::vec3(s), false);
+        }
+    }
+}
+
+void Player::calculateMovement(glm::vec3 targetDir, float delta) {
+    collider->gravityMultiplier = 1.0f; // ensure normal gravity
+
+    // save y velocity and zero it
+    float oldY = collider->vel.y;
+    collider->vel.y = 0.0f;
+
+    // save max value out of square speed and square magnitude of velocity
+    float sqrMagSave = glm::max(speed*speed, glm::dot(collider->vel, collider->vel));
+
+    // acceleration based on groundedness
+    float accel = recentlyGrounded() ? 75.0f : 35.0f;
+
+    // add to velocity
+    collider->vel += targetDir * accel * delta;
+
+    // if velocity is over sqrMagSave that means it was both over
+    // character speed limit and the magnitude of previous velocity
+    if (glm::dot(collider->vel, collider->vel) > sqrMagSave) {
+        collider->vel = glm::normalize(collider->vel) * glm::sqrt(sqrMagSave);
+    }
+
+    // if still over character speed limit then apply drag to velocity
+    bool noInput = targetDir == glm::vec3(0.0f);
+
+    float drag = 0.0f;
+    // apply light drag if over speed limit
+    if (glm::dot(collider->vel, collider->vel) > speed * speed) {
+        drag = recentlyGrounded() ? 0.5f : 0.025f;
+        if (noInput) drag *= 2.0f; // increase drag if no inputs are pressed
+    } else if (noInput) { // else if within speed limit and no input then apply harder drag
+        drag = recentlyGrounded() ? 12.0f : 3.0f;
+    }
+    drag = Mth::saturate(drag * delta);
+    collider->vel -= collider->vel * drag;
+
+    // restore old y
+    collider->vel.y = oldY;
 }
 
 void Player::onCollision(Tag tag, Entity* other) {
@@ -189,7 +309,7 @@ void Player::onCollision(Tag tag, Entity* other) {
     case Tag::HEALER: {
         if (collider->grounded && !collider->onTerrain && health < maxHealth) {
             AudioInstance->playSoundSingle(Resources::get().healingSound);
-            addHealth(10.0f * Game::deltaTime());
+            addHealth(20.0f * Game::deltaTime());
             glm::vec2 p = glm::normalize(Mth::randomPointInCircle(1.0f))*3.0f;
             glm::vec3 rp = transform->getWorldPos() + glm::vec3(p.x, 0.0f, p.y);
             EntityManagerInstance->SpawnParticle(ParticleType::HEAL, rp, glm::vec3(0.0f), 1.0f);
@@ -216,7 +336,7 @@ void Player::onCollision(Tag tag, Entity* other) {
             addHealth(10);
             break;
         case ItemType::STRENGTH:
-            damage += 5.0f;
+            attackDamage += 5.0f;
             break;
         case ItemType::AGILITY:
             speed += 5.0f;
@@ -231,34 +351,7 @@ void Player::onCollision(Tag tag, Entity* other) {
 
 }
 
-bool Player::getGroundedRecent() {
-    return timeSinceGrounded < groundedLenience;
-}
-
-void Player::jump() {
-    // check if grounded
-    if (getGroundedRecent() && !flying) {
-        AudioInstance->playSound(Resources::get().jumpSound);
-        collider->vel.y = jumpSpeed;
-        collider->grounded = false;
-        timeSinceGrounded = 10.0f;
-        timeSinceHitJump = 10.0f;
-    }
-}
-
-void Player::shoot() {
-    AudioInstance->playSound(Resources::get().shootSound);
-    glm::vec3 shootPos = transform->getWorldPos();
-    shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
-}
-
-void Player::addHealth(float amount) {
-    health += amount;
-    health = std::max(0.0f, std::min(health, maxHealth));
-}
-
-// calculate movement direction and return a normal vector pointing in that direction
+// calculate movement direction and return a normalized vector pointing in that direction
 glm::vec3 Player::getMovementDir() {
     glm::vec3 dir(0.0f, 0.0f, 0.0f);
     if (Input::pressed(sf::Keyboard::W) || Input::pressed(sf::Keyboard::Up)) {
@@ -273,13 +366,6 @@ glm::vec3 Player::getMovementDir() {
     if (Input::pressed(sf::Keyboard::D) || Input::pressed(sf::Keyboard::Right)) {
         dir.x += 1.0f;
     }
-    if (Input::pressed(sf::Keyboard::LShift)) {
-        dir.y -= 1.0f;
-    }
-    if (Input::pressed(sf::Keyboard::Space)) {
-        dir.y += 1.0f;
-    }
-
     if (dir != glm::vec3(0.0f)) {
         dir = glm::normalize(dir);
     }

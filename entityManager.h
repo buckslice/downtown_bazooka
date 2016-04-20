@@ -22,10 +22,7 @@ class EntityManager {
 public:
     EntityManager(Player* player);
 
-    ~EntityManager() {
-    }
-
-    void init(int numberOfDudes);
+    ~EntityManager();
 
     void update(float delta);
 

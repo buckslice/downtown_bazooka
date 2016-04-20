@@ -6,7 +6,7 @@ Particle::Particle() : Entity() {
 }
 
 void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
-    float rmag, glm::vec3 scale, bool hasCollision){
+    float rmag, glm::vec3 scale, bool hasCollision) {
 
     this->type = type;
     transform->setPos(pos);
@@ -44,6 +44,10 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
         break;
     case BEACON:
         gravmult = -10.0f;
+        lifetime = 2.0f;
+        break;
+    case BOOST:
+        gravmult = 0.0f;
         lifetime = 2.0f;
         break;
     }
@@ -84,6 +88,13 @@ void Particle::update(GLfloat dt) {
     }break;
     case BEACON:
         transform->color = glm::vec3(curlife / lifetime, 1.0f, 0.0f);
+        break;
+    case BOOST:
+        transform->color = Mth::lerp(glm::vec3(1.0f, 0.25f, 0.5f),
+            glm::vec3(0.5f, 0.0f, 1.0f)*0.5f, 1.0f - curlife / lifetime);
+        collider->vel -= collider->vel * Mth::saturate(2.0f * dt);
+        //transform->setScale(Mth::lerp(startScale, glm::vec3(5.0f), 1.0f - curlife / lifetime));
+        transform->setScale(curlife / lifetime * startScale);
         break;
     }
 

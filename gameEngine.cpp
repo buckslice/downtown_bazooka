@@ -180,7 +180,6 @@ void GameEngine::update(GLfloat delta) {
     running = menu->update(delta);
 
     if (menu->justClosed) {
-        entityManager->init(NUM_ENEMIES);
         player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), true);
         //Resources::get().menuTrack.stop();
         //Resources::get().mainTrack.play();
@@ -193,7 +192,7 @@ void GameEngine::update(GLfloat delta) {
     }
 
     // update camera
-    if (player->isDead) {
+    if (player->isDead()) {
         cam.behavior = CameraMode::DEATH;
     } else if (menu->getVisible()) {
         cam.behavior = CameraMode::AUTOSPIN;

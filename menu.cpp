@@ -80,7 +80,7 @@ void Menu::draw(sf::RenderWindow& window, bool showFPS) {
 
     // if main menu is not being shown then draw game UI stuff
     if (!visible) {
-        if (player->isDead) {
+        if (player->isDead()) {
             overlay.setSize(sf::Vector2f(sf::Vector2i(width, height)));
             glDepthMask(GL_FALSE);
             window.draw(overlay);

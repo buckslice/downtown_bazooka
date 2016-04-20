@@ -15,13 +15,25 @@ Projectile::Projectile() {
 Projectile::~Projectile() {
 }
 
-void Projectile::init(glm::vec3 pos, glm::vec3 vel) {
+void Projectile::activate(ProjectileType type, glm::vec3 pos, glm::vec3 vel) {
+    this->type = type;
     transform->setPos(pos);
     transform->setVisibility(Visibility::SHOW_SELF);
 
     collider->vel = vel;
 
     timer = 2.0f;
+
+    switch (type) {
+    case ProjectileType::ROCKET:
+        collider->gravityMultiplier = 0.0f;
+        break;
+    case ProjectileType::LASER:
+        collider->gravityMultiplier = 1.0f;
+        break;
+    default:
+        break;
+    }
 }
 
 void Projectile::update(GLfloat delta) {

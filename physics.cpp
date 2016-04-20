@@ -366,20 +366,28 @@ void Physics::streamColliderModels() {
     for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
         glm::vec3 color;
         Collider& col = cd->collider;
+
+        // never draw NOCLIP colliders because they only use their collider
+        // for simple velocity and gravity updates from physics engine
+        if (col.type == ColliderType::NOCLIP) {
+            continue;
+        }
+
         if (!col.enabled) {
             // ignore drawing deactivated particles to avoid cluttering
-            if (col.type == ColliderType::BASIC || col.type == ColliderType::NOCLIP) {
+            if (col.type == ColliderType::BASIC) {
                 continue;
             }
             // this pretty much never happens now since
             // since everything is pooled now and its memory is 
-            // corrupted as soon as its returned, should think of way to fix pools
-            color = glm::vec3(0.7f);        // grey for disabled colliders
+            // corrupted as soon as its returned
+            color = glm::vec3(0.7f);  // grey for disabled colliders
         } else if (!col.awake) {
             color = glm::vec3(0.0f, 1.0f, 1.0f);    // teal for sleeping colliders
         } else {
             color = glm::vec3(1.0f, 0.0f, 0.0f);    // red for active dynamic colliders
         }
+
         Graphics::addToStream(Shape::CUBE_SOLID, col.getAABB().getModelMatrix(), color);
     }
 
