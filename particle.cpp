@@ -43,6 +43,7 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
         lifetime = 0.5f;
         break;
     case BEACON:
+    case BEACON_TRIGGERED:
         gravmult = -10.0f;
         lifetime = 2.0f;
         break;
@@ -60,42 +61,46 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
 void Particle::update(GLfloat dt) {
     if (!collider->enabled) {
         return;
-    } else if ((curlife -= dt) <= 0) {
+    } else if ((curlife -= dt) <= 0.0f) {
         collider->enabled = false;
         transform->setVisibility(Visibility::HIDE_ALL);
         return;
     }
 
+    // precalculate lifetime lerp value for convenience
+    // equal to 1.0f at beginning of particle life, 0.0f at end
+    float t = curlife / lifetime;
+
     switch (type) {
     case SPARK:
         collider->vel *= curlife + (1.0f - curlife) * 0.75f;
-        transform->setScale(curlife / lifetime * startScale);
         break;
     case FIRE:
-        transform->color = glm::vec3(1.0f, curlife / lifetime, 0.0f);
-        transform->setScale(curlife / lifetime * startScale);
+        transform->color = glm::vec3(1.0f, t, 0.0f);
         collider->vel *= .95f;
         break;
     case BEAM:
-        transform->color = HSBColor(curlife / lifetime * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
-        transform->setScale(curlife / lifetime * startScale);
+        transform->color = HSBColor(t * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
         collider->vel *= curlife + (1.0f - curlife) * 0.75f;
         break;
     case HEAL: {
-        float f = (1.0f - curlife / lifetime) * 0.5f;
+        float f = (1.0f - t) * 0.5f;
         transform->color = glm::vec3(f, 1.0f, f);
-        transform->setScale(curlife / lifetime * startScale);
     }break;
     case BEACON:
-        transform->color = glm::vec3(curlife / lifetime, 1.0f, 0.0f);
+        transform->color = glm::vec3(t, 1.0f, 0.0f);
+        break;
+    case BEACON_TRIGGERED:
+        transform->color = glm::vec3(t, 0.0f, 1.0f);
         break;
     case BOOST:
         transform->color = Mth::lerp(glm::vec3(1.0f, 0.25f, 0.5f),
-            glm::vec3(0.5f, 0.0f, 1.0f)*0.5f, 1.0f - curlife / lifetime);
+            glm::vec3(0.5f, 0.0f, 1.0f)*0.5f, 1.0f - t);
         collider->vel -= collider->vel * Mth::saturate(2.0f * dt);
-        //transform->setScale(Mth::lerp(startScale, glm::vec3(5.0f), 1.0f - curlife / lifetime));
-        transform->setScale(curlife / lifetime * startScale);
         break;
     }
+
+    // set scale based on remaining lifetime
+    transform->setScale(t * startScale);
 
 }

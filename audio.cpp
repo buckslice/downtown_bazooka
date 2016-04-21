@@ -6,8 +6,6 @@ Audio::Audio() {
     AudioInstance = this;
     sounds.resize(MAX_CHANNELS);
     heardFromThisFrame.resize(MAX_CHANNELS);
-    Resources::get().mainTrack.setVolume(volume);
-    Resources::get().menuTrack.setVolume(volume);
 }
 
 Audio::~Audio() {
@@ -22,26 +20,26 @@ int Audio::getNextFreeSound() {
     return -1;
 }
 
-void Audio::playSound(sf::SoundBuffer& sb) {
+void Audio::playSound(sf::SoundBuffer& sb, float volume) {
     int i = getNextFreeSound();
     if (i < 0 || muted) {
         return;
     }
     sf::Sound& sound = sounds[i];
-    sound.setVolume(volume);
+    sound.setVolume(masterVolume * volume);
     sound.setLoop(false);
     sound.setBuffer(sb);
     sound.play();
 }
 
-void Audio::playSoundSingle(sf::SoundBuffer& sb) {
+void Audio::playSoundSingle(sf::SoundBuffer& sb, float volume) {
     if (loopingSounds.count(&sb) == 0) {
         int i = getNextFreeSound();
         if (i < 0 || muted) {
             return;
         }
         sf::Sound& sound = sounds[i];
-        sound.setVolume(volume);
+        sound.setVolume(masterVolume * volume);
         sound.setLoop(true);
         sound.setBuffer(sb);
         sound.play();
@@ -49,7 +47,7 @@ void Audio::playSoundSingle(sf::SoundBuffer& sb) {
         heardFromThisFrame[i] = true;
     } else {
         int i = loopingSounds[&sb];
-        sounds[i].setVolume(volume);
+        sounds[i].setVolume(masterVolume * volume);
         heardFromThisFrame[i] = true;
     }
 
@@ -59,8 +57,8 @@ void Audio::update(GLfloat delta) {
     // updates the volume of the sounds and music
     if (muted) {
         if (!changedOldVolume) {
-            oldVolume = volume;
-            volume = 0.0f;
+            oldVolume = masterVolume;
+            masterVolume = 0.0f;
             changedOldVolume = true;
         }
     } else {
@@ -85,19 +83,19 @@ void Audio::update(GLfloat delta) {
     if (Input::justPressed(sf::Keyboard::M)) {
         muted = !muted;
         if (!muted) {
-            volume = oldVolume;
+            masterVolume = oldVolume;
         }
         changedOldVolume = false;
     }
-    Resources::get().mainTrack.setVolume(volume*0.5f);
-    Resources::get().menuTrack.setVolume(volume*0.5f);
+    Resources::get().mainTrack.setVolume(masterVolume*0.5f);
+    Resources::get().menuTrack.setVolume(masterVolume*0.5f);
 }
 
 void Audio::changeVolume(float delta) {
-    volume += delta;
-    if (volume < 0.0f) {
-        volume = 0.0f;
-    } else if (volume > 100.0f) {
-        volume = 100.0f;
+    masterVolume += delta;
+    if (masterVolume < 0.0f) {
+        masterVolume = 0.0f;
+    } else if (masterVolume > 100.0f) {
+        masterVolume = 100.0f;
     }
 }

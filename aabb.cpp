@@ -15,6 +15,9 @@ glm::vec3 AABB::getCenter() {
     return min + (max - min) / 2.0f;
 }
 
+// getSize().x == width
+// .z = length
+// .y = height
 glm::vec3 AABB::getSize() {
     return max - min;
 }

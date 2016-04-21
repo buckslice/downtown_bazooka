@@ -18,7 +18,10 @@ Resources::Resources() {
         { &explosionSound, "explosion.wav"},
         { &burningSound, "burning.wav"},
         { &healingSound, "healing.wav"},
-        { &boostSound, "boost.wav"}
+        { &boostSound, "boost.wav"},
+        { &waypointSound, "waypoint.wav"},
+        { &waypointHitSound, "waypointHit.wav" },
+
     };
     loadAudio(soundPaths);
 

@@ -429,10 +429,3 @@ void Graphics::addToStream(Shape shape, std::vector<glm::mat4>& models, std::vec
         return;
     }
 }
-
-// no way to delete meshes currently but can just set
-// visibility to false if you need
-void Graphics::registerMesh(Mesh<Vertex>* mesh) {
-    //meshes.push_back(mesh);
-}
-

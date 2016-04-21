@@ -11,6 +11,8 @@
 glm::vec2 seed;
 bool debugColors = false;
 
+bool Terrain::hardGenerating = true;
+
 void Terrain::setSeed(glm::vec2 sd) {
     seed = sd;
 }
@@ -29,16 +31,29 @@ CVertex Chunk::genPoint(float x, float y) {
     float h = static_cast<float>(f[1] - f[0]);
     h = Mth::clamp(h, 0.0f, 1.0f);
 
-    int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
-    glm::vec3 color = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 50) / 255.0f, (id[idc] % 127) / 255.0f);
-    color = glm::clamp(color, glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(0.2f, 0.2f, 0.5f));
-    //color = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 color = glm::vec3(0.0f, 0.1f, 0.3f);
 
-    Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
-    float b = static_cast<float>(1.0f - f[0]);
-    b = Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
+    // reduce noise height near center
+    float sqrdist = x*x + y*y;
+    float centerLimit = 100.0f;
+    float blendRange = 100.0f;
+    if (sqrdist < centerLimit * centerLimit) {  // near center
+        h = 0.0f;
+    } else {
+        Noise::worley(x + seed.x, y + seed.y, 0.0f, max, f, id, Noise::EUCLIDIAN, 0.001f);
+        float b = static_cast<float>(1.0f - f[0]);
+        h += Mth::cblend(b, 0.5f, 1.0f, Mth::cubic);
+        if (sqrdist < (centerLimit + blendRange)*(centerLimit + blendRange)) { // at edge of center
+            float d = glm::distance(glm::vec2(0.0f), glm::vec2(x, y));
+            h *= Mth::blend(d, centerLimit, centerLimit + blendRange, Mth::cubic);
+        } else {
+            int idc = 1;    // 0 is whole cell, 1 is sides of cell, 2 is subcells within sides?
+            color = glm::vec3((id[idc] % 50) / 255.0f, (id[idc] % 50) / 255.0f, (id[idc] % 127) / 255.0f);
+            color = glm::clamp(color, glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(0.2f, 0.2f, 0.5f));
+        }
+    }
 
-    return CVertex{ glm::vec3(x, (h + b)*100.0f, y), color };
+    return CVertex{ glm::vec3(x, h*100.0f, y), color };
 }
 
 void Chunk::generateTerrain() {
@@ -257,15 +272,21 @@ Chunk::Chunk(point p) {
     int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
     rng.seed(rngseed);
 
-    // generators for this chunk
-    std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
-    std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
-    std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
-    Distributions dist = Distributions{ unix, uniz, zeroToOne };
-
     generateTerrain();
-    generateStructures(rng, dist);
-    spawnEntities(rng, dist);
+
+    // spawn buildings and entities if not in center
+    float sqrdist = cx*cx + cz*cz;
+    float centerLimit = 200.0f;
+    if (sqrdist > centerLimit * centerLimit) { 
+        // generators for this chunk
+        std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
+        std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);
+        std::uniform_real_distribution<float> zeroToOne(0.0f, 1.0f);
+        Distributions dist = Distributions{ unix, uniz, zeroToOne };
+
+        generateStructures(rng, dist);
+        spawnEntities(rng, dist);
+    }
 }
 
 Chunk::~Chunk() {
@@ -394,7 +415,9 @@ void Terrain::update(float delta, glm::vec3 pl) {
     }
 
     // build new chunks
+    hardGenerating = false;
     for (size_t i = 0; i < newPoints.size(); ++i) {
+        hardGenerating = true;
         coordsByIndices[newPoints[i]] = chunks.size();
         chunks.push_back(new Chunk(newPoints[i]));
     }
@@ -459,6 +482,7 @@ void Terrain::deleteChunks() {
     }
     chunks.erase(chunks.begin(), chunks.end());
     coordsByIndices.clear();
+    hardGenerating = true; // it will be generating
 }
 
 Terrain::Terrain() {

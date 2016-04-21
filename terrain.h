@@ -96,6 +96,9 @@ public:
 
     bool toggleDebugColors();
 
+    // whether terrain generated last frame or is about to
+    static bool hardGenerating;
+
 private:
     // list of chunk objects
     std::vector<Chunk*> chunks;
@@ -105,4 +108,5 @@ private:
     point worldToChunk(float x, float z);
 
     std::uniform_real_distribution<float> un;
+
 };

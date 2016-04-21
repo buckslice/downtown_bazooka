@@ -56,6 +56,8 @@ public:
 
     void streamColliderModels();
 
+    static glm::vec3 getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant);
+
     Terrain* terrainGen;   // ref to terrain for collision detection
 
 private:

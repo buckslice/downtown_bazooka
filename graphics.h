@@ -30,7 +30,7 @@ public:
     static Transform* getTransform(int id);
 
     // TODO generic mesh registration and handling
-    static void registerMesh(Mesh<Vertex>* mesh);
+    //static void registerMesh(Mesh<Vertex>* mesh);
 
     static void addToStream(Shape shape, glm::mat4& model, glm::vec3& color);
     static void addToStream(Shape shape, std::vector<glm::mat4>& models, std::vector<glm::vec3>& colors);

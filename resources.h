@@ -42,6 +42,8 @@ public:
     sf::SoundBuffer burningSound;
     sf::SoundBuffer healingSound;
     sf::SoundBuffer boostSound;
+    sf::SoundBuffer waypointSound;
+    sf::SoundBuffer waypointHitSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

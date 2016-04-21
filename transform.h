@@ -5,6 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
 #include "mathutil.h"
+#include "aabb.h"
 
 enum class Visibility {
     SHOW_SELF,       // show yourself
@@ -46,6 +47,8 @@ public:
     void setRot(glm::vec3 euler);
     // set local rotation of transform
     void setRot(float x, float y, float z);
+    // sets up position and scale from provided AABB
+    void setByBounds(AABB bounds);
 
     void setRot(glm::quat q);
     // local rotation around axis by angle in degrees

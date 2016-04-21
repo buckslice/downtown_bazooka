@@ -15,11 +15,13 @@ public:
     ~Audio();
 
     // will play given sound in a free buffer
-    void playSound(sf::SoundBuffer& sb);
+    // volume is value from 0-1 representing percent of master volume
+    void playSound(sf::SoundBuffer& sb, float volume = 1.0f);
 
     // sound will play and loop as long as this is called every frame
-    // only one instance of each soundbuffer can be looped like this at a time
-    void playSoundSingle(sf::SoundBuffer& sb);
+    // only one instance of a particular soundbuffer can be looped like this at a time
+    // volume is value from 0-1 representing percent of master volume
+    void playSoundSingle(sf::SoundBuffer& sb, float volume = 1.0f);
 
     void update(GLfloat delta);
 
@@ -29,7 +31,7 @@ private:
 
     int getNextFreeSound();
 
-    float volume = DEFAULT_VOLUME;      // master game volume
+    float masterVolume = DEFAULT_VOLUME;      // master game volume
     float oldVolume = DEFAULT_VOLUME;
     bool changedOldVolume = false;
     bool muted = false;

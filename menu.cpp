@@ -6,6 +6,9 @@
 
 #define USESPRITES 1
 
+bool _justClosed = false;
+bool _justOpened = false;
+
 Menu::Menu(Player* player) {
     menu = nullptr;
     curSelection = 0;
@@ -146,8 +149,8 @@ bool Menu::update(GLfloat delta) {
 
     updateFpsText(delta);
 
-    justClosed = false;
-    justOpened = false;
+    _justClosed = false;
+    _justOpened = false;
     if (Input::justPressed(sf::Keyboard::Escape)) {
         if (visible) {
             if (showingInstructions) {
@@ -157,7 +160,7 @@ bool Menu::update(GLfloat delta) {
             }
         } else {
             visible = true;
-            justOpened = true;
+            _justOpened = true;
         }
     }
 
@@ -178,7 +181,7 @@ bool Menu::update(GLfloat delta) {
         case 0:
 			AudioInstance->playSound(Resources::get().menuSelectSound);
             setVisible(false);
-            justClosed = true;
+            _justClosed = true;
             break;
         case 1:
 			AudioInstance->playSound(Resources::get().menuSelectSound);
@@ -227,4 +230,11 @@ void Menu::updateFpsText(float delta) {
 
 bool Menu::getVisible() {
     return visible;
+}
+
+bool Menu::justClosed() {
+    return _justClosed;
+}
+bool Menu::justOpened() {
+    return _justOpened;
 }

@@ -24,6 +24,7 @@ GameEngine::GameEngine(GLuint width, GLuint height)
     player = new Player(&cam);
     cam.transform->setPos(glm::vec3(0.0f, 1.8f, 0.0f));
     player->transform->parentAll(cam.transform);
+    player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
 
     entityManager = new EntityManager(player);
 
@@ -38,10 +39,11 @@ GameEngine::GameEngine(GLuint width, GLuint height)
     window->setMouseCursorVisible(false);
     window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be more accurate
 
+    // initiate game helper class
+    game = new Game();
 }
 
 void GameEngine::start() {
-    game = new Game();
     frameTime.restart();
     while (running) {
 
@@ -146,11 +148,13 @@ void GameEngine::toggleOptions() {
     }
     // toggle terrain color debug
     if (Input::justPressed(sf::Keyboard::Num4)) {
+        entityManager->returnAllObjects();
         terrain->deleteChunks();
         std::cout << "TERRAIN DEBUG " << (terrain->toggleDebugColors() ? "ON" : "OFF") << std::endl;
     }
     // randomize world seed
     if (Input::justPressed(sf::Keyboard::Num5)) {
+        entityManager->returnAllObjects();
         terrain->deleteChunks();
         terrain->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
         std::cout << "RANDOMIZED WORLD SEED" << std::endl;
@@ -159,7 +163,7 @@ void GameEngine::toggleOptions() {
     if (Input::justPressed(sf::Keyboard::Num0)) {
         Resources::get().buildShaders();
     }
-    if (Input::justPressed(sf::Keyboard::Tab) && gameFocused) { // gameFocused cuz alt tab
+    if (Input::justPressed(sf::Keyboard::Tab) && gameFocused) { // && gameFocused cuz alt tab
         paused = !paused;
     }
     if (Input::justPressed(sf::Keyboard::F1)) {
@@ -179,27 +183,17 @@ void GameEngine::update(GLfloat delta) {
     // update menu
     running = menu->update(delta);
 
-    if (menu->justClosed) {
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), true);
-        //Resources::get().menuTrack.stop();
-        //Resources::get().mainTrack.play();
+    if (Menu::justClosed()) {
+        player->spawn(glm::vec3(0.0f, 5.0f, 0.0f), true);
     }
-    if (menu->justOpened) {
+    if (Menu::justOpened()) {
         player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
         entityManager->returnAllObjects();
-        //Resources::get().menuTrack.play();
-        //Resources::get().mainTrack.stop();
     }
 
     // update camera
-    if (player->isDead()) {
-        cam.behavior = CameraMode::DEATH;
-    } else if (menu->getVisible()) {
-        cam.behavior = CameraMode::AUTOSPIN;
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
-    } else {
-        cam.behavior = CameraMode::NORMAL;
-    }
+    cam.behavior = player->isDead() ? CameraMode::DEATH :
+        menu->getVisible() ? CameraMode::AUTOSPIN : CameraMode::NORMAL;
     cam.updateCameraDistance(mouseScroll);
     cam.update(mouseMove.x, mouseMove.y, delta);
 
@@ -213,16 +207,14 @@ void GameEngine::update(GLfloat delta) {
     // update audio
     audio->update(delta);
 
+    // update all game entities
     entityManager->update(delta);
 
-    glm::vec3 pp = player->transform->getWorldPos();
-    //std::cout << pp.x << " " << pp.y << " " << pp.z << std::endl;
-    terrain->update(delta, pp);
+    glm::vec3 playerWorldPos = player->transform->getWorldPos();
+    terrain->update(delta, playerWorldPos);
 
     // detect and resolve collisions
-    physics->update(delta, pp);
-
-    //testMathUtils();
+    physics->update(delta, playerWorldPos);
 
 }
 
@@ -274,7 +266,7 @@ void GameEngine::testMathUtils() {
         model = glm::scale(model, scale);
 
         HSBColor color(Mth::rand01(), 1.0f, 1.0f);
-        Graphics::addToStream(Shape::CUBE_SOLID , model, color.toRGB());
+        Graphics::addToStream(Shape::CUBE_SOLID, model, color.toRGB());
         //Graphics::addToStream(true, model, glm::vec3(1.0f));
     }
 }

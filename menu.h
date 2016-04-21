@@ -66,7 +66,8 @@ public:
     void setVisible(bool visible);
     bool getVisible();
 
-    bool justClosed = false, justOpened = false;
+    static bool justClosed();
+    static bool justOpened();
 
 private:
     void move(bool up);
@@ -87,7 +88,8 @@ private:
 
     Player* player;
     int curSelection;
-    bool visible = true, showingInstructions = false;
+    bool visible = true;
+    bool showingInstructions = false;
 
 };
 

@@ -44,6 +44,13 @@ void Transform::setRot(glm::quat q) {
     rot = q;
     needUpdate = true;
 }
+
+void Transform::setByBounds(AABB bounds) {
+    pos = bounds.getCenter();
+    scale = bounds.getSize();
+    needUpdate = true;
+}
+
 // if you dont normalize things rotating fast will starting stretching so weird haha
 void Transform::rotate(float angle, glm::vec3 axis) {
     rot *= glm::normalize(glm::angleAxis(angle*DEGREESTORADS, axis));

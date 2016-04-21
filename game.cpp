@@ -1,6 +1,8 @@
 #include "game.h"
 #include "input.h"
 #include "mathutil.h"
+#include "physics.h"
+#include "graphics.h"
 
 sf::Clock Game::time;
 float Game::timeCounter = 0.0f;
@@ -10,6 +12,15 @@ float Game::lavaTime = 0.0f;
 
 Game::Game() {
     time.restart();
+
+    // starting platform 
+    // later add some old dude who talks to you XD
+    AABB b(glm::vec3(-10.0f, 0.0f, -10.0f), glm::vec3(10.0f, 4.0f, 10.0f));
+    Physics::addStatic(b);
+    Transform* t = Graphics::registerTransform();
+    t->setByBounds(b);
+    t->color = glm::vec3(0.0f, 0.5f, 0.2f);
+
 }
 
 float Game::deltaTime() {

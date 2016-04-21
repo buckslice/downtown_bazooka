@@ -1,5 +1,6 @@
 #include "entityManager.h"
 #include "audio.h"
+#include "menu.h"
 
 // TODO maybe make everything like this, singletons instead of static function calls?
 // except this is kind of a shitty singleton
@@ -19,12 +20,16 @@ EntityManager::EntityManager(Player* player) : player(player) {
     enemies = new MemPool<Enemy>(MAX_ENEMIES);
     items = new MemPool<Item>(MAX_ITEMS);
 
+    waypoint.player = player;
+
 }
 
 EntityManager::~EntityManager() {
 }
 
 void EntityManager::returnAllObjects() {
+    Terrain::hardGenerating = true;
+    waypoint.firstSpawn = true;
     projectiles->freeAll();
     enemies->freeAll();
     items->freeAll();

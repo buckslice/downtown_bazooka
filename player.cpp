@@ -56,6 +56,7 @@ void Player::spawn(glm::vec3 spawnPos, bool enabled) {
     flyMode = false;
     health = maxHealth;
     burnTime = 0.0f;
+    boostParticleTime = 0.0f;
     transform->setPos(spawnPos);
     collider->enabled = enabled;
 }
@@ -130,6 +131,7 @@ glm::vec3 Player::checkInputs() {
     // toggle flying
     if (Input::justPressed(sf::Keyboard::Q)) {
         burnTime = 0.0f;
+        boostParticleTime = 0.0f;
         flyMode = !flyMode;
     }
     // check jump input
@@ -245,6 +247,8 @@ void Player::checkJumpAndBoost() {
 
         AudioInstance->playSound(Resources::get().boostSound);
 
+        addHealth(-5.0f);  // slightly hurt player
+
         // spawn a bunch of particles
         glm::vec3 pos = transform->getWorldPos();
         for (int i = 0; i < 200; ++i) {
@@ -282,16 +286,15 @@ void Player::calculateMovement(glm::vec3 targetDir, float delta) {
 
     // if velocity is over sqrMagSave that means it was both over
     // character speed limit and the magnitude of previous velocity
+    // so clamp it to sqrMagSave
     if (glm::dot(collider->vel, collider->vel) > sqrMagSave) {
         collider->vel = glm::normalize(collider->vel) * glm::sqrt(sqrMagSave);
     }
 
     // if still over character speed limit then apply drag to velocity
-    bool noInput = targetDir == glm::vec3(0.0f);
-
     float drag = 0.0f;
-    // apply light drag if over speed limit
-    if (glm::dot(collider->vel, collider->vel) > speed * speed) {
+    bool noInput = targetDir == glm::vec3(0.0f);
+    if (glm::dot(collider->vel, collider->vel) > speed * speed) { // apply light drag if over speed limit
         drag = recentlyGrounded() ? 0.5f : 0.025f;
         if (noInput) drag *= 2.0f; // increase drag if no inputs are pressed
     } else if (noInput) { // else if within speed limit and no input then apply harder drag

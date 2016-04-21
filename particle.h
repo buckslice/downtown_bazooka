@@ -11,6 +11,7 @@ enum ParticleType {
 	BEAM,
     HEAL,
     BEACON,
+    BEACON_TRIGGERED,
     BOOST
 };
 class Particle : public Entity {
@@ -22,9 +23,8 @@ public:
 
 	void update(GLfloat dt) override;
 
-    glm::vec3 startScale;
 private:
-
+    glm::vec3 startScale;
     ParticleType type;
     float lifetime;
     float curlife;

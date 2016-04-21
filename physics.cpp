@@ -243,7 +243,6 @@ void Physics::update(float delta, glm::vec3 center) {
                     dynamicResolvedSet.insert(closestIndex);
 
                     ColliderData* other = dynamicPool.get(closestIndex);
-
                     if (cdObj->entity) {
                         cdObj->entity->onCollision(other->collider.tag, other->entity);
                     }
@@ -395,6 +394,59 @@ void Physics::streamColliderModels() {
     collisionTree->streamModel(glm::vec3(1.0f));
 
 }
+
+// finds point on top of tallest building in certain quadrant 
+// in relation to origin point
+// quadrant layout
+// 0 -> +x -z
+// 1 -> -x -z
+// 2 -> -x +z
+// 3 -> +x +z
+glm::vec3 Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) {
+    glm::vec3 tallest = glm::vec3(0.0f);
+
+    for (StaticData* sd = nullptr; staticPool.next(sd);) {
+        AABB& b = sd->bounds;
+        glm::vec3 c = b.getCenter();
+        // continue if building not in correct quadrant
+        switch (quadrant) {
+        case 0:
+            if (c.x < origin.x || c.z > origin.z) {
+                continue;
+            } break;
+        case 1:
+            if (c.x > origin.x || c.z > origin.z) {
+                continue;
+            } break;
+        case 2:
+            if (c.x > origin.x || c.z < origin.z) {
+                continue;
+            } break;
+        case 3:
+            if (c.x < origin.x || c.z < origin.z) {
+                continue;
+            } break;
+        default:
+            std::cout << "BAD QUADRANT" << std::endl;
+            return glm::vec3();
+            break;
+        }
+        // continue if building is too close to current origin
+        float minDist = 200.0f;
+        glm::vec3 d = c - origin;
+        if (glm::dot(d, d) < minDist * minDist) {
+            continue;
+        }
+
+        if (b.max.y > tallest.y) {
+            glm::vec3 v = b.getCenter();
+            v.y = b.max.y;
+            tallest = v;
+        }
+    }
+    return tallest;
+}
+
 
 Quadtree::Quadtree(int level, AABB bounds) {
     this->level = level;
