@@ -30,7 +30,7 @@ public:
     sf::Font font;
 
     sf::Music mainTrack;
-    sf::Music menuTrack;
+    sf::Music bossTrack;
 
     sf::SoundBuffer jumpSound;
     sf::SoundBuffer shootSound;
@@ -44,6 +44,7 @@ public:
     sf::SoundBuffer boostSound;
     sf::SoundBuffer waypointSound;
     sf::SoundBuffer waypointHitSound;
+    sf::SoundBuffer timetodieSound;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

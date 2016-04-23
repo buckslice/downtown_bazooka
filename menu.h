@@ -4,6 +4,7 @@
 
 #include "SFML/Graphics.hpp"
 #include "player.h"
+#include "resources.h"
 #include <string>
 #include <queue>
 

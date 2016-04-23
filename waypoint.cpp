@@ -3,8 +3,10 @@
 #include "terrain.h"
 #include "physics.h"
 #include "audio.h"
+#include "game.h"
 
-Waypoint::Waypoint() {
+Waypoint::Waypoint(Player* p) {
+    this->player = p;
     transform->setPos(glm::vec3(0.0f, 3000.0f, 0.0f));
     collider->type = ColliderType::TRIGGER;
     collider->gravityMultiplier = 0.0f;
@@ -30,57 +32,90 @@ Waypoint::Waypoint() {
 Waypoint::~Waypoint() {
 }
 
+void Waypoint::reset() {
+    this->enabled = !Game::isInFinalBattle();
+    collider->enabled = !Game::isInFinalBattle();
+    timesTriggered = 0; // reset times triggered
+    resetSpawn = true;
+}
+
 void Waypoint::update(GLfloat delta) {
-    if (firstSpawn) {
+    if (!enabled) {
+        return;
+    }
+
+    // if havent spawned into world yet then do so
+    if (resetSpawn) {
         if (!Terrain::hardGenerating) {
+            // get tallest building in random quadrant and set your pos to top of it
             quadrant = Mth::randRange(0, 4);
-            glm::vec3 v = Physics::getTallestBuildingInQuadrant(glm::vec3(0.0f), quadrant);
+            currentBuilding = Physics::getTallestBuildingInQuadrant(glm::vec3(0.0f), quadrant);
+            glm::vec3 v = currentBuilding.getCenter();
+            v.y = currentBuilding.max.y;
             transform->setPos(v);
+
+            // save last position for lerping between
             lastPos = targetPos = v;
-            firstSpawn = false;
-        } else {
+
+            resetSpawn = false;
+        } else {    // if terrain isnt done generating then return
             return;
         }
     }
 
-
+    // play humming sound if player is close enough and not triggered
     glm::vec3 diff = player->transform->getWorldPos();
     diff -= transform->getWorldPos();
     float range = 200.0f;
     float t = glm::dot(diff, diff) / (range*range);
-    if (t < 1.0f && active) {
+    if (t < 1.0f && !triggered) {
         AudioInstance->playSoundSingle(Resources::get().waypointSound, (1.0f - t));
     }
 
-
+    // blend to new target trigger point
     blendTime += delta;
     float b = Mth::cblend(blendTime, 0.0f, 5.0f, Mth::smootherStep);
-
     transform->setPos(Mth::lerp(lastPos, targetPos, b));
     diff = transform->getPos() - targetPos;
     if (glm::dot(diff, diff) < 1.0f) {
-        active = true;
+        triggered = false;
     }
 
-
+    // rotate transform and draw particles
     transform->rotate(delta*360.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     for (size_t i = 0; i < particleSpawnPoints.size(); ++i) {
         glm::vec3 pos = particleSpawnPoints[i].getWorldPos();
-        ParticleType t = active ? ParticleType::BEACON : ParticleType::BEACON_TRIGGERED;
+        ParticleType t = triggered ? ParticleType::BEACON_TRIGGERED : ParticleType::BEACON;
         EntityManagerInstance->SpawnParticle(t, pos, glm::vec3(0.0f, 100.0f, 0.0f), 1.0f, glm::vec3(5.0f), false);
     }
 }
 
 void Waypoint::onCollision(Tag tag, Entity* other) {
-    if (active && tag == Tag::PLAYER) {
-        AudioInstance->playSound(Resources::get().waypointHitSound);
+    if (!triggered && tag == Tag::PLAYER) {
+        glm::vec3 v = player->collider->vel;
+        if (!player->collider->grounded || glm::dot(v, v) > 10.0f * 10.0f) {
+            return;
+        }
+
         player->addHealth(1000.0f);   // heal player to full
+
+        // spawn boss battle area if third waypoint hit
+        if (++timesTriggered >= 3) {
+            AudioInstance->playSound(Resources::get().timetodieSound);
+            Game::startFinalBattle(currentBuilding);
+            Game::setRequiresWorldRegen(true);
+            reset();
+            return;
+        }
+
+        AudioInstance->playSound(Resources::get().waypointHitSound);
         lastPos = transform->getPos();
-        glm::vec3 v = Physics::getTallestBuildingInQuadrant(lastPos, quadrant);
-        targetPos = v;
+        currentBuilding = Physics::getTallestBuildingInQuadrant(lastPos, quadrant);
+        glm::vec3 c = currentBuilding.getCenter();
+        c.y = currentBuilding.max.y;
+        targetPos = c;
         blendTime = 0.0f;
-        active = false;
-        successes++;
+        triggered = true;
     }
 
 }

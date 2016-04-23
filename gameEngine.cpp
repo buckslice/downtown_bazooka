@@ -32,7 +32,7 @@ GameEngine::GameEngine(GLuint width, GLuint height)
     window->resetGLStates();
 
     audio = new Audio();
-    Resources::get().menuTrack.play();
+    Resources::get().mainTrack.play();
 
     // mouse and window focusing variables
     sf::Mouse::setPosition(center, *window);
@@ -143,19 +143,18 @@ void GameEngine::toggleOptions() {
         blurring = !wireframe;
         mipmapping = !wireframe;
         Resources::get().loadTextures(mipmapping);
-        //physics->setColliderTransformVisibility(!wireframe);
         std::cout << "PHYSICS DEBUG " << (wireframe ? "ON" : "OFF") << std::endl;
     }
     // toggle terrain color debug
     if (Input::justPressed(sf::Keyboard::Num4)) {
-        entityManager->returnAllObjects();
         terrain->deleteChunks();
+        entityManager->returnAllObjects();
         std::cout << "TERRAIN DEBUG " << (terrain->toggleDebugColors() ? "ON" : "OFF") << std::endl;
     }
     // randomize world seed
     if (Input::justPressed(sf::Keyboard::Num5)) {
-        entityManager->returnAllObjects();
         terrain->deleteChunks();
+        entityManager->returnAllObjects();
         terrain->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
         std::cout << "RANDOMIZED WORLD SEED" << std::endl;
     }
@@ -187,8 +186,10 @@ void GameEngine::update(GLfloat delta) {
         player->spawn(glm::vec3(0.0f, 5.0f, 0.0f), true);
     }
     if (Menu::justOpened()) {
-        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
+        game->reset();
+        terrain->deleteChunks();
         entityManager->returnAllObjects();
+        player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
     }
 
     // update camera
@@ -203,6 +204,11 @@ void GameEngine::update(GLfloat delta) {
 
     // update game first because it stores delta time and other useful variables
     game->update(delta);
+    if (Game::requiresWorldRegen()) {
+        terrain->deleteChunks();
+        entityManager->returnAllObjects();
+        Game::setRequiresWorldRegen(false);
+    }
 
     // update audio
     audio->update(delta);

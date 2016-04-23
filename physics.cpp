@@ -117,8 +117,8 @@ void Physics::update(float delta, glm::vec3 center) {
             staticCheckSet.clear();
             dynamicCheckSet.clear();
 
-            AABB curDynamic = col.getAABB();
-            AABB broadphase = AABB::getSwept(curDynamic, rvel * delta);
+            AABB myAABB = col.getAABB();
+            AABB broadphase = AABB::getSwept(myAABB, rvel * delta);
 
             // save time, normal, and index of closest object we hit
             float time = 1.0f;  // holds time of collision (0-1)
@@ -138,10 +138,26 @@ void Physics::update(float delta, glm::vec3 center) {
                         dynamicResolvedSet.count(index) || dynamicCheckSet.count(index)) {
                         continue;
                     }
-                    // pretend like they aren't moving since you are going first
-                    AABB otherAABB = dynamicPool.get(index)->collider.getAABB();
 
-                    // broadphase sweep bounds check
+                    ColliderData* other = dynamicPool.get(index);
+                    // pretend like they aren't moving since you are going first
+                    AABB otherAABB = other->collider.getAABB();
+
+                    // check if already intersecting and if so just call onCollision and continue
+                    if (AABB::check(myAABB, otherAABB)) {
+                        // dont let this dynamic collide with this other object again (this frame)
+                        dynamicResolvedSet.insert(index);
+
+                        if (cdObj->entity) {
+                            cdObj->entity->onCollision(other->collider.tag, other->entity);
+                        }
+                        if (other->entity) {
+                            other->entity->onCollision(col.tag, cdObj->entity);
+                        }
+                        continue;
+                    }
+
+                    // broadphase sweep bounds check to see if these two objects will collide this frame
                     if (!AABB::check(broadphase, otherAABB)) {
                         // if failed any broadphase then dont check this static again since 
                         // future resolutions will never exceed previous broadphases
@@ -156,7 +172,7 @@ void Physics::update(float delta, glm::vec3 center) {
                     // calculates exact time of collision
                     // but still possible for no collision at this point
                     glm::vec3 n;
-                    float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
+                    float t = AABB::sweepTest(myAABB, otherAABB, rvel * delta, n);
                     if (t < time) { // a collision occured
                         time = t;
                         norm = n;
@@ -189,7 +205,7 @@ void Physics::update(float delta, glm::vec3 center) {
                     // calculates exact time of collision
                     // but still possible for no collision at this point
                     glm::vec3 n;
-                    float t = AABB::sweepTest(curDynamic, otherAABB, rvel * delta, n);
+                    float t = AABB::sweepTest(myAABB, otherAABB, rvel * delta, n);
                     if (t < time) { // a collision occured
                         time = t;
                         norm = n;
@@ -277,7 +293,7 @@ void Physics::update(float delta, glm::vec3 center) {
                 break;
             }
 
-        }
+        }  // end of resolutions loop for current dynamic
 
         // update transforms position after fully resolved
         col.transform->setPos(col.pos);
@@ -402,9 +418,9 @@ void Physics::streamColliderModels() {
 // 1 -> -x -z
 // 2 -> -x +z
 // 3 -> +x +z
-glm::vec3 Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) {
-    glm::vec3 tallest = glm::vec3(0.0f);
-
+AABB Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) {
+    //glm::vec3 tallest = glm::vec3(0.0f);
+    AABB tallest;
     for (StaticData* sd = nullptr; staticPool.next(sd);) {
         AABB& b = sd->bounds;
         glm::vec3 c = b.getCenter();
@@ -428,20 +444,18 @@ glm::vec3 Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) 
             } break;
         default:
             std::cout << "BAD QUADRANT" << std::endl;
-            return glm::vec3();
+            return AABB();
             break;
         }
         // continue if building is too close to current origin
-        float minDist = 200.0f;
+        float minDist = 300.0f;
         glm::vec3 d = c - origin;
         if (glm::dot(d, d) < minDist * minDist) {
             continue;
         }
 
-        if (b.max.y > tallest.y) {
-            glm::vec3 v = b.getCenter();
-            v.y = b.max.y;
-            tallest = v;
+        if (b.max.y > tallest.max.y) {
+            tallest = b;
         }
     }
     return tallest;

@@ -1,6 +1,7 @@
 #include "entityManager.h"
 #include "audio.h"
 #include "menu.h"
+#include "game.h"
 
 // TODO maybe make everything like this, singletons instead of static function calls?
 // except this is kind of a shitty singleton
@@ -20,16 +21,16 @@ EntityManager::EntityManager(Player* player) : player(player) {
     enemies = new MemPool<Enemy>(MAX_ENEMIES);
     items = new MemPool<Item>(MAX_ITEMS);
 
-    waypoint.player = player;
-
+    waypoint = new Waypoint(player);
 }
 
 EntityManager::~EntityManager() {
+    delete waypoint;
 }
 
 void EntityManager::returnAllObjects() {
     Terrain::hardGenerating = true;
-    waypoint.firstSpawn = true;
+    waypoint->reset();
     projectiles->freeAll();
     enemies->freeAll();
     items->freeAll();
@@ -38,7 +39,7 @@ void EntityManager::returnAllObjects() {
 void EntityManager::update(float delta) {
     player->update(delta);
 
-    waypoint.update(delta);
+    waypoint->update(delta);
 
     // update enemies
     for (Enemy* e = nullptr; enemies->next(e);) {
@@ -66,7 +67,7 @@ float EntityManager::getPlayerDamage() {
     return player->getDamage();
 }
 
-void EntityManager::SpawnParticle(ParticleType type, 
+void EntityManager::SpawnParticle(ParticleType type,
     glm::vec3 pos, glm::vec3 vel, float rmag, glm::vec3 scale, bool hasCollision) {
 
     particles[nextParticleIndex].activate(type, pos, vel, rmag, scale, hasCollision);;

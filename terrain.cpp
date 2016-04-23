@@ -22,6 +22,10 @@ bool Terrain::toggleDebugColors() {
 }
 
 CVertex Chunk::genPoint(float x, float y) {
+    if (Game::isInFinalBattle()) {  // generate flat land for this
+        return CVertex{ glm::vec3(x, 0.0f, y), glm::vec3(0.0f, 0.0f, 0.5f) };
+    }
+
     const int max = 2;
     double f[max];
     uint32_t id[max];
@@ -277,7 +281,7 @@ Chunk::Chunk(point p) {
     // spawn buildings and entities if not in center
     float sqrdist = cx*cx + cz*cz;
     float centerLimit = 200.0f;
-    if (sqrdist > centerLimit * centerLimit) { 
+    if (!Game::isInFinalBattle() && sqrdist > centerLimit * centerLimit) {
         // generators for this chunk
         std::uniform_real_distribution<float> unix(cx - hc, cx + hc);
         std::uniform_real_distribution<float> uniz(cz - hc, cz + hc);

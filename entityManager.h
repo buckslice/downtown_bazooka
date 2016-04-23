@@ -61,7 +61,7 @@ private:
 
     Player* player;
 
-    Waypoint waypoint;
+    Waypoint* waypoint = nullptr;
 
 };
 

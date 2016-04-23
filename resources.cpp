@@ -19,8 +19,9 @@ Resources::Resources() {
         { &burningSound, "burning.wav"},
         { &healingSound, "healing.wav"},
         { &boostSound, "boost.wav"},
-        { &waypointSound, "waypoint.wav"},
+        { &waypointSound, "waypoint2.wav"},
         { &waypointHitSound, "waypointHit.wav" },
+        { &timetodieSound, "timetodie.wav"},
 
     };
     loadAudio(soundPaths);
@@ -72,15 +73,15 @@ void Resources::loadTextures(bool mipmapped) {
 
 void Resources::loadAudio(std::vector<std::pair<sf::SoundBuffer*, std::string>>& soundPaths) {
     // load music track	
-    if (!menuTrack.openFromFile("assets/music/expl1.ogg")) {
+    if (!mainTrack.openFromFile("assets/music/expl1.ogg")) {
         std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
     }
-    //if (!mainTrack.openFromFile("assets/music/DOWN_WE_GO_2.ogg")) {
-    //    std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
-    //}
-    //mainTrack.setLoop(true);
+    mainTrack.setLoop(true);
+    if (!bossTrack.openFromFile("assets/music/DOWN_WE_GO_2.ogg")) {
+        std::cout << "ERROR::MUSIC_LOAD_FAILURE" << std::endl;
+    }
+    bossTrack.setLoop(true);
 
-    menuTrack.setLoop(true);
 
     for (size_t i = 0; i < soundPaths.size(); ++i) {
         std::string path = "assets/sounds/" + soundPaths[i].second;

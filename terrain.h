@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include "hsbColor.h"
 #include "mathutil.h"
-#include "resources.h"
 #include "noise.h"
 #include "aabb.h"
 

@@ -3,6 +3,7 @@
 #include "graphics.h"
 #include "audio.h"
 #include "game.h"
+#include <iomanip>
 
 Player::Player(Camera* cam) {
     this->cam = cam;
@@ -147,6 +148,12 @@ glm::vec3 Player::checkInputs() {
         }
     }
 
+    if (Input::pressed(sf::Keyboard::BackSpace)) {
+        glm::vec3 p = transform->getWorldPos();
+        std::cout << std::setprecision(2) << std::fixed;
+        std::cout << p.x << " " << p.y << " " << p.z << std::endl;
+    }
+
     // calculate movement vector in xz plane
     glm::vec3 input = getMovementDir(); // input from key presses
     glm::vec3 xzCamForward = glm::normalize(glm::cross(cam->worldUp, cam->right)); // cam forward in xz plane
@@ -248,6 +255,7 @@ void Player::checkJumpAndBoost() {
         AudioInstance->playSound(Resources::get().boostSound);
 
         addHealth(-5.0f);  // slightly hurt player
+        timeSinceGrounded = 10.0f;
 
         // spawn a bunch of particles
         glm::vec3 pos = transform->getWorldPos();

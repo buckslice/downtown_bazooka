@@ -87,8 +87,9 @@ void Audio::update(GLfloat delta) {
         }
         changedOldVolume = false;
     }
+    // set music to half master volume because it drowns out sound effects otherwise
     Resources::get().mainTrack.setVolume(masterVolume*0.5f);
-    Resources::get().menuTrack.setVolume(masterVolume*0.5f);
+    Resources::get().bossTrack.setVolume(masterVolume*0.5f);
 }
 
 void Audio::changeVolume(float delta) {
