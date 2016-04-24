@@ -27,17 +27,17 @@ public:
 
     void changeVolume(float delta);
 private:
-    std::vector<sf::Sound> sounds;
-
     int getNextFreeSound();
+
+    std::vector<sf::Sound> sounds;
+    std::unordered_map<sf::SoundBuffer*, int> loopingSounds;
+    std::vector<bool> heardFromThisFrame;
 
     float masterVolume = DEFAULT_VOLUME;      // master game volume
     float oldVolume = DEFAULT_VOLUME;
     bool changedOldVolume = false;
     bool muted = false;
 
-    std::unordered_map<sf::SoundBuffer*, int> loopingSounds;
-    std::vector<bool> heardFromThisFrame;
 };
 
 // Global variable for Audio 

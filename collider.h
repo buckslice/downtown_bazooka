@@ -34,22 +34,25 @@ public:
     ColliderType type;
 
     glm::vec3 vel;
+
+    float gravityMultiplier = 1.0f;
+
     bool grounded = false;  // true if is standing on something flat
     bool onTerrain = false; // true if standing on terrain
     bool enabled = true;    // true if should be apart of physics simulation
     bool awake = true;      // true if inside physics simulation area
 
-    float gravityMultiplier = 1.0f;
 
     Collider();
 
     void setExtents(glm::vec3 min, glm::vec3 max);
 
-    AABB getAABB();
+    AABB getAABB() const;
 
 private:
-    glm::vec3 extmin, extmax;
-
+    glm::vec3 extmin;
+    glm::vec3 extmax;
     glm::vec3 pos;
+
     friend class Physics;
 };

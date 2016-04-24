@@ -11,18 +11,18 @@ bool AABB::check(const AABB& a, const AABB& b) {
         a.max.x >= b.min.x && a.max.y >= b.min.y && a.max.z >= b.min.z;
 }
 
-glm::vec3 AABB::getCenter() {
+glm::vec3 AABB::getCenter() const{
     return min + (max - min) / 2.0f;
 }
 
 // getSize().x == width
 // .z = length
 // .y = height
-glm::vec3 AABB::getSize() {
+glm::vec3 AABB::getSize() const{
     return max - min;
 }
 
-glm::mat4 AABB::getModelMatrix() {
+glm::mat4 AABB::getModelMatrix() const {
     glm::mat4 model;
     model = glm::translate(model, getCenter());
     model = glm::scale(model, getSize());

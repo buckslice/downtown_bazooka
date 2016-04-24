@@ -40,7 +40,7 @@ GameEngine::GameEngine(GLuint width, GLuint height)
     window->setKeyRepeatEnabled(false); // so sf::Event::KeyPressed will be more accurate
 
     // initiate game helper class
-    game = new Game();
+    game = new Game(player->transform);
 }
 
 void GameEngine::start() {
@@ -147,14 +147,12 @@ void GameEngine::toggleOptions() {
     }
     // toggle terrain color debug
     if (Input::justPressed(sf::Keyboard::Num4)) {
-        terrain->deleteChunks();
-        entityManager->returnAllObjects();
+        regenerateWorld();
         std::cout << "TERRAIN DEBUG " << (terrain->toggleDebugColors() ? "ON" : "OFF") << std::endl;
     }
     // randomize world seed
     if (Input::justPressed(sf::Keyboard::Num5)) {
-        terrain->deleteChunks();
-        entityManager->returnAllObjects();
+        regenerateWorld();
         terrain->setSeed(glm::vec2(Mth::randRange(-10000.0f, 10000.0f), Mth::randRange(-10000.0f, 10000.0f)));
         std::cout << "RANDOMIZED WORLD SEED" << std::endl;
     }
@@ -187,8 +185,7 @@ void GameEngine::update(GLfloat delta) {
     }
     if (Menu::justOpened()) {
         game->reset();
-        terrain->deleteChunks();
-        entityManager->returnAllObjects();
+        regenerateWorld();
         player->spawn(glm::vec3(0.0f, 150.0f, 0.0f), false);
     }
 
@@ -205,8 +202,7 @@ void GameEngine::update(GLfloat delta) {
     // update game first because it stores delta time and other useful variables
     game->update(delta);
     if (Game::requiresWorldRegen()) {
-        terrain->deleteChunks();
-        entityManager->returnAllObjects();
+        regenerateWorld();
         Game::setRequiresWorldRegen(false);
     }
 
@@ -216,11 +212,10 @@ void GameEngine::update(GLfloat delta) {
     // update all game entities
     entityManager->update(delta);
 
-    glm::vec3 playerWorldPos = player->transform->getWorldPos();
-    terrain->update(delta, playerWorldPos);
+    terrain->update(delta);
 
     // detect and resolve collisions
-    physics->update(delta, playerWorldPos);
+    physics->update(delta);
 
 }
 
@@ -245,6 +240,12 @@ void GameEngine::render() {
 
     // swap buffers
     window->display();
+}
+
+void GameEngine::regenerateWorld() {
+    terrain->deleteChunks();
+    physics->rebuildCollisionTree(0.0f);
+    entityManager->returnAllObjects();
 }
 
 // test math utils by drawing a bunch of boxes using each function

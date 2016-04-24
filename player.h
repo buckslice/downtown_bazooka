@@ -20,11 +20,11 @@ public:
 
     void spawn(glm::vec3 spawnPos, bool awake);
 
-    float getHealth();
-    float getMaxHealth();
-    float getDamage();
+    float getHealth() const;
+    float getMaxHealth() const;
+    float getDamage() const;
+    bool isDead() const;
 
-    bool isDead();
     void addHealth(float amount);
 
     void update(GLfloat delta) override;

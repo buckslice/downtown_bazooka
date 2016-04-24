@@ -17,7 +17,6 @@ void Transform::setPos(float x, float y, float z) {
     pos = glm::vec3(x, y, z);
     needUpdate = true;
 }
-
 void Transform::addPos(glm::vec3 add) {
     pos += add;
     needUpdate = true;
@@ -57,20 +56,20 @@ void Transform::rotate(float angle, glm::vec3 axis) {
     needUpdate = true;
 }
 
-glm::vec3 Transform::getWorldPos() {
+glm::vec3 Transform::getWorldPos() const {
     if (parent != nullptr) {
         return glm::vec3(parent->getModelMatrix() * glm::vec4(pos, 1.0f));
     }
     return pos;
 }
-glm::vec3 Transform::getWorldScale() {  // world scale?
+glm::vec3 Transform::getWorldScale() const {  // world scale?
     if (parent != nullptr) {
         return parent->getWorldScale() * scale;
     }
     return scale;
 }
 
-glm::quat Transform::getWorldRot() {
+glm::quat Transform::getWorldRot() const {
     if (parent != nullptr) {
         return parent->getWorldRot() * rot;
     }
@@ -93,7 +92,7 @@ glm::mat4 Transform::getModelMatrix() {
     return model;
 }
 
-bool Transform::shouldDraw() {
+bool Transform::shouldDraw() const {
     if (visibility != Visibility::SHOW_SELF) {
         return false;
     }

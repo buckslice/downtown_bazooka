@@ -228,7 +228,7 @@ void Menu::updateFpsText(float delta) {
     fpsText.setString(ss.str());
 }
 
-bool Menu::getVisible() {
+bool Menu::getVisible() const{
     return visible;
 }
 

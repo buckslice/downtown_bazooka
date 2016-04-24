@@ -74,6 +74,9 @@ int Mth::clamp(int n, int min, int max) {
     return std::min(std::max(n, min), max);
 }
 
+float Mth::clamp01(float n) {
+    return std::max(0.0f, std::min(n, 1.0f));
+}
 float Mth::saturate(float n) {
     return std::max(0.0f, std::min(n, 1.0f));
 }

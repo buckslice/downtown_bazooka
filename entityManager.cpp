@@ -63,7 +63,7 @@ void EntityManager::update(float delta) {
 
 }
 
-float EntityManager::getPlayerDamage() {
+float EntityManager::getPlayerDamage() const {
     return player->getDamage();
 }
 

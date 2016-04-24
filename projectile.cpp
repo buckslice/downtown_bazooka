@@ -8,6 +8,7 @@ Projectile::Projectile() {
 
     transform->setVisibility(Visibility::HIDE_ALL);
     transform->color = glm::vec3(1.0f, 0.2f, 0.0f);
+    transform->shape = Shape::CUBE_SOLID;
 
     Physics::setCollisionCallback(this);
 }

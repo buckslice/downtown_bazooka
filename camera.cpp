@@ -23,16 +23,6 @@ Camera::Camera(GLfloat yaw, GLfloat pitch, bool firstPerson)
     updateCameraVectors();
 }
 
-glm::mat4 Camera::getViewMatrix() {
-    glm::vec3 p = transform->getWorldPos();
-    p = p - forward * camDist;
-    return glm::lookAt(p, p + forward, up);
-}
-
-glm::mat4 Camera::getProjMatrix(GLuint w, GLuint h) {
-    return glm::perspective(45.0f, (GLfloat)w / (GLfloat)h, NEAR_PLANE, FAR_PLANE);
-}
-
 void Camera::updateCameraVectors() {
     glm::vec3 f;
     f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -48,32 +38,32 @@ void Camera::updateCameraVectors() {
 }
 
 void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
-	switch (behavior) {
+    switch (behavior) {
     case CameraMode::AUTOSPIN:
-		pitch = 0.0f;
-		yaw += 5.0f * delta;
-		camDist = 0.0f;
-		camDistTarget = DEFAULT_CAMDISTTARGET;
-		updateCameraVectors();
-		return;
-	case CameraMode::NORMAL:
-		// update yaw and pitch from mouse deltas
-		yaw += mdx * mouseSensitivity;
-		if (yaw > 360.0f) {
-			yaw -= 360.0f;
-		}
-		if (yaw < 0.0f) {
-			yaw += 360.0f;
-		}
-		pitch -= mdy * mouseSensitivity;
-		pitch = glm::clamp(pitch, -89.0f, 89.0f);
-		break;
-	case CameraMode::DEATH:
-		pitch = -90.0f;
-		camDistTarget += 4.0f * delta;
-		yaw += 5.0f * delta;
-		break;
-	}
+        pitch = 0.0f;
+        yaw += 5.0f * delta;
+        camDist = 0.0f;
+        camDistTarget = DEFAULT_CAMDISTTARGET;
+        updateCameraVectors();
+        return;
+    case CameraMode::NORMAL:
+        // update yaw and pitch from mouse deltas
+        yaw += mdx * mouseSensitivity;
+        if (yaw > 360.0f) {
+            yaw -= 360.0f;
+        }
+        if (yaw < 0.0f) {
+            yaw += 360.0f;
+        }
+        pitch -= mdy * mouseSensitivity;
+        pitch = glm::clamp(pitch, -89.0f, 89.0f);
+        break;
+    case CameraMode::DEATH:
+        pitch = -90.0f;
+        camDistTarget += 4.0f * delta;
+        yaw += 5.0f * delta;
+        break;
+    }
     // lerp camDist towards target
     GLfloat t = std::max(std::min(delta*10.0f, 1.0f), 0.0f);
     camDist = (1.0f - t) * camDist + t * camDistTarget; // manual lerp what is this
@@ -86,6 +76,16 @@ void Camera::updateCameraDistance(GLfloat deltaScroll) {
     camDistTarget = std::max(std::min(camDistTarget, 100.0f), 0.0f);
 }
 
-GLfloat Camera::getCamDist() {
+glm::mat4 Camera::getViewMatrix() const {
+    glm::vec3 p = transform->getWorldPos();
+    p = p - forward * camDist;
+    return glm::lookAt(p, p + forward, up);
+}
+
+glm::mat4 Camera::getProjMatrix(GLuint w, GLuint h) const {
+    return glm::perspective(45.0f, (GLfloat)w / (GLfloat)h, NEAR_PLANE, FAR_PLANE);
+}
+
+GLfloat Camera::getCamDist() const {
     return camDist;
 }

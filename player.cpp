@@ -62,19 +62,19 @@ void Player::spawn(glm::vec3 spawnPos, bool enabled) {
     collider->enabled = enabled;
 }
 
-float Player::getHealth() {
+float Player::getHealth() const {
     return health;
 }
 
-float Player::getMaxHealth() {
+float Player::getMaxHealth() const {
     return maxHealth;
 }
 
-float Player::getDamage() {
+float Player::getDamage() const {
     return attackDamage;
 }
 
-bool Player::isDead() {
+bool Player::isDead() const {
     return health <= 0.0f;
 }
 

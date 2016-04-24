@@ -15,7 +15,7 @@ const GLfloat SENSITIVITY = 0.25f;
 const GLfloat NEAR_PLANE = 0.1f;
 const GLfloat FAR_PLANE = 2000.0f;
 
-const float DEFAULT_CAMDISTTARGET = 10.0f;
+const float DEFAULT_CAMDISTTARGET = 20.0f;
 enum class CameraMode{
 	NORMAL,
 	AUTOSPIN,
@@ -24,24 +24,27 @@ enum class CameraMode{
 class Camera {
 
 public:
+    glm::vec3 forward, up, right, worldUp;
     Transform* transform;
 	CameraMode behavior;
-    glm::vec3 forward, up, right, worldUp;
     
 	Camera();
     Camera(GLfloat yaw, GLfloat pitch, bool firstPerson = true);
-
-    glm::mat4 getViewMatrix();
-    glm::mat4 getProjMatrix(GLuint w, GLuint h);
 
     void update(GLint mdx, GLint mdy, GLfloat delta);
 
     void updateCameraDistance(GLfloat deltaScroll);
 
-    GLfloat getCamDist();
+    glm::mat4 getViewMatrix() const;
+    glm::mat4 getProjMatrix(GLuint w, GLuint h) const;
+    GLfloat getCamDist() const;
 
 private:
-    GLfloat yaw, pitch, mouseSensitivity, camDist, camDistTarget = DEFAULT_CAMDISTTARGET;
+    GLfloat yaw;
+    GLfloat pitch;
+    GLfloat mouseSensitivity;
+    GLfloat camDist;
+    GLfloat camDistTarget = DEFAULT_CAMDISTTARGET;
 
     void updateCameraVectors();
 };

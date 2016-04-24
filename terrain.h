@@ -43,30 +43,55 @@ public:
     Chunk(point pos);
     ~Chunk();
 
-    float getHeight(float x, float z);
     void render();
 
-    point pos;
+    float getHeight(float x, float z) const;
 
+    point pos;
     StandardMesh* mesh;
 private:
-    struct Distributions {
-        std::uniform_real_distribution<float>& unix;
-        std::uniform_real_distribution<float>& uniz;
-        std::uniform_real_distribution<float>& zeroToOne;
+    class RNG {
+    public:
+        RNG(point pos, float cx, float cz, float hc):
+            unix(cx - hc, cx + hc),
+            uniz(cz - hc, cz + hc),
+            zeroToOne(0.0f, 1.0f){
+            // use a seeded random generator for this chunk based on its chunk coords
+            // this way the building positions and shapes will be the same each time
+            int rngseed = (pos.first + pos.second)*(pos.first + pos.second + 1) / 2 + pos.second;
+            rng.seed(rngseed);
+        }
+        // returns random x value within chunk boundaries
+        float x() { 
+            return unix(rng);
+        }
+        // returns random z value within chunk boundaries
+        float z() { 
+            return uniz(rng);
+        }
+        // returns random value from 0-1
+        float rand() { 
+            return zeroToOne(rng);
+        }
+
+    private:
+        std::mt19937 rng;
+        std::uniform_real_distribution<float> unix;
+        std::uniform_real_distribution<float> uniz;
+        std::uniform_real_distribution<float> zeroToOne;
     };
 
     std::vector<glm::vec3> verts; // save these for collision detection
 
     void generateTerrain();
-    void generateStructures(std::mt19937& rng, Distributions rds);
-    void spawnEntities(std::mt19937& rng, Distributions rds);
+    void generateStructures(RNG& rng);
+    void generateFinalBattle(RNG& rng);
+    void spawnEntities(RNG& rng);
 
     CVertex genPoint(float xo, float yo);
 
     // delete statics objects out of physics
     void clearStatics();
-
 
     std::vector<glm::mat4> buildingModels;
     std::vector<glm::vec3> buildingColors;
@@ -83,7 +108,7 @@ public:
 
     ~Terrain();
 
-    void update(float delta, glm::vec3 pp);
+    void update(float delta);
 
     void render(glm::mat4 view, glm::mat4 proj);
 
@@ -104,7 +129,7 @@ private:
     // map from chunks coords to vector index
     std::unordered_map<point, size_t> coordsByIndices;
 
-    point worldToChunk(float x, float z);
+    point worldToChunk(float x, float z) const;
 
     std::uniform_real_distribution<float> un;
 

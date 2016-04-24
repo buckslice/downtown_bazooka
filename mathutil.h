@@ -62,6 +62,8 @@ public:
     static int clamp(int n, int min, int max);
 
     // clamps value between 0 and 1
+    static float clamp01(float n);
+    // clamps value between 0 and 1
     static float saturate(float n);
 
     // BLENDING FUNCTIONS

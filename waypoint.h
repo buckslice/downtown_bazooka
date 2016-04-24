@@ -12,7 +12,6 @@ public:
 
     void update(GLfloat delta);
 
-    bool resetSpawn = true;
 
     void reset();
 
@@ -23,10 +22,11 @@ private:
     AABB currentBuilding;
     glm::vec3 targetPos;
     glm::vec3 lastPos;
-    int quadrant = -1;
+    float blendTime = 0.0f;
     int timesTriggered = 0;
+    int quadrant = -1;
+    bool resetSpawn = true;
     bool triggered = false;
     bool enabled = true;
-    float blendTime = 0.0f;
 
 };

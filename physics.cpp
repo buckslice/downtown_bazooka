@@ -4,6 +4,7 @@
 #include <glm/gtx/projection.hpp>
 #include "physics.h"
 #include "graphics.h"
+#include "game.h"
 
 
 Quadtree* Physics::collisionTree;
@@ -21,23 +22,17 @@ Physics::~Physics() {
     delete collisionTree;
 }
 
-// if you want to add these back in later for science
-// then implement as a static variables in AABB class that is set in calls to AABB::check and sweeptest
-//int totalAABBChecks = 0;
-//int totalSweepTests = 0;
-
-void Physics::update(float delta, glm::vec3 center) {
-    //std::cout << staticPool.getFreeList().size() << std::endl;
-    bool printedErrorThisFrame = false;
-    int numberOver = 0;
-
+void Physics::rebuildCollisionTree(float delta) {
     delete collisionTree;
-    collisionTree = new Quadtree(0, getPhysicsArea(center, MATRIX_SIZE));
-
+    collisionTree = new Quadtree(0, getPhysicsArea(Game::getPlayerPos(), MATRIX_SIZE));
+    
+    // insert all statics into tree
     for (StaticData* sd = nullptr; staticPool.next(sd);) {
         collisionTree->insert(QuadtreeData{ sd->bounds, staticPool.getIndex(sd), false });
     }
-
+    if (delta == 0.0f) {
+        return;
+    }
     // insert all dynamics into tree (that are awake and not basic)
     for (ColliderData* cd = nullptr; dynamicPool.next(cd);) {
         Collider& col = cd->collider;
@@ -52,10 +47,9 @@ void Physics::update(float delta, glm::vec3 center) {
             QuadtreeData{ AABB::getSwept(col.getAABB(), col.vel*delta), dynamicPool.getIndex(cd), true });
 
     }
+}
 
-    // used by rest of update method 
-    std::vector<QuadtreeData> returnData;
-
+void Physics::processOverlapEvents(std::vector<QuadtreeData>& returnData) {
     // process and send out all overlap events since last frame
     for (size_t i = 0; i < overlapEvents.size(); ++i) {
         OverlapEvent& oe = overlapEvents[i];
@@ -73,6 +67,19 @@ void Physics::update(float delta, glm::vec3 center) {
         }
     }
     overlapEvents.clear(); // clear event list for next frame
+}
+
+void Physics::update(float delta) {
+    //std::cout << staticPool.getFreeList().size() << std::endl;
+    bool printedErrorThisFrame = false;
+    int numberOver = 0;
+
+    rebuildCollisionTree(delta);
+
+    // used by rest of update method 
+    std::vector<QuadtreeData> returnData;
+
+    processOverlapEvents(returnData);
 
     // for each dynamic object check it against all objects in its leaf(s)
     // leafs objects are looked up using the superMatrix
@@ -419,7 +426,6 @@ void Physics::streamColliderModels() {
 // 2 -> -x +z
 // 3 -> +x +z
 AABB Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) {
-    //glm::vec3 tallest = glm::vec3(0.0f);
     AABB tallest;
     for (StaticData* sd = nullptr; staticPool.next(sd);) {
         AABB& b = sd->bounds;
@@ -448,9 +454,13 @@ AABB Physics::getTallestBuildingInQuadrant(glm::vec3 origin, int quadrant) {
             break;
         }
         // continue if building is too close to current origin
-        float minDist = 300.0f;
+        float minDist = 400.0f;
         glm::vec3 d = c - origin;
         if (glm::dot(d, d) < minDist * minDist) {
+            continue;
+        }
+        // continue if building is too small (like a tree)
+        if (b.getSize().x < 5.0f || b.getSize().z < 5.0f) {
             continue;
         }
 

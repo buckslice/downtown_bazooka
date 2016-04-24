@@ -48,7 +48,7 @@ public:
     // dfunc specifies which distance function to use
     // common combinations: F[0], F[1]-F[0], F[2]-F[0], F[0]*F[1], 1-F[x]
     // coloring can be based of IDs of each feature 
-    // output range is from [0-1]
+    // output range is from [0-1] (roughly)
     static void worley(float x, float y, float z, 
         size_t max_order, double* F, uint32_t* ID, DIST_FUNC dfunc, float frequency = 1.0f);
 

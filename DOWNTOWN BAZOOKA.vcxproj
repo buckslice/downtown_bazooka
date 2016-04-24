@@ -201,7 +201,6 @@
     <ClInclude Include="item.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="skybox.h" />
-    <ClInclude Include="slotMap.h" />
     <ClInclude Include="gameEngine.h" />
     <ClInclude Include="glHelper.h" />
     <ClInclude Include="graphics.h" />

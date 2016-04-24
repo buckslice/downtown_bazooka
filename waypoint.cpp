@@ -49,7 +49,7 @@ void Waypoint::update(GLfloat delta) {
         if (!Terrain::hardGenerating) {
             // get tallest building in random quadrant and set your pos to top of it
             quadrant = Mth::randRange(0, 4);
-            currentBuilding = Physics::getTallestBuildingInQuadrant(glm::vec3(0.0f), quadrant);
+            currentBuilding = Physics::getTallestBuildingInQuadrant(Game::getPlayerPos(), quadrant);
             glm::vec3 v = currentBuilding.getCenter();
             v.y = currentBuilding.max.y;
             transform->setPos(v);

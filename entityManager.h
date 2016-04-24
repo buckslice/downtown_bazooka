@@ -48,7 +48,7 @@ public:
     void SpawnItem(glm::vec3 pos, ItemType type);
     void ReturnItem(Item* i);
 
-    float getPlayerDamage();
+    float getPlayerDamage() const;
 
 private:
     int nextParticleIndex = 0;

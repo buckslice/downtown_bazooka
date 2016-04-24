@@ -65,7 +65,7 @@ public:
     void draw(sf::RenderWindow& window, bool showFPS);
     bool update(GLfloat delta);
     void setVisible(bool visible);
-    bool getVisible();
+    bool getVisible() const;
 
     static bool justClosed();
     static bool justOpened();

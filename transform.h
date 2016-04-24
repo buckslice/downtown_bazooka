@@ -39,38 +39,45 @@ public:
     void setPos(float x, float y, float z);
     // adds to position of transform
     void addPos(glm::vec3 add);
+
     // set local scale of transform
     void setScale(glm::vec3 scale);
     // set local scale of transform
     void setScale(float x, float y, float z);
-    // set local rotation of transform
+
+    // set local rotation of transform by euler vector
     void setRot(glm::vec3 euler);
-    // set local rotation of transform
+    // set local rotation of transform by euler values
     void setRot(float x, float y, float z);
+    // set local rotation of transform by quaternion
+    void setRot(glm::quat q);
+
     // sets up position and scale from provided AABB
     void setByBounds(AABB bounds);
 
-    void setRot(glm::quat q);
-    // local rotation around axis by angle in degrees
+    // rotate around axis by angle in degrees (local)
     void rotate(float angle, glm::vec3 axis);
 
     // returns world pos of transform (transformed by parent matrices)
-    glm::vec3 getWorldPos();
+    glm::vec3 getWorldPos() const;
 
     // returns world scale of transform
-    glm::vec3 getWorldScale();
+    glm::vec3 getWorldScale() const;
 
-    glm::quat getWorldRot();
+    // returns world rotation of transform
+    glm::quat getWorldRot() const;
 
     // get local position
-    inline glm::vec3 getPos() { return pos; }
+    inline glm::vec3 getPos() const { return pos; }
     // get local scale
-    inline glm::vec3 getScale() { return scale; }
+    inline glm::vec3 getScale() const { return scale; }
+    // get local rotation
+    inline glm::quat getRot() const { return rot; }
 
     // get model matrix for rendering
     glm::mat4 getModelMatrix();
 
-    bool shouldDraw();
+    bool shouldDraw() const;
 
     void setVisibility(Visibility vis);
 

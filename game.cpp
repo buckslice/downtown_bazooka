@@ -13,8 +13,9 @@ bool Game::inFinalBattle = false;
 bool Game::reqRegen = false;
 AABB Game::building;
 Transform* Game::lastBuilding;
+Transform* Game::player;
 
-Game::Game() {
+Game::Game(Transform* player) {
     time.restart();
 
     // starting platform 
@@ -28,6 +29,7 @@ Game::Game() {
     lastBuilding = Graphics::registerTransform();
     lastBuilding->setVisibility(Visibility::HIDE_ALL);
 
+    this->player = player;
 }
 
 void Game::reset() {
@@ -95,9 +97,17 @@ bool Game::isInFinalBattle() {
     return inFinalBattle;
 }
 
+glm::vec3 Game::getFinalOrigin() {
+    return lastBuilding->getWorldPos();
+}
+
+glm::vec3 Game::getPlayerPos() {
+    return player->getWorldPos();
+}
+
 void Game::setRequiresWorldRegen(bool b) {
     reqRegen = b;
-    if (!b) {
+    if (!b) {   // called after world has been regenerated
         building.min.y = 0.0f;
         Physics::addStatic(building);
         lastBuilding->setByBounds(building);

@@ -25,6 +25,12 @@ struct OverlapEvent {
     Entity* entity;
 };
 
+struct QuadtreeData {
+    AABB box;   // local copy of aabb to reduce index lookups
+    int index;
+    bool dynamic;
+};
+
 class Quadtree;
 class Physics {
 public:
@@ -35,7 +41,13 @@ public:
 
     // progress the physics simulation by delta time
     // center dictates the center of the collision area
-    void update(float delta, glm::vec3 center);
+    void update(float delta);
+
+    // clears tree and reinserts all current statics and dynamics
+    void rebuildCollisionTree(float delta);
+
+    // checks all overlap events for this frame
+    void processOverlapEvents(std::vector<QuadtreeData>& returnData);
 
     // adds a static to the matrix (returns index)
     static int addStatic(AABB bounds, Tag tag = Tag::NONE);
@@ -84,13 +96,6 @@ private:
     std::unordered_set<int> staticCheckSet;
     std::unordered_set<int> dynamicCheckSet;
 
-};
-
-
-struct QuadtreeData {
-    AABB box;   // local copy of aabb to reduce index lookups
-    int index;
-    bool dynamic;
 };
 
 class Quadtree {

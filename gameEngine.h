@@ -66,6 +66,8 @@ private:
 
     sf::Clock frameTime;
 
+    void regenerateWorld();
+
     void testMathUtils();
 
     // for mouse input

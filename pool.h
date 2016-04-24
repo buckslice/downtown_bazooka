@@ -80,7 +80,7 @@ public:
     // this is pretty much an iterator
     // call like so to iterate over all allocated elements:
     // for(T* t = nullptr; pool.next(t);){}
-    bool next(T*& item) {   // reference to a pointer
+    bool next(T*& item) const {   // reference to a pointer
         char* address = (char*)item;
         if (!item) {    // if item is nullptr then start at one back from beginning
             address = memory - itemSize;
@@ -97,15 +97,15 @@ public:
         return true;
     }
 
-    int getIndex(T* item) { // get index from type pointer
+    int getIndex(T* item) const { // get index from type pointer
         return ((char*)item - memory) / itemSize;
     }
 
-    int getIndex(char* ptr) {   // get index to current item from random point in memory block
+    int getIndex(char* ptr) const {   // get index to current item from random point in memory block
         return (int)(((char*)ptr - memory) / itemSize);
     }
 
-    T* get(int index) { // return item pointer by index
+    T* get(int index) const { // return item pointer by index
         return (T*)(memory + index * itemSize);
     }
 

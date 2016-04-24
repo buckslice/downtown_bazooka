@@ -4,7 +4,8 @@
 
 class AABB {
 public:
-    glm::vec3 min, max;
+    glm::vec3 min;
+    glm::vec3 max;
 
     AABB();
 
@@ -13,10 +14,11 @@ public:
         max(max) {
     }
 
-    glm::vec3 getCenter();
-    glm::vec3 getSize();
+    glm::vec3 getCenter() const;
 
-    glm::mat4 getModelMatrix();
+    glm::vec3 getSize() const;
+
+    glm::mat4 getModelMatrix() const;
 
     static bool check(const AABB& a, const AABB& b);
 

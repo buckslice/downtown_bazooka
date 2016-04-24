@@ -155,9 +155,6 @@
     <ClInclude Include="resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="slotMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>

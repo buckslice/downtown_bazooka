@@ -4,7 +4,7 @@
 
 class Game {
 public:
-    Game::Game();
+    Game::Game(Transform* player);
 
     void update(float delta);
 
@@ -16,6 +16,8 @@ public:
 
     static void startFinalBattle(AABB b);
     static bool isInFinalBattle();
+    static glm::vec3 getFinalOrigin();
+    static glm::vec3 getPlayerPos();
 
     static void setRequiresWorldRegen(bool b);
     static bool requiresWorldRegen();
@@ -27,6 +29,7 @@ public:
 private:
     float finalBattleMusicTimer = 0.0f;
 
+    static Transform* player;
     static Transform* lastBuilding;
     static AABB building;
 
