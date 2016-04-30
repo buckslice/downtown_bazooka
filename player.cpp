@@ -51,6 +51,7 @@ Player::Player(Camera* cam) {
     collider->type = ColliderType::FULL;
 
     Physics::setCollisionCallback(this);
+
 }
 
 void Player::spawn(glm::vec3 spawnPos, bool enabled) {

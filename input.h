@@ -10,6 +10,7 @@ public:
 
     Input();
     void update();
+    void forgetLeftClickThisFrame();
 
     static bool pressed(sf::Keyboard::Key key);
     static bool justPressed(sf::Keyboard::Key key);

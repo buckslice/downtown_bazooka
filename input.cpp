@@ -21,14 +21,16 @@ void Input::update() {
     }
 }
 
+void Input::forgetLeftClickThisFrame() {
+    blastframe[sf::Mouse::Left] = true;
+}
+
 bool Input::pressed(sf::Keyboard::Key key) {
     return thisframe[key];
 }
-
 bool Input::justPressed(sf::Keyboard::Key key) {
     return thisframe[key] && !lastframe[key];
 }
-
 bool Input::justReleased(sf::Keyboard::Key key) {
     return !thisframe[key] && lastframe[key];
 }

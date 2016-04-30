@@ -43,7 +43,7 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
         pitch = 0.0f;
         yaw += 5.0f * delta;
         camDist = 0.0f;
-        camDistTarget = DEFAULT_CAMDISTTARGET;
+        targCamDist = DEFAULT_CAMDIST;
         updateCameraVectors();
         return;
     case CameraMode::NORMAL:
@@ -60,20 +60,20 @@ void Camera::update(GLint mdx, GLint mdy, GLfloat delta) {
         break;
     case CameraMode::DEATH:
         pitch = -90.0f;
-        camDistTarget += 4.0f * delta;
+        targCamDist += 4.0f * delta;
         yaw += 5.0f * delta;
         break;
     }
     // lerp camDist towards target
     GLfloat t = std::max(std::min(delta*10.0f, 1.0f), 0.0f);
-    camDist = (1.0f - t) * camDist + t * camDistTarget; // manual lerp what is this
+    camDist = (1.0f - t) * camDist + t * targCamDist; // manual lerp what is this
     updateCameraVectors();
 }
 
 GLfloat scrollSpeed = 2.0f;
 void Camera::updateCameraDistance(GLfloat deltaScroll) {
-    camDistTarget += deltaScroll * scrollSpeed;
-    camDistTarget = std::max(std::min(camDistTarget, 100.0f), 0.0f);
+    targCamDist += deltaScroll * scrollSpeed;
+    targCamDist = std::max(std::min(targCamDist, 100.0f), 0.0f);
 }
 
 glm::mat4 Camera::getViewMatrix() const {

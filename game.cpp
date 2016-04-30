@@ -8,7 +8,7 @@ sf::Clock Game::time;
 float Game::timeCounter = 0.0f;
 float Game::delta = 0.0f;
 float Game::flowRate = 0.0f;
-float Game::lavaTime = 0.0f;   
+float Game::lavaTime = 0.0f;
 bool Game::inFinalBattle = false;
 bool Game::reqRegen = false;
 AABB Game::building;
@@ -112,7 +112,7 @@ void Game::setRequiresWorldRegen(bool b) {
         Physics::addStatic(building);
         lastBuilding->setByBounds(building);
         lastBuilding->setVisibility(Visibility::SHOW_SELF);
-        lastBuilding->color = glm::vec3(1.0f, 0.0f, 0.0f);
+        lastBuilding->color = glm::vec3(0.0f, 0.5f, 0.25f);
     }
 }
 bool Game::requiresWorldRegen() {

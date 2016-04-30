@@ -96,6 +96,17 @@ void GameEngine::getInput() {
     // check and track game focusing
     lastFocused = gameFocused;
     gameFocused = window->hasFocus() && clickedInside;
+
+    // update static input bool arrays
+    if (gameFocused || lastFocused) {
+        input.update();
+    }
+
+    if (gameFocused && !lastFocused) {
+        input.forgetLeftClickThisFrame();
+    }
+
+    // check if clicked inside window this frame
     if (!gameFocused && lastFocused) {
         clickedInside = false;
     }
@@ -116,11 +127,6 @@ void GameEngine::getInput() {
     mouseMove = sf::Vector2i(0, 0);
     if (gameFocused) {
         mouseMove = input.getMouseMovement(*window, !lastFocused, center);
-    }
-
-    // update static input bool arrays
-    if (gameFocused || lastFocused) {
-        input.update();
     }
 }
 

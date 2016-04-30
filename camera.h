@@ -8,27 +8,24 @@
 
 #include "transform.h"
 
-const GLfloat YAW = -90.0f;
-const GLfloat PITCH = 0.0f;
 const GLfloat SENSITIVITY = 0.25f;
-
 const GLfloat NEAR_PLANE = 0.1f;
 const GLfloat FAR_PLANE = 2000.0f;
+const GLfloat DEFAULT_CAMDIST = 20.0f;
 
-const float DEFAULT_CAMDISTTARGET = 20.0f;
-enum class CameraMode{
-	NORMAL,
-	AUTOSPIN,
-	DEATH
+enum class CameraMode {
+    NORMAL,
+    AUTOSPIN,
+    DEATH
 };
 class Camera {
 
 public:
     glm::vec3 forward, up, right, worldUp;
     Transform* transform;
-	CameraMode behavior;
-    
-	Camera();
+    CameraMode behavior;
+
+    Camera();
     Camera(GLfloat yaw, GLfloat pitch, bool firstPerson = true);
 
     void update(GLint mdx, GLint mdy, GLfloat delta);
@@ -44,7 +41,7 @@ private:
     GLfloat pitch;
     GLfloat mouseSensitivity;
     GLfloat camDist;
-    GLfloat camDistTarget = DEFAULT_CAMDISTTARGET;
+    GLfloat targCamDist = DEFAULT_CAMDIST;
 
     void updateCameraVectors();
 };

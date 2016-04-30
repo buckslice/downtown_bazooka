@@ -26,11 +26,12 @@ Menu::Menu(Player* player) {
 
     instructions.setFont(Resources::get().font);
     instructions.setColor(SELECTED_COLOR);
-    instructions.setString( // instead of adding a space to front should just move pos over lol XD
-        "WASD : move\n"
-        "E    : shoot\n"
-        "Space: jump, select\n"
-        "ESC  : menu, quit\n"
+    instructions.setString(
+        "WASD     : move\n"
+        "Lclick/E : shoot\n"
+        "Rclick   : rocket jump\n"
+        "Space    : jump, select\n"
+        "ESC      : menu, quit\n"
         "---------------------------\n"
         "TAB  : pause\n"
         "F1   : show FPS\n"

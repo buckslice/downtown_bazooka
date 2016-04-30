@@ -262,6 +262,82 @@ void Chunk::spawnEntities(RNG& rng) {
 
 }
 
+void Chunk::generateFinalBattle(RNG& rng) {
+    float cx = pos.first * CHUNK_SIZE;
+    float cz = pos.second * CHUNK_SIZE;
+    float hc = CHUNK_SIZE / 2.0f;
+    float platformSize = 400.0f;
+    glm::vec3 ori = Game::getFinalOrigin() + glm::vec3(500.0f, 0.0f, 0.0f);
+    float sqrDistx = (cx - ori.x)*(cx - ori.x);
+    float sqrDistz = (cz - ori.z)*(cz - ori.z);
+    float maxDist = 700.0f*700.0f;
+    if (sqrDistx > maxDist || sqrDistz > maxDist) {
+        return;
+    }
+
+    // check if main boss platform should be spawned in this chunk
+    if (ori.x > cx - hc && ori.x < cx + hc &&
+        ori.z > cz - hc && ori.z < cz + hc) {
+        glm::vec3 minOri = glm::vec3(ori.x - platformSize / 2.0f, 0.0f, ori.z - platformSize / 2.0f);
+        int slices = 10;
+        float sliceSize = platformSize / slices;
+        for (int i = 0; i < slices*slices; ++i) {
+            int x = i % slices;
+            int z = i / slices;
+            glm::vec3 min = minOri + glm::vec3(sliceSize * x, 0.0f, sliceSize * z);
+            int ps = 0;
+            const int tiers = 3;
+            for (int j = 0; j < tiers; j++) {
+                if (x > j && x < slices - 1 - j &&
+                    z > j && z < slices - 1 - j) {
+                    ps++;
+                }
+            }
+
+            float h = rng.rand() * 5.0f + 90.0f + ps * 25.0f;
+            glm::vec3 max = min + glm::vec3(sliceSize, h, sliceSize);
+
+            AABB box = AABB(min, max);
+            staticIndices.push_back(Physics::addStatic(box));
+            buildingModels.push_back(box.getModelMatrix());
+            buildingColors.push_back(glm::vec3(0.2f * rng.rand() + 0.3f, 0.0f, (ps / (float)tiers)*0.75f));
+
+        }
+        return;
+    }
+
+    float x, z, sx, sy, sz, x0, z0, x1, z1;
+    for (int i = 0; i < 20; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            x = rng.x();    // random x position in chunk
+            z = rng.z();    // random y position in chunk
+
+            float d = std::max(abs(x - ori.x), abs(z - ori.z));
+            float b = Mth::cblend(d, 500.0f, platformSize / 2.0f, Mth::cubic);
+
+            // calculate scale of building
+            sx = rng.rand() * 3.0f + 2.0f + b * 5.0f;
+            sy = rng.rand() * 1.0f + 2.0f + b * 75.0f;
+            sz = rng.rand() * 3.0f + 2.0f + b * 5.0f;
+
+            // calculate building corners
+            x0 = x - sx / 2.0f;
+            z0 = z - sz / 2.0f;
+            x1 = x + sx / 2.0f;
+            z1 = z + sz / 2.0f;
+
+            AABB box = AABB(glm::vec3(x0, 0.0f, z0), glm::vec3(x1, sy, z1));
+            if (!Physics::checkStatic(box)) {
+                staticIndices.push_back(Physics::addStatic(box));
+                buildingModels.push_back(box.getModelMatrix());
+                buildingColors.push_back(glm::vec3(0.1f * rng.rand() + 0.2f, 0.0f, 0.0f));
+                break;
+            }
+        }
+    }
+
+}
+
 Chunk::Chunk(point p) {
     this->pos = p;
 
@@ -273,9 +349,7 @@ Chunk::Chunk(point p) {
     generateTerrain();
 
     if (Game::isInFinalBattle()) {
-
-
-
+        generateFinalBattle(rng);
     } else {
         // spawn buildings and entities if not in center
         float sqrdist = cx*cx + cz*cz;
