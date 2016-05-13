@@ -43,4 +43,5 @@ private:
     static bool inFinalBattle;  // whether or in final battle stage
 
     static bool reqRegen;   // whether or not world should be regenerated
+
 };

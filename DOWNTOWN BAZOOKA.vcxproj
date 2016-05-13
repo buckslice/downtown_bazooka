@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="aabb.cpp" />
     <ClCompile Include="audio.cpp" />
+    <ClCompile Include="boss.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="collider.cpp" />
     <ClCompile Include="enemy.cpp" />
@@ -192,6 +193,7 @@
   <ItemGroup>
     <ClInclude Include="aabb.h" />
     <ClInclude Include="audio.h" />
+    <ClInclude Include="boss.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="collider.h" />
     <ClInclude Include="enemy.h" />

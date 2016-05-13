@@ -268,6 +268,7 @@ void Chunk::generateFinalBattle(RNG& rng) {
     float hc = CHUNK_SIZE / 2.0f;
     float platformSize = 400.0f;
     glm::vec3 ori = Game::getFinalOrigin() + glm::vec3(500.0f, 0.0f, 0.0f);
+	EntityManagerInstance->SpawnBoss(ori + glm::vec3(0.0f, 200.0f, 0.0f));
     float sqrDistx = (cx - ori.x)*(cx - ori.x);
     float sqrDistz = (cz - ori.z)*(cz - ori.z);
     float maxDist = 700.0f*700.0f;
@@ -328,9 +329,16 @@ void Chunk::generateFinalBattle(RNG& rng) {
 
             AABB box = AABB(glm::vec3(x0, 0.0f, z0), glm::vec3(x1, sy, z1));
             if (!Physics::checkStatic(box)) {
-                staticIndices.push_back(Physics::addStatic(box));
+				if (rng.rand() < 0.01f) {
+					staticIndices.push_back(Physics::addStatic(box, Tag::HEALER));
+					buildingColors.push_back(glm::vec3(0.0f, 1.0f, 0.25f));
+				} else {
+					staticIndices.push_back(Physics::addStatic(box));
+					buildingColors.push_back(glm::vec3(0.1f * rng.rand() + 0.2f, 0.0f, 0.0f));
+				}
+                
                 buildingModels.push_back(box.getModelMatrix());
-                buildingColors.push_back(glm::vec3(0.1f * rng.rand() + 0.2f, 0.0f, 0.0f));
+
                 break;
             }
         }

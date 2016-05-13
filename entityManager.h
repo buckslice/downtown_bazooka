@@ -12,6 +12,7 @@
 #include "particle.h"
 #include "pool.h"
 #include "waypoint.h"
+#include "boss.h"
 
 const int MAX_PROJECTILES = 200;
 const int MAX_PARTICLES = 10000;
@@ -48,6 +49,7 @@ public:
     void SpawnItem(glm::vec3 pos, ItemType type);
     void ReturnItem(Item* i);
 
+	void SpawnBoss(glm::vec3 pos);
     float getPlayerDamage() const;
 
 private:
@@ -62,6 +64,7 @@ private:
     Player* player;
 
     Waypoint* waypoint = nullptr;
+	Boss* boss = nullptr;
 
 };
 

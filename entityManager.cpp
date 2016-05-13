@@ -26,6 +26,10 @@ EntityManager::EntityManager(Player* player) : player(player) {
 
 EntityManager::~EntityManager() {
     delete waypoint;
+	delete items;
+	delete projectiles;
+	delete enemies;
+	delete boss;
 }
 
 void EntityManager::returnAllObjects() {
@@ -61,6 +65,13 @@ void EntityManager::update(float delta) {
         particles[i].update(delta);
     }
 
+}
+
+void EntityManager::SpawnBoss(glm::vec3 pos) {
+	if (boss != nullptr) {
+		delete boss;
+	}
+	boss = new Boss(pos);
 }
 
 float EntityManager::getPlayerDamage() const {

@@ -256,7 +256,7 @@ void Player::checkJumpAndBoost() {
 
         AudioInstance->playSound(Resources::get().boostSound);
 
-        addHealth(-5.0f);  // slightly hurt player
+        addHealth(-1.0f);  // slightly hurt player
         timeSinceGrounded = 10.0f;
 
         // spawn a bunch of particles

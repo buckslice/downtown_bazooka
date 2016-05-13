@@ -91,7 +91,6 @@ void Game::startFinalBattle(AABB b) {
 
     inFinalBattle = true;
     building = b;
-
 }
 bool Game::isInFinalBattle() {
     return inFinalBattle;
