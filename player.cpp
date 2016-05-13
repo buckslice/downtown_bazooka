@@ -126,7 +126,8 @@ void Player::shoot() {
     AudioInstance->playSound(Resources::get().shootSound);
     glm::vec3 shootPos = transform->getWorldPos();
     shootPos.y += 1.8f;
-    EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
+    //EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
+    EntityManagerInstance->SpawnProjectile(shootPos, cam->forward*shootSpeed, true);
 }
 
 glm::vec3 Player::checkInputs() {
@@ -341,7 +342,7 @@ void Player::onCollision(Tag tag, Entity* other) {
         Item* i = dynamic_cast<Item*>(other);
         switch (i->type) {
         case ItemType::HEAL:
-            addHealth(10);
+            addHealth(30);
             break;
         case ItemType::STAMINA:
             maxHealth += 10.0f;

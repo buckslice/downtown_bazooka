@@ -109,9 +109,13 @@ public:
         return (T*)(memory + index * itemSize);
     }
 
+    size_t getCount() {
+        return count;
+    }
+
 private:
     char* memory;    // block of memory for this pool
-    size_t maxCount; // number of elements in pool
+    size_t maxCount; // max number of elements in pool
 
     Item* nextFree;  // pointer to next free element
     size_t count;    // signifies highest element index since reset

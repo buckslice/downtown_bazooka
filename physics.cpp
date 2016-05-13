@@ -70,9 +70,6 @@ void Physics::processOverlapEvents(std::vector<QuadtreeData>& returnData) {
 }
 
 void Physics::update(float delta) {
-    //std::cout << staticPool.getFreeList().size() << std::endl;
-    bool printedErrorThisFrame = false;
-    int numberOver = 0;
 
     rebuildCollisionTree(delta);
 
@@ -114,11 +111,6 @@ void Physics::update(float delta) {
         int dndx = dynamicPool.getIndex(cdObj);
         // try to resolve up to 10 collisions for this object this frame
         for (int resolutionAttempts = 0; resolutionAttempts < 10; ++resolutionAttempts) {
-            //if (resolutionAttempts == 9 && !printedErrorThisFrame) {
-            //    std::cout << "PHYSICS::MAX_RESOLUTIONS_REACHED ";
-            //    numberOver++;
-            //    printedErrorThisFrame = true;   // to avoid spam
-            //}
 
             // should try only clearing these at beginning of dynamic not each resolution
             staticCheckSet.clear();
@@ -161,7 +153,9 @@ void Physics::update(float delta) {
                         if (other->entity) {
                             other->entity->onCollision(col.tag, cdObj->entity);
                         }
-                        continue;
+                        // actually dont continue because dynamics touching eachother will
+                        // count as colliding here barely
+                        //continue;
                     }
 
                     // broadphase sweep bounds check to see if these two objects will collide this frame
@@ -224,11 +218,10 @@ void Physics::update(float delta) {
             }
 
             if (closestIndex >= 0 && closestIsDynamic) {
-                ColliderData* other = dynamicPool.get(closestIndex);
                 // if your type is TRIGGER or their type is TRIGGER
                 // then reset collision variables to pretent like it didn't happen
                 if (col.type == ColliderType::TRIGGER ||
-                    other->collider.type == ColliderType::TRIGGER) {
+                    dynamicPool.get(closestIndex)->collider.type == ColliderType::TRIGGER) {
                     time = 1.0f;
                     norm = glm::vec3(0.0f);
                 }

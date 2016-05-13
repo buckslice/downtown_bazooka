@@ -9,10 +9,11 @@ const float AIM_DEVIANCE = 20.0f; // the factor of how much the enemies' aim dev
 
 enum class EnemyType {
     BASIC,
-    ELITE
+    ELITE,
+    FLYER
 };
 
-class Enemy : public Entity {
+class Enemy : public ModelEntity {
 public:
     Enemy();
     ~Enemy();
@@ -25,7 +26,6 @@ public:
 
 private:
     Transform* player = nullptr;
-    Transform* model;
 
     float speed;
     float jumpVel;

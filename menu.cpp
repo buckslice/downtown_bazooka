@@ -28,8 +28,8 @@ Menu::Menu(Player* player) {
     instructions.setColor(SELECTED_COLOR);
     instructions.setString(
         "WASD     : move\n"
-        "Lclick/E : shoot\n"
-        "Rclick   : rocket jump\n"
+        "Rclick/E : shoot\n"
+        "Lclick   : rocket jump\n"
         "Space    : jump, select\n"
         "ESC      : menu, quit\n"
         "---------------------------\n"

@@ -28,3 +28,16 @@ public:
 private:
 
 };
+
+
+class ModelEntity : public Entity {
+public:
+    ModelEntity();
+    ~ModelEntity();
+protected:
+    // returns a new model transform that will automatically
+    // get returned when this class instance is destructed
+    Transform* registerModel();
+private:
+    std::vector<Transform*>* models;
+};

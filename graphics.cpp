@@ -54,6 +54,7 @@ Graphics::Graphics(sf::RenderWindow& window) {
 }
 
 void Graphics::uploadTransforms() {
+    //std::cout << boxes.getCount() << std::endl;
     for (Transform* t = nullptr; boxes.next(t);) {
         if (!t->shouldDraw()) {
             continue;

@@ -3,25 +3,24 @@
 #include "entityManager.h"
 
 Enemy::Enemy() {
-    model = Graphics::registerTransform();
-    model->setVisibility(Visibility::SHOW_SELF);
+    jumpTimer = Mth::rand01() * 5.0f + 5.0f;
+    shootTimer = Mth::rand01() * 5.0f + 5.0f;
 
-    transform->setVisibility(Visibility::HIDE_ALL);
-    transform->parentAll(model);
+    transform->setVisibility(Visibility::HIDE_SELF);
     collider->type = ColliderType::FULL;
     collider->tag = Tag::ENEMY;
 
-    jumpTimer = Mth::rand01() * 5.0f + 5.0f;
-    shootTimer = Mth::rand01() * 5.0f + 5.0f;
     Physics::setCollisionCallback(this);
 }
 
 Enemy::~Enemy() {
-    Graphics::returnTransform(model);
 }
 
 void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
     this->player = player;
+
+    Transform* model = registerModel();
+    transform->parentAll(model);
 
     glm::vec3 scale = glm::vec3(1.0f, 2.0f, 1.0f);
     glm::vec3 variance = Mth::randInsideUnitCube();
@@ -30,24 +29,44 @@ void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
 
     glm::vec3 color;
     switch (type) {
-    case EnemyType::ELITE:
+    case EnemyType::ELITE: {
         scale *= Mth::rand01() + 2.0f;
         color = glm::vec3(0.8f, 1.0f, 0.6f);
         speed = Mth::rand01() * 5.0f + 10.0f;
         jumpVel = Mth::rand01() * 10.0f + 30.0f;
         health = 100.0f;
-        break;
-    case EnemyType::BASIC:
+
+        Transform* larm = registerModel();
+        Transform* rarm = registerModel();
+
+        larm->setPos(-scale.x * 0.75f, scale.y * 0.75f, 0.0f);
+        rarm->setPos(scale.x * 0.75f, scale.y * 0.75f, 0.0f);
+
+        larm->setScale(scale*0.75f);
+        rarm->setScale(scale*0.75f);
+
+        transform->parentAllWithColor(larm, rarm);
+
+        break; }
+    case EnemyType::BASIC: {
         color = glm::vec3(1.0f, Mth::rand01() * 0.3f, Mth::rand01() * 0.3f);
         speed = Mth::rand01() * 5.0f + 5.0f;
         jumpVel = Mth::rand01() * 10.0f + 20.0f;
         health = 20.0f;
-        break;
+
+        //scale = glm::vec3(0.75f, 2.0f, 0.75f);
+        Transform* head = registerModel();
+        head->setPos(0.0f, scale.y * 0.75f, 0.0f);
+        head->setScale(1.3f, 0.7f, 1.3f);
+        head->color = glm::vec3(1.0f, 0.0f, 0.0f);
+        transform->parentAll(head);
+
+
+        break; }
     default:
         break;
     }
 
-    transform->setVisibility(Visibility::HIDE_SELF);
     transform->setPos(pos);
     model->setPos(0.0f, scale.y / 2.0f, 0.0f);
     model->setScale(scale);
@@ -56,8 +75,6 @@ void Enemy::init(Transform* player, glm::vec3 pos, EnemyType type) {
     glm::vec3 min = glm::vec3(-0.5f, 0.0f, -0.5f)*scale;
     glm::vec3 max = glm::vec3(0.5f, 1.0f, 0.5f)*scale;
     collider->setExtents(min, max);
-    collider->type = ColliderType::FULL;
-    collider->tag = Tag::ENEMY;
 }
 
 void Enemy::update(GLfloat delta) {
@@ -74,7 +91,7 @@ void Enemy::update(GLfloat delta) {
         jumpTimer += Mth::rand01() * 10.0f + 2.0f;
     }
 
-    if (player < 0) {
+    if (!player) {
         return;
     }
 

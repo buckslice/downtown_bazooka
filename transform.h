@@ -116,17 +116,14 @@ public:
     Shape shape;
 
 private:
+    glm::mat4 model;           // local model matrix
+
+    glm::quat rot;
     glm::vec3 pos;
     glm::vec3 scale;
-    glm::quat rot;
-
-    glm::mat4 model;           // local model matrix
-    // may be worth caching parents matrix too like benny does
-
-    bool needUpdate = true;    // set to true whenever model matrix needs to be recalculated
-
-    Visibility visibility;
 
     Transform* parent = nullptr;
+    Visibility visibility;
 
+    bool needUpdate = true;    // set to true whenever model matrix needs to be recalculated
 };

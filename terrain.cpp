@@ -238,7 +238,7 @@ void Chunk::generateStructures(RNG& rng) {
 
 void Chunk::spawnEntities(RNG& rng) {
     //int numEnemies = (int)(rds.zeroToOne(rng) * 1.0 + 1.0f);
-    int numEnemies = 0;
+    int numEnemies = 2;
     int numItems = 2;
 
     for (int i = 0; i < numEnemies; ++i) {
