@@ -100,7 +100,7 @@ void Waypoint::onCollision(Tag tag, Entity* other) {
         player->addHealth(1000.0f);   // heal player to full
 
         // spawn boss battle area if third waypoint hit
-        if (++timesTriggered >= 1) {
+        if (++timesTriggered >= 0) {
             AudioInstance->playSound(Resources::get().timetodieSound);
             Game::startFinalBattle(currentBuilding);
             Game::setRequiresWorldRegen(true);

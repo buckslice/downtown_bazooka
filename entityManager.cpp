@@ -38,6 +38,7 @@ void EntityManager::returnAllObjects() {
     projectiles->freeAll();
     enemies->freeAll();
     items->freeAll();
+    deleteBoss();
 }
 
 void EntityManager::update(float delta) {
@@ -65,13 +66,26 @@ void EntityManager::update(float delta) {
         particles[i].update(delta);
     }
 
+    if (boss != nullptr) {
+        boss->update(delta);
+    }
+
 }
 
-void EntityManager::SpawnBoss(glm::vec3 pos) {
-	if (boss != nullptr) {
-		delete boss;
-	}
+void EntityManager::spawnBoss(glm::vec3 pos) {
+    deleteBoss();
 	boss = new Boss(pos);
+}
+
+void EntityManager::deleteBoss() {
+    if (boss != nullptr) {
+        delete boss;
+        boss = nullptr;
+    }
+}
+
+Boss* EntityManager::getBoss() {
+    return boss;
 }
 
 float EntityManager::getPlayerDamage() const {

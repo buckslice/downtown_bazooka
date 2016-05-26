@@ -328,6 +328,12 @@ void Player::onCollision(Tag tag, Entity* other) {
             EntityManagerInstance->SpawnParticle(ParticleType::HEAL, rp, glm::vec3(0.0f), 1.0f);
         }
     }break;
+    case Tag::SWITCH: {
+        Boss* b = EntityManagerInstance->getBoss();
+        if (b != nullptr) {
+            b->playerHitSwitch();
+        }
+    }break;
     case Tag::ENEMY:
     case Tag::ENEMY_PROJECTILE:
         if (invulnTime >= 0.5f) {

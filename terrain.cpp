@@ -267,8 +267,8 @@ void Chunk::generateFinalBattle(RNG& rng) {
     float cz = pos.second * CHUNK_SIZE;
     float hc = CHUNK_SIZE / 2.0f;
     float platformSize = 400.0f;
-    glm::vec3 ori = Game::getFinalOrigin() + glm::vec3(500.0f, 0.0f, 0.0f);
-	EntityManagerInstance->SpawnBoss(ori + glm::vec3(0.0f, 200.0f, 0.0f));
+    glm::vec3 ori = Game::getFinalOrigin();
+
     float sqrDistx = (cx - ori.x)*(cx - ori.x);
     float sqrDistz = (cz - ori.z)*(cz - ori.z);
     float maxDist = 700.0f*700.0f;
@@ -279,6 +279,11 @@ void Chunk::generateFinalBattle(RNG& rng) {
     // check if main boss platform should be spawned in this chunk
     if (ori.x > cx - hc && ori.x < cx + hc &&
         ori.z > cz - hc && ori.z < cz + hc) {
+
+        // spawn the boss
+        EntityManagerInstance->spawnBoss(ori);
+        Boss* boss = EntityManagerInstance->getBoss();
+
         glm::vec3 minOri = glm::vec3(ori.x - platformSize / 2.0f, 0.0f, ori.z - platformSize / 2.0f);
         int slices = 10;
         float sliceSize = platformSize / slices;
@@ -298,15 +303,13 @@ void Chunk::generateFinalBattle(RNG& rng) {
             float h = rng.rand() * 5.0f + 90.0f + ps * 25.0f;
             glm::vec3 max = min + glm::vec3(sliceSize, h, sliceSize);
 
-            AABB box = AABB(min, max);
-            staticIndices.push_back(Physics::addStatic(box));
-            buildingModels.push_back(box.getModelMatrix());
-            buildingColors.push_back(glm::vec3(0.2f * rng.rand() + 0.3f, 0.0f, (ps / (float)tiers)*0.75f));
-
+            glm::vec3 color = glm::vec3(0.2f * rng.rand() + 0.3f, 0.0f, (ps / (float)tiers)*0.75f);
+            boss->addBox(AABB(min, max), color);
         }
         return;
     }
 
+    // other platforms around main boss platform
     float x, z, sx, sy, sz, x0, z0, x1, z1;
     for (int i = 0; i < 20; ++i) {
         for (int j = 0; j < 10; ++j) {
@@ -329,14 +332,14 @@ void Chunk::generateFinalBattle(RNG& rng) {
 
             AABB box = AABB(glm::vec3(x0, 0.0f, z0), glm::vec3(x1, sy, z1));
             if (!Physics::checkStatic(box)) {
-				if (rng.rand() < 0.01f) {
-					staticIndices.push_back(Physics::addStatic(box, Tag::HEALER));
-					buildingColors.push_back(glm::vec3(0.0f, 1.0f, 0.25f));
-				} else {
-					staticIndices.push_back(Physics::addStatic(box));
-					buildingColors.push_back(glm::vec3(0.1f * rng.rand() + 0.2f, 0.0f, 0.0f));
-				}
-                
+                if (rng.rand() < 0.01f) {
+                    staticIndices.push_back(Physics::addStatic(box, Tag::HEALER));
+                    buildingColors.push_back(glm::vec3(0.0f, 1.0f, 0.25f));
+                } else {
+                    staticIndices.push_back(Physics::addStatic(box));
+                    buildingColors.push_back(glm::vec3(0.1f * rng.rand() + 0.2f, 0.0f, 0.0f));
+                }
+
                 buildingModels.push_back(box.getModelMatrix());
 
                 break;
@@ -541,6 +544,12 @@ void Terrain::render(glm::mat4 view, glm::mat4 proj) {
 
     chunks[0]->mesh->unbind();
 
+    // draw bosses buildings if there is a boss
+
+    Boss* boss = EntityManagerInstance->getBoss();
+    if (boss != nullptr) {
+        boss->render();
+    }
 }
 
 void Terrain::deleteChunks() {

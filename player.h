@@ -66,7 +66,7 @@ private:
     float health = maxHealth;       // current health of player 
     float attackDamage = 10.0f;     // how much damage player does per attack
     float shotsPerSecond = 1.0f;    // the rate player can shoot at
-    float shootSpeed = 25.0f;       // how fast player shoots
+    float shootSpeed = 40.0f;       // how fast player shoots
     float invulnTime = 0.0f;        // how much remaining invulnerability player has    
     float timeSinceHitJump = 10.0f; // how long since player hit jump
     float timeSinceShot = 10.0f;    // how long since player shot

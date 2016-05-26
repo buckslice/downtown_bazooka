@@ -49,7 +49,10 @@ public:
     void SpawnItem(glm::vec3 pos, ItemType type);
     void ReturnItem(Item* i);
 
-	void SpawnBoss(glm::vec3 pos);
+	void spawnBoss(glm::vec3 pos);
+    void deleteBoss();
+    Boss* getBoss();
+
     float getPlayerDamage() const;
 
 private:

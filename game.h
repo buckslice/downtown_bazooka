@@ -16,7 +16,7 @@ public:
 
     static void startFinalBattle(AABB b);
     static bool isInFinalBattle();
-    static glm::vec3 getFinalOrigin();
+    static glm::vec3 getFinalOrigin(); // returns origin of boss platform
     static glm::vec3 getPlayerPos();
 
     static void setRequiresWorldRegen(bool b);

@@ -325,6 +325,13 @@ int Physics::addStatic(AABB bounds, Tag tag) {
     return index;
 }
 
+void Physics::removeStatic(int index) {
+    if (index < 0) {
+        return;
+    }
+    staticPool.free(index);
+}
+
 // checks static against other statics in the matrix
 // returns true if collides with any
 bool Physics::checkStatic(AABB obj) {
@@ -338,13 +345,6 @@ bool Physics::checkStatic(AABB obj) {
         }
     }
     return false;
-}
-
-void Physics::removeStatic(int index) {
-    if (index < 0) {
-        return;
-    }
-    staticPool.free(index);
 }
 
 Collider* Physics::registerDynamic(Transform* transform) {
