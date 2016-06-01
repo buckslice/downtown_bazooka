@@ -108,7 +108,7 @@ void Enemy::update(GLfloat delta) {
     if (shootTimer < 0.0f) {
         shootTimer = Mth::rand01() * 10.0f + 5.0f;
         if (distsq <= SHOOT_VECINITY * SHOOT_VECINITY) {
-            EntityManagerInstance->SpawnProjectile(transform->getWorldPos(), collider->vel + shootDir*40.0f, false);
+            EntityManagerInstance->SpawnProjectile(ProjectileType::ROCKET, Tag::ENEMY_PROJECTILE, transform->getWorldPos(), collider->vel + shootDir*40.0f);
         }
     }
 

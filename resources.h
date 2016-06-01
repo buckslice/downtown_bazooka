@@ -45,6 +45,9 @@ public:
     sf::SoundBuffer waypointSound;
     sf::SoundBuffer waypointHitSound;
     sf::SoundBuffer timetodieSound;
+    sf::SoundBuffer bossShoot;
+    sf::SoundBuffer bossSwitch;
+    sf::SoundBuffer bossVulnerable;
 
     void buildShaders();
     void loadTextures(bool mipmapped);

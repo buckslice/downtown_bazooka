@@ -23,7 +23,8 @@ enum class Tag {
     TERRAIN, 
 	ITEM,
     HEALER,
-    SWITCH
+    SWITCH,
+    BOSSBOY,
 };
 
 // Colliders represent dynamic physics objects

@@ -18,8 +18,6 @@ Entity::~Entity() {
 }
 
 
-
-
 ModelEntity::ModelEntity() {
     models = new std::vector<Transform*>();
 }

@@ -33,6 +33,8 @@ public:
     // effect dictates appearance, lifetime, and velocity over time
     // mag is magnitude of randomized velocity
     // vel is initial velocity
+    // scale dictates starting size of particle
+    // hasCollision determines if particle collides with anything
     void SpawnParticle(ParticleType type, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f),
         float rmag = 0.0f, glm::vec3 scale = glm::vec3(1.0f), bool hasCollision = true);
 
@@ -40,7 +42,7 @@ public:
     // num dictates how many particles in explosion
     void MakeExplosion(glm::vec3 pos, int num = 100, float mag = 16.0f, glm::vec3 vel = glm::vec3(0.0f));
 
-    void SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer);
+    void SpawnProjectile(ProjectileType type, Tag tag, glm::vec3 pos, glm::vec3 vel);
     void ReturnProjectile(Projectile* p);
 
     void SpawnEnemy(glm::vec3 pos, EnemyType type);

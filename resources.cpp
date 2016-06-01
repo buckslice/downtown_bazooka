@@ -22,6 +22,9 @@ Resources::Resources() {
         { &waypointSound, "waypoint2.wav"},
         { &waypointHitSound, "waypointHit.wav" },
         { &timetodieSound, "timetodie.wav"},
+        { &bossShoot, "bossShoot.wav"},
+        { &bossSwitch, "bossSwitch.wav"},
+        { &bossVulnerable, "bossVulnerable.wav"},
 
     };
     loadAudio(soundPaths);

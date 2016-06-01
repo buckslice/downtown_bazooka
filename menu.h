@@ -75,13 +75,17 @@ private:
 
     TextOption **menu;
 
-    sf::Text title, instructions;
-    sf::RectangleShape healthBar, overlay;
+    sf::Text title;
+    sf::Text instructions;
+    sf::RectangleShape healthBar;
+    sf::RectangleShape bossHealthBar;
+    sf::RectangleShape overlay;
 
     sf::Texture titleTexture;
     sf::Sprite titleSprite;
 
-    sf::Text fpsText, deadText;
+    sf::Text fpsText;
+    sf::Text deadText;
     std::queue<float> fpsValues;
     float totalFpsQueueValue = 0.0f;
 

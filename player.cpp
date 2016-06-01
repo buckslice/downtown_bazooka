@@ -124,10 +124,10 @@ void Player::updateTimers(float delta) {
 
 void Player::shoot() {
     AudioInstance->playSound(Resources::get().shootSound);
-    glm::vec3 shootPos = transform->getWorldPos();
-    shootPos.y += 1.8f;
-    //EntityManagerInstance->SpawnProjectile(shootPos, collider->vel + cam->forward*shootSpeed, true);
-    EntityManagerInstance->SpawnProjectile(shootPos, cam->forward*shootSpeed, true);
+    glm::vec3 shotPos = transform->getWorldPos();
+    shotPos.y += 1.8f;
+    EntityManagerInstance->SpawnProjectile(
+        ProjectileType::ROCKET, Tag::PLAYER_PROJECTILE, shotPos, cam->forward*shootSpeed);
 }
 
 glm::vec3 Player::checkInputs() {

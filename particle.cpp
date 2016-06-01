@@ -36,7 +36,8 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
         break;
     case BEAM:
         gravmult = 0.0f;
-        lifetime = 0.5f;
+        //lifetime = 0.5f;
+        lifetime = 2.0f;
         break;
     case HEAL:
         gravmult = -1.0f;
@@ -50,6 +51,10 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
     case BOOST:
         gravmult = 0.0f;
         lifetime = 2.0f;
+        break;
+    case SWITCH:
+        gravmult = -1.0f;
+        lifetime = 3.0f;
         break;
     }
     collider->gravityMultiplier = gravmult;
@@ -80,8 +85,8 @@ void Particle::update(GLfloat dt) {
         collider->vel *= .95f;
         break;
     case BEAM:
-        transform->color = HSBColor(t * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB();
-        collider->vel *= curlife + (1.0f - curlife) * 0.75f;
+        transform->color = HSBColor(t * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB()*0.5f;
+        //collider->vel *= curlife + (1.0f - curlife) * 0.75f;
         break;
     case HEAL: {
         float f = (1.0f - t) * 0.5f;
@@ -97,6 +102,10 @@ void Particle::update(GLfloat dt) {
         transform->color = Mth::lerp(glm::vec3(1.0f, 0.25f, 0.5f),
             glm::vec3(0.5f, 0.0f, 1.0f)*0.5f, 1.0f - t);
         collider->vel -= collider->vel * Mth::saturate(2.0f * dt);
+        break;
+    case SWITCH:
+        float flicker = abs(sin(t*10.0f));
+        transform->color = Mth::lerp(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f), flicker);
         break;
     }
 

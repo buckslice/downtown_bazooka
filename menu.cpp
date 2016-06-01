@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include "audio.h"
+#include "entityManager.h"
 
 #define USESPRITES 1
 
@@ -98,6 +99,20 @@ void Menu::draw(sf::RenderWindow& window, bool showFPS) {
             float y = static_cast<float>(HEALTH_BAR_HEIGHT);
             healthBar.setSize(sf::Vector2f(x, y));
             window.draw(healthBar);
+
+            Boss* boss = EntityManagerInstance->getBoss();
+            if (boss != nullptr) {
+                if (boss->isVulnerable()) {
+                    bossHealthBar.setFillColor(sf::Color(255, 0, 0, 255));
+                } else {
+                    bossHealthBar.setFillColor(sf::Color(30,30,30, 255));
+                }
+                bossHealthBar.setPosition(0.0f, 0.0f);
+                float x = static_cast<float>(width * boss->getHealthPercentage());
+                float y = static_cast<float>(HEALTH_BAR_HEIGHT);
+                bossHealthBar.setSize(sf::Vector2f(x, y));
+                window.draw(bossHealthBar);
+            }
         }
         return;
     }
@@ -138,7 +153,7 @@ int circularClamp(int n, int min, int max) {
 }
 
 void Menu::move(bool up) {
-	AudioInstance->playSound(Resources::get().menuMoveSound);
+    AudioInstance->playSound(Resources::get().menuMoveSound);
     menu[curSelection]->SetIsSelected(false);
     curSelection += up ? -1 : 1;
     curSelection = circularClamp(curSelection, 0, MAX_NUMBER_OF_ITEMS - 1);
@@ -180,12 +195,12 @@ bool Menu::update(GLfloat delta) {
     if (Input::justPressed(sf::Keyboard::Return) || Input::justPressed(sf::Keyboard::Space)) {
         switch (curSelection) {
         case 0:
-			AudioInstance->playSound(Resources::get().menuSelectSound);
+            AudioInstance->playSound(Resources::get().menuSelectSound);
             setVisible(false);
             _justClosed = true;
             break;
         case 1:
-			AudioInstance->playSound(Resources::get().menuSelectSound);
+            AudioInstance->playSound(Resources::get().menuSelectSound);
             showingInstructions = true;
             break;
         case 2:
@@ -229,7 +244,7 @@ void Menu::updateFpsText(float delta) {
     fpsText.setString(ss.str());
 }
 
-bool Menu::getVisible() const{
+bool Menu::getVisible() const {
     return visible;
 }
 

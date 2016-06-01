@@ -268,7 +268,7 @@ void Chunk::generateFinalBattle(RNG& rng) {
     float hc = CHUNK_SIZE / 2.0f;
     float platformSize = 400.0f;
     glm::vec3 ori = Game::getFinalOrigin();
-
+    ori.y = 0.0f;
     float sqrDistx = (cx - ori.x)*(cx - ori.x);
     float sqrDistz = (cz - ori.z)*(cz - ori.z);
     float maxDist = 700.0f*700.0f;

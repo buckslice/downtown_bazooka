@@ -74,7 +74,7 @@ void EntityManager::update(float delta) {
 
 void EntityManager::spawnBoss(glm::vec3 pos) {
     deleteBoss();
-	boss = new Boss(pos);
+	boss = new Boss(pos, player);
 }
 
 void EntityManager::deleteBoss() {
@@ -109,13 +109,13 @@ void EntityManager::MakeExplosion(glm::vec3 pos, int num, float mag, glm::vec3 v
 }
 
 // projectiles
-void EntityManager::SpawnProjectile(glm::vec3 pos, glm::vec3 vel, bool forPlayer) {
+void EntityManager::SpawnProjectile(ProjectileType type, Tag tag, glm::vec3 pos, glm::vec3 vel) {
     Projectile* p = projectiles->alloc();
     if (!p) {
         return; // just ignore cuz pool is empty
     }
-    p->collider->tag = forPlayer ? Tag::PLAYER_PROJECTILE : Tag::ENEMY_PROJECTILE;
-    p->activate(forPlayer ? ProjectileType::ROCKET : ProjectileType::LASER, pos, vel);
+    p->collider->tag = tag;
+    p->activate(type, pos, vel);
 }
 
 void EntityManager::SpawnEnemy(glm::vec3 pos, EnemyType type) {

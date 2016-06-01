@@ -12,7 +12,8 @@ enum ParticleType {
     HEAL,
     BEACON,
     BEACON_TRIGGERED,
-    BOOST
+    BOOST,
+    SWITCH
 };
 class Particle : public Entity {
 public:

@@ -2,7 +2,8 @@
 #include "entity.h"
 enum class ProjectileType {
 	ROCKET,
-	LASER
+	LASER,
+    BOSS_CANNON,
 };
 
 class Projectile : public Entity {
