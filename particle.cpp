@@ -35,6 +35,7 @@ void Particle::activate(ParticleType type, glm::vec3 pos, glm::vec3 vel,
         lifetime = 2.0f;
         break;
     case BEAM:
+    case BEAM_HOMING:
         gravmult = 0.0f;
         //lifetime = 0.5f;
         lifetime = 2.0f;
@@ -84,10 +85,24 @@ void Particle::update(GLfloat dt) {
         transform->color = glm::vec3(1.0f, t, 0.0f);
         collider->vel *= .95f;
         break;
-    case BEAM:
-        transform->color = HSBColor(t * 0.1666f + 0.666f, 1.0f, 1.0f).toRGB()*0.5f;
-        //collider->vel *= curlife + (1.0f - curlife) * 0.75f;
-        break;
+    case BEAM: {
+        int ps = (int)(t * 20);
+        if (ps % 2 == 0) {
+            transform->color = HSBColor(t * 0.1f + 0.666f, 1.0f, 1.0f).toRGB()*0.5f;
+        } else {
+            transform->color = HSBColor(1.0f, t * 0.1f + 0.666f, 1.0f).toRGB()*0.5f;
+        }
+        collider->vel += collider->vel*(2.0f - curlife)*dt;
+    }break;
+    case BEAM_HOMING: {
+        int ps = (int)(t * 10);
+        if (ps % 2 == 0) {
+            transform->color = HSBColor(t * 0.2f + 0.2f, 1.0f, 1.0f).toRGB()*0.5f;
+        } else {
+            transform->color = HSBColor(t * 0.1f + 0.5f, 1.0f, 1.0f).toRGB()*0.5f;
+        }
+        collider->vel += collider->vel*(2.0f - curlife)*dt;
+    }break;
     case HEAL: {
         float f = (1.0f - t) * 0.5f;
         transform->color = glm::vec3(f, 1.0f, f);

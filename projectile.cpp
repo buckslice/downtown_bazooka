@@ -26,9 +26,11 @@ void Projectile::activate(ProjectileType type, glm::vec3 pos, glm::vec3 vel) {
     timer = 2.0f;
 
     switch (type) {
+    case ProjectileType::BOSS_HOMING:
+        transform->color = glm::vec3(0.0f, 1.0f, 0.5f);
     case ProjectileType::BOSS_CANNON:
-        transform->setScale(glm::vec3(4.0f));
-        collider->setExtents(glm::vec3(-2.0f), glm::vec3(2.0f));
+        transform->setScale(glm::vec3(5.0f));
+        collider->setExtents(glm::vec3(-2.5f), glm::vec3(2.5f));
         timer = 4.0f;
     case ProjectileType::ROCKET:
         collider->gravityMultiplier = 0.0f;
@@ -58,9 +60,19 @@ void Projectile::update(GLfloat delta) {
         break;
     case ProjectileType::BOSS_CANNON:
         for (int i = 0; i < 1; ++i) {
-            EntityManagerInstance->SpawnParticle(BEAM, transform->getWorldPos(), glm::vec3(0.0f), 10.0f, glm::vec3(8.0f), false);
+            EntityManagerInstance->SpawnParticle(BEAM, transform->getWorldPos(), glm::vec3(0.0f), 10.0f, glm::vec3(5.0f), false);
         }
         break;
+    case ProjectileType::BOSS_HOMING: {
+        glm::vec3 dir = EntityManagerInstance->getPlayerPosition() - transform->getWorldPos();
+        if (dir != glm::vec3(0.0f)) {
+            dir = glm::normalize(dir);
+        }
+        collider->vel = glm::normalize(collider->vel + dir*4.0f)*100.0f;
+        for (int i = 0; i < 1; ++i) {
+            EntityManagerInstance->SpawnParticle(BEAM_HOMING, transform->getWorldPos(), glm::vec3(0.0f), 10.0f, glm::vec3(5.0f), false);
+        }
+    }break;
     default:
         break;
     }
@@ -77,6 +89,11 @@ void Projectile::onDeath() {
     if (type == ProjectileType::BOSS_CANNON) {
         for (int i = 0; i < 50; ++i) {
             EntityManagerInstance->SpawnParticle(BEAM, transform->getWorldPos(), glm::vec3(0.0f), 100.0f, glm::vec3(8.0f), false);
+        }
+    }
+    if (type == ProjectileType::BOSS_HOMING) {
+        for (int i = 0; i < 50; ++i) {
+            EntityManagerInstance->SpawnParticle(BEAM_HOMING, transform->getWorldPos(), glm::vec3(0.0f), 100.0f, glm::vec3(8.0f), false);
         }
     }
     EntityManagerInstance->ReturnProjectile(this);

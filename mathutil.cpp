@@ -30,6 +30,13 @@ glm::vec3 Mth::randInsideUnitCube() {
     return glm::vec3(randUnit(), randUnit(), randUnit());
 }
 
+glm::vec3 Mth::randOnUnitSphere() {
+    float phi = randRange(0.0f, PI*2.0f);
+    float costheta = randUnit();
+    float theta = acos(costheta);
+    return glm::vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta));
+}
+
 glm::vec3 Mth::randInsideSphere(float radius) {
     float phi = randRange(0.0f, PI*2.0f);
     float costheta = randUnit();

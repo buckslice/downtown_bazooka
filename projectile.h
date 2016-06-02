@@ -4,6 +4,7 @@ enum class ProjectileType {
 	ROCKET,
 	LASER,
     BOSS_CANNON,
+    BOSS_HOMING,
 };
 
 class Projectile : public Entity {

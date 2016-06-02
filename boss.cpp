@@ -82,6 +82,19 @@ Boss::~Boss() {
 }
 
 void Boss::update(GLfloat delta) {
+    if (health <= 0) {
+        bossDyingTime -= delta;
+        if (bossDyingTime > 0.0f) {
+            for (int i = 0; i < 10; ++i) {
+                EntityManagerInstance->SpawnParticle(
+                    ParticleType::FIRE, transform->getWorldPos(),
+                    Mth::randOnUnitSphere() * 300.0f, 0.0f, glm::vec3(5.0f), false);
+            }
+        }
+        transform->setVisibility(Visibility::HIDE_ALL);
+        return;
+    }
+
     glm::vec3 targetDir = glm::normalize(player->transform->getWorldPos() - transform->getWorldPos());
     if (targetDir != glm::vec3(0.0f)) {
         targRot = glm::normalize(glm::rotation(glm::vec3(0.0f, 0.0f, 1.0f), targetDir));
@@ -98,14 +111,11 @@ void Boss::update(GLfloat delta) {
     vulnerableTimer -= delta;
 
     float healthPercent = health / maxHealth;
-    if (healthPercent > 0.66f) {
+    if (healthPercent > 0.5f) {
         phase = 0;
-    } else if (healthPercent > 0.33f) {
-        phase = 1;
     } else {
-        phase = 2;
+        phase = 1;
     }
-    phase = 0;   // DOIN THIS FOR NOW BECAUSE WE ONLY HAVE CODE FOR ONE PHASE!!!
 
     switch (phase) {
     case 0:
@@ -149,15 +159,46 @@ void Boss::update(GLfloat delta) {
                 dir = glm::normalize(dir);
             }
             shootRight = !shootRight;
-            EntityManagerInstance->SpawnProjectile(ProjectileType::BOSS_CANNON, Tag::ENEMY_PROJECTILE, shotPos, dir * 60.0f);
+            EntityManagerInstance->SpawnProjectile(ProjectileType::BOSS_CANNON, Tag::ENEMY_PROJECTILE, shotPos, dir * 100.0f);
 
         }
 
         break;
     case 1:
+        vulnerableTimer = 10.0f;
+        // take shots at player
+        shotTimer -= delta;
+        if (shotTimer < 0.0f) {
+            if (launchHomingVolley) {
+                launchHomingVolley = false;
+                for (int i = 0; i < 3; ++i) {
+                    EntityManagerInstance->SpawnProjectile(ProjectileType::BOSS_HOMING, Tag::ENEMY_PROJECTILE,
+                        rgun.getWorldPos(), Mth::randOnUnitSphere() * 100.0f);
+                    EntityManagerInstance->SpawnProjectile(ProjectileType::BOSS_HOMING, Tag::ENEMY_PROJECTILE,
+                        lgun.getWorldPos(), Mth::randOnUnitSphere() * 100.0f);
+                }
+                shotTimer = 1.0f;
+            } else {
 
-        break;
-    case 2:
+                shotTimer = 0.6f / shotsPerSecond;
+                if (++shotCount > 8) {
+                    shotTimer = 2.0f;
+                    shotCount = 0;
+                    launchHomingVolley = true;
+                }
+                AudioInstance->playSound(Resources::get().bossShoot, 0.3f);
+
+                // get shot position and direction
+                glm::vec3 shotPos = shootRight ? rgun.getWorldPos() : lgun.getWorldPos();
+                glm::vec3 aimPos = player->transform->getWorldPos();
+                glm::vec3 dir = aimPos - shotPos;
+                if (dir != glm::vec3(0.0f)) {
+                    dir = glm::normalize(dir);
+                }
+                shootRight = !shootRight;
+                EntityManagerInstance->SpawnProjectile(ProjectileType::BOSS_CANNON, Tag::ENEMY_PROJECTILE, shotPos, dir * 100.0f);
+            }
+        }
 
         break;
     default:

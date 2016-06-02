@@ -49,7 +49,9 @@ private:
     const float shotsPerSecond = 1.0f;
     int shotCount = 0;
     float shotTimer = 0.0f;
+    bool launchHomingVolley = false;
     bool shootRight = true;
+    float bossDyingTime = 5.0f;
 
     int switchIndex = -1;
     int switchesHit = 0;

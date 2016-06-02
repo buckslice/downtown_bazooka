@@ -91,6 +91,9 @@ Boss* EntityManager::getBoss() {
 float EntityManager::getPlayerDamage() const {
     return player->getDamage();
 }
+glm::vec3 EntityManager::getPlayerPosition() const {
+    return player->transform->getWorldPos();
+}
 
 void EntityManager::SpawnParticle(ParticleType type,
     glm::vec3 pos, glm::vec3 vel, float rmag, glm::vec3 scale, bool hasCollision) {

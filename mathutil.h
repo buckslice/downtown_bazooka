@@ -39,6 +39,9 @@ public:
     // returns random vec3 somewhere inside a unit sphere
     static glm::vec3 randInsideSphere(float radius);
 
+    // return random vec3 on unit sphere
+    static glm::vec3 randOnUnitSphere();
+
     // returns random vec3 with values between min and max
     static glm::vec3 randomPointInRange(glm::vec3 min, glm::vec3 max);
 

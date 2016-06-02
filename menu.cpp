@@ -53,9 +53,7 @@ Menu::Menu(Player* player) {
     fpsText.setScale(2.0f, 2.0f);
     fpsText.setPosition(0.0f, -10.0f);
     deadText.setFont(Resources::get().font);
-    deadText.setColor(sf::Color(255, 0, 0));
-    deadText.setScale(4.0f, 4.0f);
-    deadText.setString("GAME OVER!");
+    deadText.setScale(6.0f, 6.0f);
 
     overlay.setFillColor(sf::Color(0, 0, 0, 150));
     overlay.setPosition(sf::Vector2f());
@@ -91,7 +89,9 @@ void Menu::draw(sf::RenderWindow& window, bool showFPS) {
             window.draw(overlay);
             glDepthMask(GL_TRUE);
 
-            deadText.setPosition(width / 2.0f - 325.0f, height / 5.0f);
+            deadText.setString("GAME OVER!");
+            deadText.setColor(sf::Color(255, 0, 0));
+            deadText.setPosition(width / 2.0f - 500.0f, height / 5.0f);
             window.draw(deadText);
         } else {
             healthBar.setPosition(0.0f, static_cast<float>(height - HEALTH_BAR_HEIGHT));
@@ -102,10 +102,15 @@ void Menu::draw(sf::RenderWindow& window, bool showFPS) {
 
             Boss* boss = EntityManagerInstance->getBoss();
             if (boss != nullptr) {
-                if (boss->isVulnerable()) {
+                if (boss->getHealthPercentage() <= 0.0f) {
+                    deadText.setString("YOU WIN!");
+                    deadText.setColor(sf::Color(0, 255, 0));
+                    deadText.setPosition(width / 2.0f - 500.0f, height / 5.0f);
+                    window.draw(deadText);
+                } else if (boss->isVulnerable()) {
                     bossHealthBar.setFillColor(sf::Color(255, 0, 0, 255));
                 } else {
-                    bossHealthBar.setFillColor(sf::Color(30,30,30, 255));
+                    bossHealthBar.setFillColor(sf::Color(30, 30, 30, 255));
                 }
                 bossHealthBar.setPosition(0.0f, 0.0f);
                 float x = static_cast<float>(width * boss->getHealthPercentage());

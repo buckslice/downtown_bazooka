@@ -56,6 +56,7 @@ public:
     Boss* getBoss();
 
     float getPlayerDamage() const;
+    glm::vec3 getPlayerPosition() const;
 
 private:
     int nextParticleIndex = 0;

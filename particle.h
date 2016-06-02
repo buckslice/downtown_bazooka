@@ -9,6 +9,7 @@ enum ParticleType {
 	SPARK,
 	FIRE,
 	BEAM,
+    BEAM_HOMING,
     HEAL,
     BEACON,
     BEACON_TRIGGERED,
